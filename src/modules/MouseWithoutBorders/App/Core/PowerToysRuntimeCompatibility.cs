@@ -4,6 +4,7 @@
 
 using System;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Text;
 using System.Threading;
@@ -63,7 +64,7 @@ namespace ManagedCommon
             try
             {
                 var builder = new StringBuilder();
-                builder.Append(DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff"));
+                builder.Append(DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff", CultureInfo.InvariantCulture));
                 builder.Append(" [");
                 builder.Append(Environment.ProcessId);
                 builder.Append(':');
@@ -115,7 +116,7 @@ namespace Microsoft.PowerToys.Telemetry
     /// <summary>
     /// Compatibility value used only by the imported event classes. No telemetry is sent.
     /// </summary>
-    internal enum PartA_PrivTags
+    public enum PartA_PrivTags
     {
         ProductAndServiceUsage = 0,
     }
@@ -140,11 +141,11 @@ namespace Microsoft.PowerToys.Telemetry
 
 namespace Microsoft.PowerToys.Telemetry.Events
 {
-    internal class EventBase
+    public class EventBase
     {
     }
 
-    internal interface IEvent
+    public interface IEvent
     {
     }
 }
