@@ -13,7 +13,6 @@ namespace MouseWithoutBorders.UnitTests.Core;
 [TestClass]
 public sealed class EncryptionTests
 {
-    // Must be at least 16 characters to be accepted as a key.
     private const string TestKey = "MwbEncryptionTestKey1234";
 
     // The cleartext salt (16 bytes) + IV (16 bytes) header that precedes the cipher text.
@@ -65,6 +64,46 @@ public sealed class EncryptionTests
         var header2 = Encrypt(plainText)[..HeaderLength];
 
         CollectionAssert.AreNotEqual(header1, header2);
+    }
+
+    [TestMethod]
+    public void UserChosenKeyAtMinimumLengthShouldBeAccepted()
+    {
+        var isValid = Encryption.IsKeyValid("1234", out var error);
+
+        Assert.IsTrue(isValid);
+        Assert.IsNull(error);
+    }
+
+    [TestMethod]
+    public void UserChosenKeyBelowMinimumLengthShouldBeRejected()
+    {
+        var isValid = Encryption.IsKeyValid("123", out var error);
+
+        Assert.IsFalse(isValid);
+        Assert.IsNotNull(error);
+    }
+
+    [TestMethod]
+    public void GeneratedKeyShouldBeShortFriendlyAndNonFormulaic()
+    {
+        const string allowedCharacters = "abcdefghjkmnpqrstuvwxyz23456789";
+        var key = Encryption.CreateRandomKey();
+
+        Assert.AreEqual(Encryption.GeneratedKeyLength, key.Length);
+        foreach (var character in key)
+        {
+            StringAssert.Contains(allowedCharacters, character.ToString());
+        }
+    }
+
+    [TestMethod]
+    public void GeneratedKeysShouldNotRepeatDeterministically()
+    {
+        var key1 = Encryption.CreateRandomKey();
+        var key2 = Encryption.CreateRandomKey();
+
+        Assert.AreNotEqual(key1, key2);
     }
 
     private static byte[] Encrypt(byte[] plainText)
