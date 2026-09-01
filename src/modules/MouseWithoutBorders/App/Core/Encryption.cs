@@ -5,7 +5,6 @@
 using System;
 using System.Globalization;
 using System.IO;
-using System.Linq;
 using System.Net.Sockets;
 using System.Security.Cryptography;
 
@@ -30,6 +29,13 @@ internal static class Encryption
     private static uint magicNumber;
     private static Random ran = new(); // Used for non encryption related functionality.
     internal const int SymAlBlockSize = 16;
+
+    // Standalone fork policy: generated keys should be easy to read and type, while users
+    // remain free to choose their own shared secret. Short custom keys are intentionally
+    // allowed for trusted-LAN convenience; callers/UI should warn rather than block them.
+    internal const int MinimumKeyLength = 4;
+    internal const int GeneratedKeyLength = 10;
+    private const string GeneratedKeyAlphabet = "abcdefghjkmnpqrstuvwxyz23456789";
 
     // Size (in bytes) of the random, per-connection PBKDF2 salt that is exchanged in the
     // clear at the start of every encrypted stream. A unique random salt prevents an
@@ -204,38 +210,21 @@ internal static class Encryption
         return CreateRandomKey();
     }
 
-    private const int PW_LENGTH = 16;
-
     internal static string CreateRandomKey()
     {
-        // Not including characters like "'`O0& since they are confusing to users.
-        string[] chars = new[] { "abcdefghjkmnpqrstuvxyz", "ABCDEFGHJKMNPQRSTUVXYZ", "123456789", "~!@#$%^*()_-+=:;<,>.?/\\|[]" };
-        char[][] charactersUsedForKey = chars.Select(charset => Enumerable.Range(0, charset.Length - 1).Select(i => charset[i]).ToArray()).ToArray();
-        byte[] randomData = new byte[1];
-        string key = string.Empty;
-
-        do
+        Span<char> key = stackalloc char[GeneratedKeyLength];
+        for (int i = 0; i < key.Length; i++)
         {
-            foreach (string set in chars)
-            {
-                randomData = RandomNumberGenerator.GetBytes(1);
-                key += set[randomData[0] % set.Length];
-
-                if (key.Length >= PW_LENGTH)
-                {
-                    break;
-                }
-            }
+            key[i] = GeneratedKeyAlphabet[RandomNumberGenerator.GetInt32(GeneratedKeyAlphabet.Length)];
         }
-        while (key.Length < PW_LENGTH);
 
-        return key;
+        return new string(key);
     }
 
     internal static bool IsKeyValid(string key, out string error)
     {
-        error = string.IsNullOrEmpty(key) || key.Length < 16
-            ? "Key must have at least 16 characters in length (spaces are discarded). Key must be auto generated in one of the machines."
+        error = string.IsNullOrWhiteSpace(key) || key.Length < MinimumKeyLength
+            ? $"Key must contain at least {MinimumKeyLength} characters (spaces are discarded by the classic UI). You may choose the key yourself; use the same key on every machine. Short keys are easier to guess."
             : null;
 
         return error == null;
