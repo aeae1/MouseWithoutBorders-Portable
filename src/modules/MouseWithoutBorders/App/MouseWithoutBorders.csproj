@@ -8,8 +8,8 @@
     <UseWindowsForms>true</UseWindowsForms>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
-    <AssemblyName>PowerToys.MouseWithoutBorders</AssemblyName>    
-    <DisableWinExeOutputInference>true</DisableWinExeOutputInference>    
+    <AssemblyName>PowerToys.MouseWithoutBorders</AssemblyName>
+    <DisableWinExeOutputInference>true</DisableWinExeOutputInference>
     <ImportWindowsDesktopTargets>true</ImportWindowsDesktopTargets>
     <OutputPath>$(RepoRoot)$(Platform)\$(Configuration)</OutputPath>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
@@ -42,10 +42,10 @@
     <Compile Remove="Service\**" />
     <Compile Remove="Helper\**" />
     <EmbeddedResource Remove="Resources\**" />
-        <EmbeddedResource Remove="Service\**" />
-        <ExcludeFromStyleCop Remove="Service\**" />
+    <EmbeddedResource Remove="Service\**" />
+    <ExcludeFromStyleCop Remove="Service\**" />
     <None Remove="Resources\**" />
-        <None Remove="Service\**" />
+    <None Remove="Service\**" />
   </ItemGroup>
   <ItemGroup>
     <Compile Update="Control\ColorBorderField.cs">
@@ -99,7 +99,6 @@
     </None>
   </ItemGroup>
 
-  <!-- FOLLOW UP: should this be here? -->
   <ItemGroup>
     <BootstrapperPackage Include="Microsoft.Net.Client.3.5">
       <Visible>False</Visible>
@@ -127,7 +126,7 @@
       <Install>false</Install>
     </BootstrapperPackage>
   </ItemGroup>
-  
+
   <ItemGroup>
     <Content Include="Icon\advanced_button_click.png" />
     <Content Include="Icon\advanced_button_hover.png" />
@@ -212,9 +211,6 @@
     <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" />
     <PackageReference Include="Microsoft.Windows.Compatibility" />
     <PackageReference Include="StreamJsonRpc" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\..\..\settings-ui\Settings.UI.Library\Settings.UI.Library.csproj" />
   </ItemGroup>
   <ItemGroup>
     <Compile Remove="Control\Machine2.Designer.cs" />
