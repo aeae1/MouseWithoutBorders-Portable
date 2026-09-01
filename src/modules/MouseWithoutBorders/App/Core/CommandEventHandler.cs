@@ -6,7 +6,6 @@ using System;
 using System.Threading;
 
 using MouseWithoutBorders.Class;
-using PowerToys.Interop;
 
 namespace MouseWithoutBorders.Core
 {
@@ -16,6 +15,11 @@ namespace MouseWithoutBorders.Core
     /// </summary>
     internal static class CommandEventHandler
     {
+        // Keep these values identical to PowerToys' CommonSharedConstants so a standalone
+        // MWB build remains compatible with the PowerToys Settings UI / Command Palette.
+        private const string ToggleEasyMouseEventName = "Local\\PowerToysMWB-ToggleEasyMouseEvent-a9c8d7b6-e5f4-3c2a-1b0d-9e8f7a6b5c4d";
+        private const string ReconnectEventName = "Local\\PowerToysMWB-ReconnectEvent-b8d7c6a5-f4e3-2b1c-0a9d-8e7f6a5b4c3d";
+
         private static CancellationTokenSource _cancellationTokenSource;
 
         /// <summary>
@@ -27,10 +31,10 @@ namespace MouseWithoutBorders.Core
             CancellationToken exitToken = _cancellationTokenSource.Token;
 
             // Start listener for Toggle Easy Mouse event
-            StartEventListener(Constants.MWBToggleEasyMouseEvent(), ToggleEasyMouse, exitToken);
+            StartEventListener(ToggleEasyMouseEventName, ToggleEasyMouse, exitToken);
 
             // Start listener for Reconnect event
-            StartEventListener(Constants.MWBReconnectEvent(), Reconnect, exitToken);
+            StartEventListener(ReconnectEventName, Reconnect, exitToken);
         }
 
         /// <summary>
