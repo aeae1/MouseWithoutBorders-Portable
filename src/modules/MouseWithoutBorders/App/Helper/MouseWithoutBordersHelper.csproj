@@ -53,6 +53,9 @@
     <Compile Include="..\Core\GpoCompatibility.cs">
       <Link>GpoCompatibility.cs</Link>
     </Compile>
+    <Compile Include="..\Core\PowerToysRuntimeCompatibility.cs">
+      <Link>PowerToysRuntimeCompatibility.cs</Link>
+    </Compile>
   </ItemGroup>
 
   <ItemGroup>
