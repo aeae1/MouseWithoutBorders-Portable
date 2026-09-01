@@ -28,9 +28,7 @@
     <NoWarn />
   </PropertyGroup>
 
-  <!-- See https://learn.microsoft.com/windows/apps/develop/platform/csharp-winrt/net-projection-from-cppwinrt-component for more info -->
   <PropertyGroup>
-    <CsWinRTIncludes>PowerToys.GPOWrapper</CsWinRTIncludes>
     <CsWinRTGeneratedFilesDir>$(OutDir)</CsWinRTGeneratedFilesDir>
     <ErrorOnDuplicatePublishOutputFiles>false</ErrorOnDuplicatePublishOutputFiles>
   </PropertyGroup>
@@ -61,6 +59,11 @@
     <None Remove="Service\**" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="..\Core\GpoCompatibility.cs">
+      <Link>GpoCompatibility.cs</Link>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
     <!-- Including MessagePack to force version, since it's used by StreamJsonRpc but contains vulnerabilities. After StreamJsonRpc updates the version of MessagePack, we can upgrade StreamJsonRpc instead. -->
     <PackageReference Include="MessagePack" />
     <PackageReference Include="Microsoft.Windows.Compatibility" />
@@ -73,11 +76,9 @@
     <PackageReference Include="StreamJsonRpc" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\..\..\common\GPOWrapper\GPOWrapper.vcxproj" />
     <ProjectReference Include="..\..\..\..\settings-ui\Settings.UI.Library\Settings.UI.Library.csproj" />
   </ItemGroup>
   <PropertyGroup>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
   </PropertyGroup>
 </Project>
-
