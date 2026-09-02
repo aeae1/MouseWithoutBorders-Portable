@@ -90,3 +90,11 @@ jobs:
           --no-build
           -c Release
           -p:Platform=x64
+
+      - name: Upload standalone x64 test build
+        uses: actions/upload-artifact@v4
+        with:
+          name: MouseWithoutBorders-standalone-x64-${{ github.sha }}
+          path: src/modules/MouseWithoutBorders/artifacts/standalone/x64/Release/**
+          if-no-files-found: error
+          retention-days: 14
