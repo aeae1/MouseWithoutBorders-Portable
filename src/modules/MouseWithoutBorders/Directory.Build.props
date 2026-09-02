@@ -1,0 +1,36 @@
+<Project>
+  <PropertyGroup>
+    <!-- Temporary pointer to the surrounding PowerToys checkout while the last explicit common props are extracted. -->
+    <RepoRoot>$(MSBuildThisFileDirectory)..\..\..\</RepoRoot>
+
+    <!-- Keep the current upstream private-build version behavior during extraction. -->
+    <Version>0.0.1</Version>
+    <VersionChannel>private</VersionChannel>
+    <ChecksumAlgorithm>SHA256</ChecksumAlgorithm>
+
+    <!-- Standalone MWB metadata. Upstream source copyright headers remain untouched. -->
+    <AssemblyProduct>Mouse Without Borders</AssemblyProduct>
+    <Product>Mouse Without Borders</Product>
+    <RepositoryUrl>https://github.com/aeae1/MouseWithoutBorders</RepositoryUrl>
+    <RepositoryType>GitHub</RepositoryType>
+    <NeutralLanguage>en-US</NeutralLanguage>
+
+    <Platforms>x64;ARM64</Platforms>
+    <PlatformTarget>$(Platform)</PlatformTarget>
+    <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
+
+    <!-- Keep extraction builds focused on compilation/runtime behavior rather than PowerToys-wide analyzer policy. -->
+    <EnableNETAnalyzers>false</EnableNETAnalyzers>
+    <RunAnalyzers>false</RunAnalyzers>
+
+    <!-- Microsoft.Testing.Platform settings used by the existing MWB tests. -->
+    <EnableMSTestRunner>true</EnableMSTestRunner>
+    <TestingPlatformShowTestsFailure>true</TestingPlatformShowTestsFailure>
+    <TestingPlatformDotNetTestSupport>true</TestingPlatformDotNetTestSupport>
+    <TestingPlatformCommandLineArguments>$(TestingPlatformCommandLineArguments) --report-trx</TestingPlatformCommandLineArguments>
+    <TestingPlatformDisableCustomTestTarget Condition="'$(Platform)' == 'ARM64'">true</TestingPlatformDisableCustomTestTarget>
+  </PropertyGroup>
+
+  <!-- Non-test MWB projects need a harmless Test target because CI may invoke Build;Test. -->
+  <Target Name="Test" />
+</Project>
