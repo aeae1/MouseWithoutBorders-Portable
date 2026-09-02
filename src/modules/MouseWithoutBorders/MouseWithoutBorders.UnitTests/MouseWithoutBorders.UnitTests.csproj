@@ -1,12 +1,18 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <!-- Look at Directory.Build.props in root for common stuff as well -->
-  <Import Project="$(RepoRoot)src\Common.Dotnet.CsWinRT.props" />
-  <Import Project="$(RepoRoot)src\Common.SelfContained.props" />
-
   <PropertyGroup>
+    <TargetFramework>net10.0-windows10.0.26100.0</TargetFramework>
+    <TargetPlatformMinVersion>10.0.19041.0</TargetPlatformMinVersion>
+    <SupportedOSPlatformVersion>10.0.19041.0</SupportedOSPlatformVersion>
+    <RuntimeIdentifiers>win-x64;win-arm64</RuntimeIdentifiers>
+    <RuntimeIdentifier Condition="'$(Platform)' == 'x64'">win-x64</RuntimeIdentifier>
+    <RuntimeIdentifier Condition="'$(Platform)' == 'ARM64'">win-arm64</RuntimeIdentifier>
+    <SelfContained>true</SelfContained>
+
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <OutputType>Exe</OutputType>
+
+    <BaseOutputPath>$(MSBuildThisFileDirectory)..\artifacts\tests\</BaseOutputPath>
 
     <!-- exit code 8 means no tests ran. -->
     <!-- Doc: https://learn.microsoft.com/dotnet/core/testing/unit-testing-platform-exit-codes -->
@@ -30,7 +36,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\App\MouseWithoutBorders.csproj" />
+    <ProjectReference Include="..\App\MouseWithoutBorders.Standalone.csproj" />
   </ItemGroup>
 
 </Project>

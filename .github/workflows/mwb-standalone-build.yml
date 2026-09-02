@@ -108,7 +108,8 @@ jobs:
           $projects = @(
             'App\MouseWithoutBorders.Standalone.csproj',
             'App\Helper\MouseWithoutBordersHelper.Standalone.csproj',
-            'App\Service\MouseWithoutBordersService.Standalone.csproj'
+            'App\Service\MouseWithoutBordersService.Standalone.csproj',
+            'MouseWithoutBorders.UnitTests\MouseWithoutBorders.UnitTests.csproj'
           )
 
           foreach ($project in $projects) {
@@ -119,24 +120,11 @@ jobs:
             }
           }
 
-      - name: Build Mouse Without Borders unit tests
-        shell: pwsh
-        run: >-
-          msbuild
-          .\src\modules\MouseWithoutBorders\MouseWithoutBorders.UnitTests\MouseWithoutBorders.UnitTests.csproj
-          /restore
-          /m
-          /p:Configuration=Release
-          /p:Platform=x64
-
-      - name: Run Mouse Without Borders unit tests
-        shell: pwsh
-        run: >-
-          dotnet test
-          .\src\modules\MouseWithoutBorders\MouseWithoutBorders.UnitTests\MouseWithoutBorders.UnitTests.csproj
-          --no-build
-          -c Release
-          -p:Platform=x64
+          $testProjectPath = Join-Path $mwbRoot 'MouseWithoutBorders.UnitTests\MouseWithoutBorders.UnitTests.csproj'
+          dotnet test $testProjectPath --no-build -c Release -p:Platform=x64
+          if ($LASTEXITCODE -ne 0) {
+            exit $LASTEXITCODE
+          }
 
       - name: Upload standalone x64 test build
         uses: actions/upload-artifact@v4

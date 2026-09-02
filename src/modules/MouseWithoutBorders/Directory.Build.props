@@ -51,6 +51,11 @@
     <DefaultItemExcludes>$(DefaultItemExcludes);$(MSBuildProjectDirectory)\obj\**</DefaultItemExcludes>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(MSBuildProjectName)' == 'MouseWithoutBorders.UnitTests'">
+    <BaseIntermediateOutputPath>$(MSBuildThisFileDirectory)artifacts\obj\standalone-tests\</BaseIntermediateOutputPath>
+    <DefaultItemExcludes>$(DefaultItemExcludes);$(MSBuildProjectDirectory)\obj\**</DefaultItemExcludes>
+  </PropertyGroup>
+
   <!-- Non-test MWB projects need a harmless Test target because CI may invoke Build;Test. -->
   <Target Name="Test" />
 </Project>
