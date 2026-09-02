@@ -31,6 +31,16 @@
     <TestingPlatformDisableCustomTestTarget Condition="'$(Platform)' == 'ARM64'">true</TestingPlatformDisableCustomTestTarget>
   </PropertyGroup>
 
+  <!--
+    The standalone app is built alongside the legacy-shaped app while extraction is
+    in progress. Set its intermediate path before Microsoft.Common.props is imported,
+    and keep the legacy app's obj tree out of the SDK's default Compile glob.
+  -->
+  <PropertyGroup Condition="'$(MSBuildProjectName)' == 'MouseWithoutBorders.Standalone'">
+    <BaseIntermediateOutputPath>$(MSBuildThisFileDirectory)artifacts\obj\standalone-app\</BaseIntermediateOutputPath>
+    <DefaultItemExcludes>$(DefaultItemExcludes);$(MSBuildProjectDirectory)\obj\**</DefaultItemExcludes>
+  </PropertyGroup>
+
   <!-- Non-test MWB projects need a harmless Test target because CI may invoke Build;Test. -->
   <Target Name="Test" />
 </Project>

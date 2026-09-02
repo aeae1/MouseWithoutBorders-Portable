@@ -23,7 +23,6 @@
 
     <!-- Keep the parallel extraction build separate from the legacy PowerToys-shaped output. -->
     <BaseOutputPath>$(MSBuildThisFileDirectory)..\artifacts\standalone\</BaseOutputPath>
-    <BaseIntermediateOutputPath>$(MSBuildThisFileDirectory)..\artifacts\obj\standalone-app\</BaseIntermediateOutputPath>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
