@@ -115,14 +115,24 @@ Already removed from MWB executables:
 - direct `PowerToys.Interop` dependency;
 - native C++ `PowerToys.GPOWrapper` dependency;
 - full `Settings.UI.Library` project dependency (replaced by MWB-local compatibility types).
+- PowerToys runner lifecycle coupling in standalone mode;
+- Microsoft PowerToys telemetry in standalone mode;
+- external `ManagedCommon` runtime/project dependencies;
+- root PowerToys build-system and package-version dependencies;
+- PowerToys-branded app/helper/service executable identities.
+
+Already proven by CI:
+
+- the standalone app, helper, service, and unit tests build from an archive containing only this MWB directory;
+- unit tests run successfully in that isolated directory;
+- a Windows x64 development bundle is uploaded after successful builds.
 
 Still to isolate/remove:
 
-- PowerToys runner lifecycle helpers;
-- Microsoft PowerToys telemetry;
-- remaining `ManagedCommon` helpers/logging;
-- root PowerToys build-system assumptions;
-- standalone packaging/installer identity.
+- legacy PowerToys-only project files and the native module interface from the final clean repository;
+- PowerToys-era settings-folder naming, with a safe one-time import/migration if it changes;
+- installer logic for the standalone Windows service, permissions, firewall rule, shortcuts, upgrades, and uninstall;
+- remaining cosmetic/internal PowerToys names that are safe to change without breaking IPC or compatibility.
 
 ## Preferred modification style
 

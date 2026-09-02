@@ -13,7 +13,11 @@ This branch is producing a standalone Windows build of Mouse Without Borders fro
 - Focused Windows x64 build/test workflow: **added** at `.github/workflows/mwb-standalone-build.yml`.
 - Human-friendly shared-key policy: **added**. User-chosen keys of 4+ characters are accepted; generated keys are 10 cryptographically random easy-to-type characters.
 - Classic visual branding: **added**. The old orange MWB tray/title-bar design is green in this fork.
-- Shared PowerToys MSBuild/package infrastructure: **current major extraction target**.
+- PowerToys-free app/helper/service projects: **added**. Each standalone executable has a clean `MouseWithoutBorders*` name and identity.
+- Shared PowerToys MSBuild/package infrastructure: **removed from the standalone build path**.
+- MWB-only build proof: **passing**. CI copies only this directory to an isolated location, builds all three programs there, and runs the unit tests there.
+- Downloadable Windows x64 development bundle: **added** to successful workflow runs.
+- Final installer and real-machine regression tests: **not finished yet**.
 
 ## Goals
 
@@ -68,13 +72,15 @@ MWB-specific settings models/storage/helper behavior now compile from MWB-local 
 
 `Core/PowerToysRuntimeCompatibility.cs` provides the tiny pieces MWB still calls. Logging is local to MWB and Microsoft PowerToys telemetry calls resolve to a no-op implementation in this fork.
 
-### PowerToys build infrastructure — still being removed
+### PowerToys build infrastructure — removed from standalone projects
 
-The app/helper/service/test projects still inherit common PowerToys MSBuild props, target-framework/package-version definitions, analyzers, and output conventions from the repository root. This is now the main obstacle to copying MWB into an otherwise empty repository and building it there.
+The standalone app, helper, service, and test projects now own their target framework, package versions, build properties, and output layout inside the MWB directory. The focused CI workflow proves this by archiving only `src/modules/MouseWithoutBorders`, extracting it outside the PowerToys checkout, building all four projects, and running the tests in that isolated copy.
 
-### Service/helper integration — preserve
+The older PowerToys-shaped project files remain temporarily as an upstream comparison and compatibility check. They are not needed in the final MWB-only repository.
 
-The existing service/helper behavior is valuable. Keep the session/UAC/logon mechanics and remove only their PowerToys-specific naming/build assumptions as the standalone package is finalized.
+### Service/helper integration — standalone builds added, installer pending
+
+The helper and service now have standalone project files and clean executable identities. The existing session/UAC/logon mechanics remain in place. Final Windows service registration, permissions, firewall rules, and uninstall behavior belong in the installer and still need end-to-end testing.
 
 ## Work order
 
@@ -82,11 +88,11 @@ The existing service/helper behavior is valuable. Keep the session/UAC/logon mec
 2. ~~Isolate/replace enterprise-policy access.~~
 3. ~~Bring required MWB settings contracts/persistence into the MWB project.~~
 4. ~~Neutralize PowerToys runner/telemetry runtime coupling.~~
-5. **Remove shared PowerToys MSBuild/package/build-tree dependencies.**
-6. Make app + helper + service + tests build from an MWB-only directory tree.
-7. Rename remaining PowerToys-specific executable/service identifiers where safe and update all matching references together.
+5. ~~Remove shared PowerToys MSBuild/package/build-tree dependencies from the standalone projects.~~
+6. ~~Make app + helper + service + tests build from an MWB-only directory tree.~~
+7. ~~Rename executable/service identities used by standalone builds and update matching references together.~~
 8. Create the clean `aeae1/MouseWithoutBorders` repository with only required source/assets/tests/build files.
-9. Package a standalone installer/portable build.
+9. **Package and validate a standalone installer; the portable CI bundle is already available for development testing.**
 10. Real-machine regression testing: input switching, clipboard, file transfer, reconnect, UAC/logon/service behavior.
 
 ## AI-assisted development
