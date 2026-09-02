@@ -1,85 +1,104 @@
 # Mouse Without Borders standalone extraction
 
-This branch is intended to produce a standalone Windows build of Mouse Without Borders while keeping the MWB protocol and behavior compatible with the actively maintained PowerToys version.
+This branch is producing a standalone Windows build of Mouse Without Borders from the actively maintained PowerToys-era source while preserving the useful MWB behavior and minimizing unrelated PowerToys baggage.
 
 ## Current status
 
-- `mwb-standalone` is intentionally kept as a small delta from the fork's `main` branch.
 - Direct `PowerToys.Interop` dependency: **removed**.
-- Native C++/WinRT `PowerToys.GPOWrapper` dependency: **removed from the MWB app, helper, and service** and replaced by an MWB-local managed compatibility shim that reads the same policy registry values.
+- Native C++/WinRT `PowerToys.GPOWrapper` project dependency: **removed from the MWB app, helper, and service**; MWB has a small local managed compatibility implementation instead.
+- `Settings.UI.Library` project dependency: **removed**; the subset MWB needs now lives with MWB as local compatibility code.
+- `ManagedCommon` / PowerToys telemetry runtime project dependencies: **removed/replaced locally**. PowerToys telemetry is intentionally a no-op in this standalone fork.
+- PowerToys-runner lifetime coupling: **neutralized for standalone operation**.
+- Classic standalone tray/settings UI: **forced on** without requiring the separate PowerToys Settings process.
 - Focused Windows x64 build/test workflow: **added** at `.github/workflows/mwb-standalone-build.yml`.
-- Human-friendly shared-key policy: **added**. The classic UI accepts user-chosen keys of 4+ characters and generated keys are 10 cryptographically random characters from an easy-to-type lowercase/digit alphabet.
-- `Settings.UI.Library`: **next major extraction target**.
-- PowerToys runner / telemetry glue: **still to remove after settings extraction**.
+- Human-friendly shared-key policy: **added**. User-chosen keys of 4+ characters are accepted; generated keys are 10 cryptographically random easy-to-type characters.
+- Classic visual branding: **added**. The old orange MWB tray/title-bar design is green in this fork.
+- Shared PowerToys MSBuild/package infrastructure: **current major extraction target**.
 
 ## Goals
 
 - Preserve keyboard and mouse sharing behavior.
-- Preserve clipboard sharing and file transfer.
-- Preserve compatibility with existing PowerToys MWB peers where practical.
+- Preserve clipboard sharing and **file transfer**.
 - Preserve service/UAC/logon-desktop support.
-- Remove runtime dependence on the PowerToys runner and unrelated PowerToys modules.
-- Keep the changes structured so upstream MWB fixes can still be merged from `microsoft/PowerToys`.
+- Keep same-fork peers compatible with each other.
+- Retain useful modern MWB fixes from upstream PowerToys.
+- Remove runtime and build-time dependence on unrelated PowerToys modules.
+- Finish with an MWB-only repository that is small enough to understand and modify without cloning/building all of PowerToys.
 
 ## Deliberate fork behavior
 
 ### Friendlier shared keys
 
-Upstream PowerToys MWB currently requires at least 16 characters and its generator produces characters in a repeating lowercase / uppercase / digit / symbol class sequence. This fork intentionally changes that UX:
+Upstream PowerToys MWB requires at least 16 characters and its generator produces characters in a repeating lowercase / uppercase / digit / symbol class sequence. This fork intentionally changes that UX:
 
 - users may type their own key;
 - minimum accepted length is 4 characters;
-- the classic UI warns that short custom keys are less secure;
+- short custom keys are allowed even though they are easier to guess;
 - generated keys are 10 characters long;
 - generated characters come from `abcdefghjkmnpqrstuvwxyz23456789` to avoid ambiguous characters and keyboard-layout-hostile punctuation;
-- every generated character position is selected independently with `RandomNumberGenerator` rather than following a character-class formula.
+- every generated position is selected independently with `RandomNumberGenerator` instead of following a character-class formula.
 
-This does **not** weaken the underlying PowerToys encryption implementation for a given shared secret. The current MWB code still derives AES-256 keys with PBKDF2-SHA512 and uses fresh per-connection random salt and IV values. Choosing a very short custom shared secret is intentionally allowed for convenience but makes guessing attacks easier.
+The underlying encryption remains the modern PowerToys-era implementation: AES-256 keys are derived using PBKDF2-SHA512 and encrypted connections use fresh random salt/IV material. A short human-chosen secret is still less resistant to guessing; the fork simply lets the user make that tradeoff.
+
+### Green classic branding
+
+This fork deliberately keeps the recognizable **classic MWB tray/title-bar icon shape** but changes its orange accent to green. The purpose is practical: a machine running this fork should be visually distinguishable from an old standalone or Microsoft build at a glance.
 
 ## Extraction strategy
 
-Do not copy the entire MWB codebase into a separate subtree. Instead, remove PowerToys-only dependencies from the existing MWB project one at a time and introduce small local compatibility abstractions only where needed. This minimizes divergence from upstream.
+Remove PowerToys-only dependencies incrementally, compile/test after each meaningful change, and keep useful MWB behavior intact. Do not simplify the project by deleting functionality such as file transfer or service mode merely because it is complicated.
 
-## PowerToys-specific dependencies
+Once the MWB app/helper/service/tests can build without the surrounding PowerToys tree, move only the required files into the clean final repository `aeae1/MouseWithoutBorders` and leave unrelated PowerToys files/history behind.
+
+## Dependency status
 
 ### `PowerToys.Interop` — removed
 
-MWB used it only for named Command Palette / Settings UI event names. The exact event-name literals are now kept locally in `Core/CommandEventHandler.cs`, preserving the same names so compatibility is retained.
+MWB used it only for named event constants. The exact event-name literals are retained locally so existing internal behavior is preserved.
 
-### `PowerToys.GPOWrapper` — removed from MWB executables
+### `PowerToys.GPOWrapper` — external project removed
 
-MWB uses enterprise policies for utility enablement, service mode, clipboard sharing, file transfer, networking restrictions, UI selection, and screen-saver behavior. `Core/GpoCompatibility.cs` now supplies the same API from managed code and reads the same `HKLM` / `HKCU\SOFTWARE\Policies\PowerToys` values, with machine policy taking precedence.
+`Core/GpoCompatibility.cs` supplies the policy API MWB still expects without carrying the native PowerToys GPO project into the standalone package.
 
-This avoids carrying the native C++/WinRT GPO projection into the eventual standalone package while preserving policy behavior and keeping the upstream call sites nearly unchanged.
+### `Settings.UI.Library` — external project removed
 
-### `Settings.UI.Library` — in progress
+MWB-specific settings models/storage/helper behavior now compile from MWB-local compatibility files. The upstream namespace/API shape is temporarily retained in places to keep the fork diff manageable while extraction is underway.
 
-This is currently the largest remaining coupling. MWB uses it for settings models, hotkey settings, JSON settings storage/watchers, attributes, and utility helpers. The standalone version should move only the MWB-specific settings contracts/helpers into the MWB module rather than depending on the full PowerToys settings library.
+### `ManagedCommon` / PowerToys telemetry — external runtime dependency removed
 
-### `ManagedCommon` / PowerToys telemetry — pending
+`Core/PowerToysRuntimeCompatibility.cs` provides the tiny pieces MWB still calls. Logging is local to MWB and Microsoft PowerToys telemetry calls resolve to a no-op implementation in this fork.
 
-Startup logging, PowerToys-runner shutdown integration, process helpers, IPC helpers, and telemetry are PowerToys integration concerns. The standalone build should use MWB-local logging/process helpers and omit Microsoft telemetry.
+### PowerToys build infrastructure — still being removed
+
+The app/helper/service/test projects still inherit common PowerToys MSBuild props, target-framework/package-version definitions, analyzers, and output conventions from the repository root. This is now the main obstacle to copying MWB into an otherwise empty repository and building it there.
 
 ### Service/helper integration — preserve
 
-The existing `App/Service` and `App/Helper` projects are valuable and should be retained. Their PowerToys-specific startup assumptions should be separated from the underlying service/session-launch behavior rather than rewritten from scratch.
+The existing service/helper behavior is valuable. Keep the session/UAC/logon mechanics and remove only their PowerToys-specific naming/build assumptions as the standalone package is finalized.
 
 ## Work order
 
-1. ~~Remove narrow PowerToys dependencies that can be replaced without behavior changes.~~
-2. ~~Isolate enterprise-policy access behind an MWB-local abstraction.~~
-3. Extract MWB settings contracts and persistence from `Settings.UI.Library`.
-4. Remove PowerToys runner/telemetry startup coupling.
-5. Make the app, helper, and service build without unrelated PowerToys projects.
-6. ~~Add a focused standalone build/CI path.~~
-7. Package a standalone installer/portable build.
+1. ~~Remove narrow PowerToys runtime dependencies.~~
+2. ~~Isolate/replace enterprise-policy access.~~
+3. ~~Bring required MWB settings contracts/persistence into the MWB project.~~
+4. ~~Neutralize PowerToys runner/telemetry runtime coupling.~~
+5. **Remove shared PowerToys MSBuild/package/build-tree dependencies.**
+6. Make app + helper + service + tests build from an MWB-only directory tree.
+7. Rename remaining PowerToys-specific executable/service identifiers where safe and update all matching references together.
+8. Create the clean `aeae1/MouseWithoutBorders` repository with only required source/assets/tests/build files.
+9. Package a standalone installer/portable build.
+10. Real-machine regression testing: input switching, clipboard, file transfer, reconnect, UAC/logon/service behavior.
 
 ## AI-assisted development
 
-See `ASSISTANT.md`. Commits made through the connected GitHub workflow use the authenticated repository owner's GitHub identity and include `Assisted-by: ChatGPT (GPT-5.6 Sol)` when the change was produced through this coding session.
+The custom extraction/modification work is performed through ChatGPT coding sessions using the repository owner's authenticated GitHub connection. GitHub therefore displays the owner's account on repository writes even when the owner did not manually author the edit.
+
+AI-assisted commits use:
+
+`AI-Assisted-By: aeae1's vibe coding assistant — ChatGPT GPT-5.6 Sol`
 
 ## Compatibility rule
 
-Unless intentionally changed, protocol constants, named IPC objects, settings migration behavior, and network/file-transfer semantics should remain compatible with Microsoft's PowerToys MWB implementation.
+Unless intentionally changed, protocol constants, named IPC objects, settings migration behavior, and network/file-transfer semantics should remain aligned with the modern PowerToys MWB implementation.
 
-Because Microsoft has changed the MWB wire protocol since the old Garage standalone build, do not assume this fork will interoperate with `2.2.1.0327`. Run the same fork/current PowerToys-compatible generation on all connected machines unless compatibility has been explicitly tested.
+Do **not** assume compatibility with the old Garage standalone `2.2.1.0327`; Microsoft has changed the MWB implementation/protocol since that generation. During testing, use the same fork/current-generation build on all connected machines unless mixed-version compatibility has been explicitly verified.
