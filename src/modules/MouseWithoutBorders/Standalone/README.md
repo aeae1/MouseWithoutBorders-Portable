@@ -17,6 +17,7 @@ This branch is producing a standalone Windows build of Mouse Without Borders fro
 - Shared PowerToys MSBuild/package infrastructure: **removed from the standalone build path**.
 - MWB-only build proof: **passing**. CI copies only this directory to an isolated location, builds all three programs there, and runs the unit tests there.
 - Downloadable Windows x64 development bundle: **added** to successful workflow runs.
+- Clean standalone source archive: **added**. PowerToys-only project files and the native module interface are excluded automatically.
 - Final installer and real-machine regression tests: **not finished yet**.
 
 ## Goals

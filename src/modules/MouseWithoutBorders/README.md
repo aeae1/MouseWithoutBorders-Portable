@@ -19,6 +19,7 @@ This is a ChatGPT-modified, standalone-only fork of Microsoft PowerToys Mouse Wi
 - Generates easy-to-type 10-character keys without easily confused characters.
 - Preserves modern keyboard/mouse sharing, clipboard sharing, file transfer, encryption, and service-mode code.
 - Produces a downloadable Windows x64 development bundle after a successful automated build.
+- Produces a clean, repo-ready source archive with PowerToys-only project files omitted.
 
 ## Progress
 
@@ -47,7 +48,23 @@ The standalone solution has three programs that work together:
 - `MouseWithoutBordersHelper.exe` — the elevated helper used for privileged tasks;
 - `MouseWithoutBordersService.exe` — the Windows service used for UAC and sign-in-screen support.
 
-The focused build workflow is `.github/workflows/mwb-standalone-build.yml`. It copies only this Mouse Without Borders directory to a clean location, builds all three programs, runs the unit tests there, and uploads the x64 development bundle.
+The extraction branch's focused build workflow copies only this Mouse Without Borders directory to a clean location, builds all three programs, runs the unit tests there, and uploads the x64 development bundle. The clean source archive also includes its own `.github/workflows/build.yml` for use after it becomes the standalone repository.
+
+## Building from source
+
+Prerequisites:
+
+- Windows 10 version 2004 or newer;
+- Visual Studio Build Tools with MSBuild and the .NET desktop workload;
+- .NET 10 SDK.
+
+Open a Visual Studio Developer PowerShell window in the repository directory, then run:
+
+```powershell
+.\build.ps1 -Configuration Release -Platform x64 -RunTests
+```
+
+The output is written to `artifacts/standalone/x64/Release`.
 
 ## Safety and compatibility
 

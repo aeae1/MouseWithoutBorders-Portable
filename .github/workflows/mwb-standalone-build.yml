@@ -98,33 +98,38 @@ jobs:
           $archivePath = Join-Path $env:RUNNER_TEMP 'mwb-source.zip'
           $extractRoot = Join-Path $env:RUNNER_TEMP 'mwb-isolated'
 
-          git archive --format=zip --output=$archivePath HEAD src/modules/MouseWithoutBorders
+          git archive --format=zip --prefix=MouseWithoutBorders/ --output=$archivePath HEAD:src/modules/MouseWithoutBorders
           if ($LASTEXITCODE -ne 0) {
             exit $LASTEXITCODE
           }
 
           Expand-Archive -Path $archivePath -DestinationPath $extractRoot -Force
-          $mwbRoot = Join-Path $extractRoot 'src\modules\MouseWithoutBorders'
-          $projects = @(
-            'App\MouseWithoutBorders.Standalone.csproj',
-            'App\Helper\MouseWithoutBordersHelper.Standalone.csproj',
-            'App\Service\MouseWithoutBordersService.Standalone.csproj',
-            'MouseWithoutBorders.UnitTests\MouseWithoutBorders.UnitTests.csproj'
+          $mwbRoot = Join-Path $extractRoot 'MouseWithoutBorders'
+          $forbiddenPaths = @(
+            'App\MouseWithoutBorders.csproj',
+            'App\Helper\MouseWithoutBordersHelper.csproj',
+            'App\Service\MouseWithoutBordersService.csproj',
+            'ModuleInterface'
           )
 
-          foreach ($project in $projects) {
-            $projectPath = Join-Path $mwbRoot $project
-            msbuild $projectPath /restore /m /p:Configuration=Release /p:Platform=x64
-            if ($LASTEXITCODE -ne 0) {
-              exit $LASTEXITCODE
+          foreach ($forbiddenPath in $forbiddenPaths) {
+            if (Test-Path (Join-Path $mwbRoot $forbiddenPath)) {
+              throw "PowerToys-only file leaked into the clean source archive: $forbiddenPath"
             }
           }
 
-          $testProjectPath = Join-Path $mwbRoot 'MouseWithoutBorders.UnitTests\MouseWithoutBorders.UnitTests.csproj'
-          dotnet test $testProjectPath --no-build -c Release -p:Platform=x64
+          & (Join-Path $mwbRoot 'build.ps1') -Configuration Release -Platform x64 -RunTests
           if ($LASTEXITCODE -ne 0) {
             exit $LASTEXITCODE
           }
+
+      - name: Upload clean standalone source
+        uses: actions/upload-artifact@v4
+        with:
+          name: MouseWithoutBorders-clean-source-${{ github.sha }}
+          path: ${{ runner.temp }}/mwb-source.zip
+          if-no-files-found: error
+          retention-days: 14
 
       - name: Upload standalone x64 test build
         uses: actions/upload-artifact@v4
