@@ -20,7 +20,11 @@ namespace MouseWithoutBordersService
     {
         private readonly ILogger<Worker> _logger;
         private readonly Action<ILogger, string, Exception> _infoLogger;
+#if STANDALONE
+        private readonly string processName = "MouseWithoutBorders";
+#else
         private readonly string processName = "PowerToys.MouseWithoutBorders";
+#endif
         private readonly IHostApplicationLifetime _lifetime;
 
         private string[] _cmdArgs;

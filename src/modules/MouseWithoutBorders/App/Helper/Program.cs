@@ -14,6 +14,12 @@ namespace MouseWithoutBorders
 {
     internal static class Program
     {
+#if STANDALONE
+        private const string AppExecutableName = "MouseWithoutBorders.exe";
+#else
+        private const string AppExecutableName = "PowerToys.MouseWithoutBorders.exe";
+#endif
+
         internal static FormHelper FormHelper;
 
         private static FormDot dotForm;
@@ -56,11 +62,11 @@ namespace MouseWithoutBorders
 
                 if (command.Equals("SvcExec", StringComparison.OrdinalIgnoreCase))
                 {
-                    Process.Start(Path.GetDirectoryName(Application.ExecutablePath) + "\\MouseWithoutBorders.exe", "\"" + arg + "\"");
+                    Process.Start(Path.Combine(Path.GetDirectoryName(Application.ExecutablePath), AppExecutableName), "\"" + arg + "\"");
                 }
                 else if (command.Equals("install", StringComparison.OrdinalIgnoreCase))
                 {
-                    Process.Start(Path.GetDirectoryName(Application.ExecutablePath) + "\\MouseWithoutBorders.exe");
+                    Process.Start(Path.Combine(Path.GetDirectoryName(Application.ExecutablePath), AppExecutableName));
                 }
                 else if (command.Equals("help-ex", StringComparison.OrdinalIgnoreCase))
                 {

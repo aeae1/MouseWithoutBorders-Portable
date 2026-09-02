@@ -25,6 +25,12 @@ namespace MouseWithoutBordersService
 
     internal sealed class Program
     {
+#if STANDALONE
+        private const string ServiceName = "MouseWithoutBorders.Service";
+#else
+        private const string ServiceName = "PowerToys.MWB.Service";
+#endif
+
         [STAThread]
         private static void Main()
         {
@@ -43,7 +49,7 @@ namespace MouseWithoutBordersService
             var host = builder
             .UseWindowsService(options =>
             {
-                options.ServiceName = "PowerToys.MWB.Service";
+                options.ServiceName = ServiceName;
             })
             .ConfigureServices(services =>
             {

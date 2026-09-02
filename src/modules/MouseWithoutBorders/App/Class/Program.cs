@@ -47,7 +47,11 @@ namespace MouseWithoutBorders.Class
 {
     internal static class Program
     {
+#if STANDALONE
+        private static readonly string ServiceName = "MouseWithoutBorders.Service";
+#else
         private static readonly string ServiceName = "PowerToys.MWB.Service";
+#endif
 
         private static readonly string ServiceModeArg = "UseService";
 
@@ -359,7 +363,8 @@ namespace MouseWithoutBorders.Class
 
             public void Shutdown()
             {
-                Process[] ps = Process.GetProcessesByName("PowerToys.MouseWithoutBorders");
+                string processName = Path.GetFileNameWithoutExtension(Application.ExecutablePath);
+                Process[] ps = Process.GetProcessesByName(processName);
                 Process me = Process.GetCurrentProcess();
 
                 foreach (Process p in ps)

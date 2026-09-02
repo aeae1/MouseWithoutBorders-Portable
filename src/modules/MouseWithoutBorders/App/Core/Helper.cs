@@ -30,7 +30,11 @@ namespace MouseWithoutBorders.Core;
 internal static class Helper
 {
     internal const string HELPER_FORM_TEXT = "Mouse without Borders Helper";
+#if STANDALONE
+    internal const string HelperProcessName = "MouseWithoutBordersHelper";
+#else
     internal const string HelperProcessName = "PowerToys.MouseWithoutBordersHelper";
+#endif
 #pragma warning disable SA1307 // Accessible fields should begin with upper-case letter
     internal static bool signalHelperToExit;
     internal static bool signalWatchDogToExit;
