@@ -72,6 +72,26 @@ jobs:
           /p:Configuration=Release
           /p:Platform=x64
 
+      - name: Build PowerToys-free standalone helper project
+        shell: pwsh
+        run: >-
+          msbuild
+          .\src\modules\MouseWithoutBorders\App\Helper\MouseWithoutBordersHelper.Standalone.csproj
+          /restore
+          /m
+          /p:Configuration=Release
+          /p:Platform=x64
+
+      - name: Build PowerToys-free standalone service project
+        shell: pwsh
+        run: >-
+          msbuild
+          .\src\modules\MouseWithoutBorders\App\Service\MouseWithoutBordersService.Standalone.csproj
+          /restore
+          /m
+          /p:Configuration=Release
+          /p:Platform=x64
+
       - name: Build Mouse Without Borders unit tests
         shell: pwsh
         run: >-

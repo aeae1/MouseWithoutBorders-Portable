@@ -41,6 +41,16 @@
     <DefaultItemExcludes>$(DefaultItemExcludes);$(MSBuildProjectDirectory)\obj\**</DefaultItemExcludes>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(MSBuildProjectName)' == 'MouseWithoutBordersHelper.Standalone'">
+    <BaseIntermediateOutputPath>$(MSBuildThisFileDirectory)artifacts\obj\standalone-helper\</BaseIntermediateOutputPath>
+    <DefaultItemExcludes>$(DefaultItemExcludes);$(MSBuildProjectDirectory)\obj\**</DefaultItemExcludes>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(MSBuildProjectName)' == 'MouseWithoutBordersService.Standalone'">
+    <BaseIntermediateOutputPath>$(MSBuildThisFileDirectory)artifacts\obj\standalone-service\</BaseIntermediateOutputPath>
+    <DefaultItemExcludes>$(DefaultItemExcludes);$(MSBuildProjectDirectory)\obj\**</DefaultItemExcludes>
+  </PropertyGroup>
+
   <!-- Non-test MWB projects need a harmless Test target because CI may invoke Build;Test. -->
   <Target Name="Test" />
 </Project>
