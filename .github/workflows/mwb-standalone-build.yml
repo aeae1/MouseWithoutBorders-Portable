@@ -92,6 +92,33 @@ jobs:
           /p:Configuration=Release
           /p:Platform=x64
 
+      - name: Verify the standalone projects outside the PowerToys tree
+        shell: pwsh
+        run: |
+          $archivePath = Join-Path $env:RUNNER_TEMP 'mwb-source.zip'
+          $extractRoot = Join-Path $env:RUNNER_TEMP 'mwb-isolated'
+
+          git archive --format=zip --output=$archivePath HEAD src/modules/MouseWithoutBorders
+          if ($LASTEXITCODE -ne 0) {
+            exit $LASTEXITCODE
+          }
+
+          Expand-Archive -Path $archivePath -DestinationPath $extractRoot -Force
+          $mwbRoot = Join-Path $extractRoot 'src\modules\MouseWithoutBorders'
+          $projects = @(
+            'App\MouseWithoutBorders.Standalone.csproj',
+            'App\Helper\MouseWithoutBordersHelper.Standalone.csproj',
+            'App\Service\MouseWithoutBordersService.Standalone.csproj'
+          )
+
+          foreach ($project in $projects) {
+            $projectPath = Join-Path $mwbRoot $project
+            msbuild $projectPath /restore /m /p:Configuration=Release /p:Platform=x64
+            if ($LASTEXITCODE -ne 0) {
+              exit $LASTEXITCODE
+            }
+          }
+
       - name: Build Mouse Without Borders unit tests
         shell: pwsh
         run: >-
