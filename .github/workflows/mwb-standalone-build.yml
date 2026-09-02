@@ -51,7 +51,7 @@ jobs:
       - name: Set up MSBuild
         uses: microsoft/setup-msbuild@v2
 
-      - name: Build Mouse Without Borders
+      - name: Build legacy-shaped Mouse Without Borders project
         shell: pwsh
         run: >-
           msbuild
@@ -61,6 +61,16 @@ jobs:
           /p:Configuration=Release
           /p:Platform=x64
           /p:BuildTests=false
+
+      - name: Build PowerToys-free standalone app project
+        shell: pwsh
+        run: >-
+          msbuild
+          .\src\modules\MouseWithoutBorders\App\MouseWithoutBorders.Standalone.csproj
+          /restore
+          /m
+          /p:Configuration=Release
+          /p:Platform=x64
 
       - name: Build Mouse Without Borders unit tests
         shell: pwsh
