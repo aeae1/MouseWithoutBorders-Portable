@@ -1,0 +1,31 @@
+<Project>
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
+    <DotNetRuntimePackageVersion>10.0.11</DotNetRuntimePackageVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- MWB app/helper/service -->
+    <PackageVersion Include="MessagePack" Version="3.1.7" />
+    <PackageVersion Include="Microsoft.Bcl.AsyncInterfaces" Version="$(DotNetRuntimePackageVersion)" />
+    <PackageVersion Include="Microsoft.Windows.Compatibility" Version="$(DotNetRuntimePackageVersion)" />
+    <PackageVersion Include="StreamJsonRpc" Version="2.21.69" />
+
+    <!-- MWB service -->
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="$(DotNetRuntimePackageVersion)" />
+    <PackageVersion Include="Microsoft.Extensions.Hosting" Version="$(DotNetRuntimePackageVersion)" />
+    <PackageVersion Include="Microsoft.Extensions.Hosting.WindowsServices" Version="$(DotNetRuntimePackageVersion)" />
+    <PackageVersion Include="Microsoft.Extensions.Logging" Version="$(DotNetRuntimePackageVersion)" />
+
+    <!-- Current common build import; expected to disappear as CsWinRT is removed. -->
+    <PackageVersion Include="Microsoft.Windows.CsWinRT" Version="2.2.0" />
+
+    <!-- MWB tests -->
+    <PackageVersion Include="MSTest" Version="3.8.3" />
+
+    <!-- Still injected by the PowerToys root Directory.Build.props for now. -->
+    <PackageVersion Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="10.0.102" />
+    <PackageVersion Include="StyleCop.Analyzers" Version="1.2.0-beta.556" />
+  </ItemGroup>
+</Project>
