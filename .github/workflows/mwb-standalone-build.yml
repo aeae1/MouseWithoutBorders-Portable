@@ -62,13 +62,21 @@ jobs:
           /p:Platform=x64
           /p:BuildTests=false
 
-      - name: Build and run Mouse Without Borders unit tests
+      - name: Build Mouse Without Borders unit tests
         shell: pwsh
         run: >-
           msbuild
           .\src\modules\MouseWithoutBorders\MouseWithoutBorders.UnitTests\MouseWithoutBorders.UnitTests.csproj
           /restore
           /m
-          /t:Build;Test
           /p:Configuration=Release
           /p:Platform=x64
+
+      - name: Run Mouse Without Borders unit tests
+        shell: pwsh
+        run: >-
+          dotnet test
+          .\src\modules\MouseWithoutBorders\MouseWithoutBorders.UnitTests\MouseWithoutBorders.UnitTests.csproj
+          --no-build
+          -c Release
+          -p:Platform=x64
