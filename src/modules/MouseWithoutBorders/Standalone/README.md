@@ -19,6 +19,7 @@ This branch is producing a standalone Windows build of Mouse Without Borders fro
 - Downloadable single-file Windows x64 build: **added** to successful workflow runs.
 - Clean standalone source archive: **added**. PowerToys-only project files and the native module interface are excluded automatically.
 - Portable first launch and per-user self-install: **added**. Preferences stay beside the EXE; installation defaults to the current user's local Programs folder and Start with Windows is optional.
+- Upstream MWB audit through September 3, 2026: **completed**. Microsoft's September 2 receive-safety improvements are incorporated and documented in `UPSTREAM_SYNC.md`.
 - Real-Windows portable/self-install and two-machine regression tests: **not finished yet**.
 
 ## Goals
@@ -55,6 +56,14 @@ This fork deliberately keeps the recognizable **classic MWB tray/title-bar icon 
 Remove PowerToys-only dependencies incrementally, compile/test after each meaningful change, and keep useful MWB behavior intact. The portable product deliberately omits installed-service UAC/sign-in-screen support, but it must retain normal-desktop clipboard and file-transfer behavior.
 
 Once the single-file app and tests build without the surrounding PowerToys tree, move only the required files into the clean final repository `aeae1/MouseWithoutBorders` and leave unrelated PowerToys files/history behind.
+
+## Upstream synchronization
+
+The extraction began from PowerToys commit `becc96f59cf18f3128fedbd6856a5248104216dd` (August 14, 2026). An audit of Microsoft PowerToys `main` on September 3, 2026 found one newer commit affecting MWB: [`103d376`](https://github.com/microsoft/PowerToys/commit/103d376c0a987cf350d4594bb3f8d71282fddfd6).
+
+That update is now incorporated. It makes received-file writes transactional, rejects overlapping receives safely, validates the final byte count, cleans up incomplete partial files, preserves an existing destination if a replacement transfer fails, and makes elevated-user impersonation cleanup exception-safe. The portable build benefits from the general transfer protections; its service-only branch remains unused because this edition does not install a service.
+
+See `UPSTREAM_SYNC.md` for the durable audit marker, intentional divergences, and the process for reviewing future PowerToys changes.
 
 ## Dependency status
 

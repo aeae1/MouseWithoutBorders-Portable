@@ -32,6 +32,12 @@ Unless a change is explicitly intentional, preserve these behaviors:
 
 Old Garage standalone `2.2.1.0327` protocol compatibility is **not** assumed. Use the same modern fork/current PowerToys-compatible generation on every connected machine unless old-version interoperability is explicitly tested.
 
+## Upstream maintenance
+
+Use `UPSTREAM_SYNC.md` as the durable upstream audit record. Do not merge PowerToys `main` wholesale into the product branch. Review new commits touching `src/modules/MouseWithoutBorders`, classify each change against the deliberate portable divergences, port the applicable pieces, and rerun the isolated Windows build and physical compatibility tests.
+
+The current audited upstream marker is Microsoft PowerToys commit `103d376c0a987cf350d4594bb3f8d71282fddfd6`, reviewed September 3, 2026.
+
 ## Intentional fork behavior
 
 ### Shared key UX

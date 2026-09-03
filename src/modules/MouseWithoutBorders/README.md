@@ -18,11 +18,18 @@ This is a ChatGPT-modified, standalone-only fork of Microsoft PowerToys Mouse Wi
 - Accepts a manually chosen security key with 4 or more characters.
 - Generates easy-to-type 10-character keys without easily confused characters.
 - Preserves modern keyboard/mouse sharing, clipboard sharing, file transfer, and encryption for normal Windows desktops.
+- Includes Microsoft's September 2, 2026 receive-safety update: incoming files are staged before replacing their destination, incomplete transfers are discarded, received lengths are checked, and overlapping transfers are handled safely.
 - Runs its clipboard helper as a hidden second mode of the same EXE, so no companion program is required.
 - Produces one self-contained Windows x64 EXE after a successful automated build.
 - Produces a clean, repo-ready source archive with PowerToys-only project files omitted.
 - Creates `MouseWithoutBorders.prefs.json` beside the EXE on first launch.
 - Offers either portable use or a per-user self-install, with an optional Start with Windows setting that is off by default.
+
+## Upstream tracking
+
+This fork started from PowerToys commit `becc96f59cf18f3128fedbd6856a5248104216dd` dated August 14, 2026. Microsoft PowerToys `main` was audited again on September 3, 2026. The one newer MWB-specific change, upstream commit [`103d376`](https://github.com/microsoft/PowerToys/commit/103d376c0a987cf350d4594bb3f8d71282fddfd6), has been incorporated.
+
+Upstream synchronization is reviewed rather than merged blindly so that useful MWB fixes are retained without restoring PowerToys runtime dependencies, telemetry, multi-program packaging, or service installation. The detailed audit record and deliberate fork differences are in [`Standalone/UPSTREAM_SYNC.md`](Standalone/UPSTREAM_SYNC.md).
 
 ## Progress
 
