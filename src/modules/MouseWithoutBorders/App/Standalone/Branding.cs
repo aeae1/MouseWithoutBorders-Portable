@@ -29,7 +29,7 @@ internal static class StandaloneBranding
         return icon.ToBitmap();
     }
 
-    internal static void Apply(Form form, NotifyIcon notifyIcon = null)
+    internal static void Apply(System.Windows.Forms.Form form, NotifyIcon notifyIcon = null)
     {
         form.Icon = CreateProductIcon();
 
