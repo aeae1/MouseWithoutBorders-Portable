@@ -80,6 +80,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="ClassicGreen.ico" LogicalName="MouseWithoutBorders.ClassicGreen.ico" />
+
     <Compile Update="Properties\Images.Designer.cs">
       <DesignTime>true</DesignTime>
       <AutoGen>true</AutoGen>

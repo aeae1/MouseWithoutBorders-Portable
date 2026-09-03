@@ -11,7 +11,7 @@
     <!-- Standalone MWB metadata. Upstream source copyright headers remain untouched. -->
     <AssemblyProduct>Mouse Without Borders</AssemblyProduct>
     <Product>Mouse Without Borders</Product>
-    <RepositoryUrl>https://github.com/aeae1/MouseWithoutBorders</RepositoryUrl>
+    <RepositoryUrl>https://github.com/aeae1/MouseWithoutBorders-Portable</RepositoryUrl>
     <RepositoryType>GitHub</RepositoryType>
     <NeutralLanguage>en-US</NeutralLanguage>
 

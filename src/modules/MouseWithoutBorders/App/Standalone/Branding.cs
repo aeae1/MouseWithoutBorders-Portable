@@ -4,6 +4,8 @@
 
 using System;
 using System.Drawing;
+using System.IO;
+using System.Reflection;
 using System.Windows.Forms;
 
 namespace MouseWithoutBorders;
@@ -15,8 +17,25 @@ namespace MouseWithoutBorders;
 /// </summary>
 internal static class StandaloneBranding
 {
+    private const string ProductIconResourceName = "MouseWithoutBorders.ClassicGreen.ico";
+
     internal static Icon CreateProductIcon()
     {
+        return CreateProductIcon(new Size(32, 32));
+    }
+
+    internal static Icon CreateProductIcon(Size size)
+    {
+        Stream resource = Assembly.GetExecutingAssembly().GetManifestResourceStream(ProductIconResourceName);
+        if (resource is not null)
+        {
+            using (resource)
+            using (Icon embeddedIcon = new(resource, size))
+            {
+                return (Icon)embeddedIcon.Clone();
+            }
+        }
+
         using Icon associatedIcon = Icon.ExtractAssociatedIcon(Application.ExecutablePath);
         return associatedIcon is null
             ? (Icon)SystemIcons.Application.Clone()
@@ -25,7 +44,12 @@ internal static class StandaloneBranding
 
     internal static Bitmap CreateProductIconBitmap()
     {
-        using Icon icon = CreateProductIcon();
+        return CreateProductIconBitmap(new Size(32, 32));
+    }
+
+    internal static Bitmap CreateProductIconBitmap(Size size)
+    {
+        using Icon icon = CreateProductIcon(size);
         return icon.ToBitmap();
     }
 

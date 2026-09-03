@@ -60,6 +60,10 @@ namespace MouseWithoutBorders
             textBoxContributors.Text += "\r\n* Paul Schmitt\t\t- WWL";
 
             textBoxContributors.Text += "\r\n\r\n* And many other Users!";
+
+#if PORTABLE_SINGLE_FILE
+            ApplyPortableAboutContent();
+#endif
         }
 
         internal static string AssemblyTitle
