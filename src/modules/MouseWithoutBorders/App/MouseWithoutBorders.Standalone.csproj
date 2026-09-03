@@ -76,7 +76,7 @@
   <ItemGroup>
     <!-- The portable build launches a second copy of this same executable in
          clipboard-helper mode, so no companion helper EXE is required. -->
-    <Compile Include="Helper\**\*.cs" />
+    <Compile Include="Helper\**\*.cs" Exclude="Helper\bin\**;Helper\obj\**" />
   </ItemGroup>
 
   <ItemGroup>
