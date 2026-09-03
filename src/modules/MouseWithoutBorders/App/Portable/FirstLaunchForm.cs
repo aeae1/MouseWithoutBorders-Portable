@@ -15,7 +15,7 @@ internal enum FirstLaunchChoice
     Install,
 }
 
-internal sealed class FirstLaunchForm : Form
+internal sealed class FirstLaunchForm : System.Windows.Forms.Form
 {
     private readonly TextBox installDirectoryTextBox;
     private readonly CheckBox startWithWindowsCheckBox;
