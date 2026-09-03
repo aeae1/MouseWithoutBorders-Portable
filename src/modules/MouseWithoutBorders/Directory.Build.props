@@ -4,7 +4,7 @@
     <RepoRoot>$(MSBuildThisFileDirectory)..\..\..\</RepoRoot>
 
     <!-- Keep the current upstream private-build version behavior during extraction. -->
-    <Version>0.0.1</Version>
+    <Version>0.1.0</Version>
     <VersionChannel>private</VersionChannel>
     <ChecksumAlgorithm>SHA256</ChecksumAlgorithm>
 

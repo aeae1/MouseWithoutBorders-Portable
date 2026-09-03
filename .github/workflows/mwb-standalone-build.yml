@@ -131,7 +131,7 @@ jobs:
         run: |
           $mwbRoot = Join-Path $env:RUNNER_TEMP 'mwb-isolated\MouseWithoutBorders'
           $portableRoot = Join-Path $env:RUNNER_TEMP 'mwb-portable'
-          $scripts = @('build.ps1', 'publish-portable.ps1')
+          $scripts = @('build.ps1', 'publish-portable.ps1', 'validate-icon.ps1')
 
           foreach ($script in $scripts) {
             $tokens = $null

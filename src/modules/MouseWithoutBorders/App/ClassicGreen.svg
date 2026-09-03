@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-labelledby="title desc">
+  <title id="title">Mouse Without Borders standalone green icon</title>
+  <desc id="desc">The classic Mouse Without Borders tray mark, redrawn as a resolution-independent green symbol.</desc>
+  <g fill="none" stroke="#18c752" stroke-width="40" stroke-linecap="square" stroke-linejoin="miter">
+    <path d="M18 132H238"/>
+    <path d="M61 74L195 208"/>
+    <path d="M195 74L61 208"/>
+  </g>
+  <g>
+    <rect x="94" y="56" width="24" height="24" rx="2" fill="#697277"/>
+    <rect x="101" y="63" width="10" height="10" fill="#f7fafb"/>
+    <rect x="138" y="56" width="24" height="24" rx="2" fill="#697277"/>
+    <rect x="145" y="63" width="10" height="10" fill="#f7fafb"/>
+  </g>
+</svg>

@@ -15,6 +15,8 @@ param(
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 
+& (Join-Path $PSScriptRoot 'validate-icon.ps1')
+
 $msbuild = Get-Command 'msbuild.exe' -ErrorAction SilentlyContinue
 if (-not $msbuild) {
     $msbuild = Get-Command 'msbuild' -ErrorAction SilentlyContinue
