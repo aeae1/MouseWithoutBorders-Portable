@@ -85,7 +85,7 @@ $UserLocalAppData = [IO.Path]::GetFullPath($UserLocalAppData).TrimEnd('\')
 $UserRoamingAppData = [IO.Path]::GetFullPath($UserRoamingAppData).TrimEnd('\')
 $sourceDirectory = [IO.Path]::GetFullPath($PSScriptRoot).TrimEnd('\')
 
-foreach ($requiredFile in @('MouseWithoutBorders.exe', 'MouseWithoutBordersHelper.exe', 'MouseWithoutBordersService.exe', 'Uninstall.ps1')) {
+foreach ($requiredFile in @('MouseWithoutBorders.exe', 'MouseWithoutBordersHelper.exe', 'MouseWithoutBordersService.exe', 'Uninstall.ps1', 'Check-Installation.cmd', 'Check-Installation.ps1')) {
     if (-not (Test-Path -LiteralPath (Join-Path $sourceDirectory $requiredFile) -PathType Leaf)) {
         throw "The installer package is incomplete. Missing $requiredFile."
     }
@@ -141,8 +141,9 @@ if ($sourceDirectory -ne $InstallDirectory) {
 $appPath = Join-Path $InstallDirectory 'MouseWithoutBorders.exe'
 $servicePath = Join-Path $InstallDirectory 'MouseWithoutBordersService.exe'
 $uninstallScriptPath = Join-Path $InstallDirectory 'Uninstall.ps1'
+$checkScriptPath = Join-Path $InstallDirectory 'Check-Installation.cmd'
 
-foreach ($installedFile in @($appPath, $servicePath, $uninstallScriptPath)) {
+foreach ($installedFile in @($appPath, $servicePath, $uninstallScriptPath, $checkScriptPath)) {
     if (-not (Test-Path -LiteralPath $installedFile -PathType Leaf)) {
         throw "Installation copy failed. Missing '$installedFile'."
     }
@@ -183,6 +184,13 @@ $uninstallShortcut.WorkingDirectory = $InstallDirectory
 $uninstallShortcut.IconLocation = "$appPath,0"
 $uninstallShortcut.Description = 'Uninstall Mouse Without Borders'
 $uninstallShortcut.Save()
+
+$checkShortcut = $shell.CreateShortcut((Join-Path $programsDirectory 'Check Mouse Without Borders installation.lnk'))
+$checkShortcut.TargetPath = $checkScriptPath
+$checkShortcut.WorkingDirectory = $InstallDirectory
+$checkShortcut.IconLocation = "$appPath,0"
+$checkShortcut.Description = 'Check the Mouse Without Borders installation'
+$checkShortcut.Save()
 
 $installMarker = @{
     Product = 'Mouse Without Borders Standalone'

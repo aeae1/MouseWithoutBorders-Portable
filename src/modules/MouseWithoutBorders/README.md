@@ -21,6 +21,7 @@ This is a ChatGPT-modified, standalone-only fork of Microsoft PowerToys Mouse Wi
 - Produces a downloadable Windows x64 development bundle after a successful automated build.
 - Produces a clean, repo-ready source archive with PowerToys-only project files omitted.
 - Includes a manual-start development installer that registers the support service on demand but creates no Windows automatic-start entry.
+- Includes a one-click installation checker that explains each result and saves a report on the Desktop.
 
 ## Progress
 
@@ -35,6 +36,7 @@ Finished:
 - automated x64 build and unit tests from an isolated MWB-only folder;
 - green classic branding and friendlier key generation;
 - manual-start installer/uninstaller packaging with service, firewall, Start menu, and Installed Apps registration.
+- plain-English post-install checks for the program files, service, firewall rule, shortcuts, and manual run mode.
 
 Still to do:
 
@@ -52,7 +54,7 @@ The standalone solution has three programs that work together:
 
 The extraction branch's focused build workflow copies only this Mouse Without Borders directory to a clean location, builds all three programs, runs the unit tests there, and uploads the x64 development bundle. The clean source archive also includes its own `.github/workflows/build.yml` for use after it becomes the standalone repository.
 
-The development bundle uses **manual run mode**. Double-click `Install.cmd`, approve the administrator prompt, and then open Mouse Without Borders yourself from the Start menu. The installer deliberately does not start the app after installation or add it to Windows startup.
+The development bundle uses **manual run mode**. Double-click `Install.cmd`, approve the administrator prompt, and then open **Check Mouse Without Borders installation** from the Start menu to create a plain-English health report. Open Mouse Without Borders yourself from the Start menu. The installer deliberately does not start the app after installation or add it to Windows startup.
 
 ## Building from source
 

@@ -117,7 +117,7 @@ foreach ($processName in @('MouseWithoutBorders', 'MouseWithoutBordersHelper', '
 Get-NetFirewallRule -DisplayName $firewallRuleName -ErrorAction SilentlyContinue | Remove-NetFirewallRule -ErrorAction Stop
 
 $programsDirectory = Join-Path $UserRoamingAppData 'Microsoft\Windows\Start Menu\Programs'
-foreach ($shortcutName in @('Mouse Without Borders.lnk', 'Uninstall Mouse Without Borders.lnk')) {
+foreach ($shortcutName in @('Mouse Without Borders.lnk', 'Uninstall Mouse Without Borders.lnk', 'Check Mouse Without Borders installation.lnk')) {
     $shortcutPath = Join-Path $programsDirectory $shortcutName
     if (Test-Path -LiteralPath $shortcutPath -PathType Leaf) {
         Remove-Item -LiteralPath $shortcutPath -Force

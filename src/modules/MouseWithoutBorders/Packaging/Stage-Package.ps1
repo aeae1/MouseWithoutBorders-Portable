@@ -28,7 +28,7 @@ if (Test-Path -LiteralPath $Destination) {
 
 Get-ChildItem -LiteralPath $BuildRoot -Force | Copy-Item -Destination $Destination -Recurse -Force
 
-foreach ($packagingFile in @('Install.cmd', 'Install.ps1', 'Uninstall.cmd', 'Uninstall.ps1')) {
+foreach ($packagingFile in @('Install.cmd', 'Install.ps1', 'Uninstall.cmd', 'Uninstall.ps1', 'Check-Installation.cmd', 'Check-Installation.ps1')) {
     Copy-Item -LiteralPath (Join-Path $PSScriptRoot $packagingFile) -Destination $Destination -Force
 }
 
@@ -44,6 +44,8 @@ $requiredFiles = @(
     'Install.ps1',
     'Uninstall.cmd',
     'Uninstall.ps1',
+    'Check-Installation.cmd',
+    'Check-Installation.ps1',
     'INSTALLING.md',
     'README.md',
     'LICENSE'

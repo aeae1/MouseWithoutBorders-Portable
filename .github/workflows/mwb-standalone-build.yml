@@ -131,6 +131,7 @@ jobs:
           $scripts = @(
             'Packaging\Install.ps1',
             'Packaging\Uninstall.ps1',
+            'Packaging\Check-Installation.ps1',
             'Packaging\Stage-Package.ps1',
             'build.ps1'
           )
@@ -168,6 +169,12 @@ jobs:
             -InstallDirectory (Join-Path $env:RUNNER_TEMP 'mwb-whatif-install') `
             -UserRoamingAppData (Join-Path $env:RUNNER_TEMP 'mwb-user-roaming') `
             -WhatIf
+
+          foreach ($requiredPackageFile in @('Check-Installation.cmd', 'Check-Installation.ps1')) {
+            if (-not (Test-Path -LiteralPath (Join-Path $packageRoot $requiredPackageFile) -PathType Leaf)) {
+              throw "Installation checker is missing from the package: $requiredPackageFile"
+            }
+          }
 
       - name: Upload clean standalone source
         uses: actions/upload-artifact@v4

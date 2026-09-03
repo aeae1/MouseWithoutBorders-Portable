@@ -12,9 +12,12 @@ This package uses **manual run mode**:
 1. Extract the entire ZIP to a normal folder.
 2. Double-click `Install.cmd`.
 3. Approve the Windows administrator prompt.
-4. When installation finishes, open **Mouse Without Borders** from the Start menu.
+4. Open **Check Mouse Without Borders installation** from the Start menu (or double-click `Check-Installation.cmd`) to confirm that the manual-start installation is healthy.
+5. When installation finishes, open **Mouse Without Borders** from the Start menu.
 
 The installer copies the package to `C:\Program Files\Mouse Without Borders`, adds the required inbound TCP firewall rule, registers the demand-start support service, and creates Start menu shortcuts. It deliberately creates no automatic-start entry.
+
+The installation checker makes no changes. It checks the installed files, support service, firewall rule, shortcuts, Installed Apps entry, and manual run mode, then saves a plain-text report on your Desktop.
 
 ## Uninstall
 
