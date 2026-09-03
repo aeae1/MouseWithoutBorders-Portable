@@ -35,7 +35,7 @@ internal sealed class FirstLaunchForm : System.Windows.Forms.Form
         MaximizeBox = false;
         MinimizeBox = false;
         ShowInTaskbar = true;
-        ClientSize = new Size(610, 500);
+        ClientSize = new Size(640, 575);
         AutoScaleMode = AutoScaleMode.Dpi;
         BackColor = Color.White;
 
@@ -50,20 +50,19 @@ internal sealed class FirstLaunchForm : System.Windows.Forms.Form
 
         var titleLabel = new Label
         {
-            AutoSize = false,
-            Font = new Font(SystemFonts.MessageBoxFont.FontFamily, 17F, FontStyle.Bold),
+            AutoSize = true,
+            Font = new Font(SystemFonts.MessageBoxFont.FontFamily, 14F, FontStyle.Bold),
             ForeColor = Color.FromArgb(34, 107, 62),
             Location = new Point(28, 22),
-            Size = new Size(550, 36),
             Text = installingExistingPreferences ? "Install this portable copy" : "How would you like to run it?",
         };
 
         var descriptionLabel = new Label
         {
-            AutoSize = false,
+            AutoSize = true,
             Font = SystemFonts.MessageBoxFont,
-            Location = new Point(30, 66),
-            Size = new Size(550, 42),
+            Location = new Point(30, 58),
+            MaximumSize = new Size(580, 0),
             Text = installingExistingPreferences
                 ? "Choose where to keep the installed copy. Your existing security key, computer layout, and options will move with it."
                 : "Install a personal copy for everyday use, or run this EXE portably from its current folder. Either way, all settings stay beside the EXE.",
@@ -73,31 +72,39 @@ internal sealed class FirstLaunchForm : System.Windows.Forms.Form
         {
             AutoSize = false,
             Font = new Font(SystemFonts.MessageBoxFont, FontStyle.Bold),
-            Location = new Point(30, 112),
-            Size = new Size(548, 22),
+            Location = new Point(30, 108),
+            Size = new Size(578, 22),
             Text = "This computer: " + Environment.MachineName,
+        };
+
+        var installOptionsGroup = new GroupBox
+        {
+            Font = new Font(SystemFonts.MessageBoxFont, FontStyle.Bold),
+            Location = new Point(30, 140),
+            Size = new Size(580, 166),
+            Text = "Install options (used only with Install for me)",
         };
 
         var locationLabel = new Label
         {
             AutoSize = true,
             Font = SystemFonts.MessageBoxFont,
-            Location = new Point(30, 146),
+            Location = new Point(16, 30),
             Text = "Install location",
         };
 
         installDirectoryTextBox = new TextBox
         {
             Font = SystemFonts.MessageBoxFont,
-            Location = new Point(33, 171),
-            Size = new Size(449, 25),
+            Location = new Point(16, 54),
+            Size = new Size(452, 25),
             Text = defaultInstallDirectory,
         };
-        installDirectoryTextBox.TextChanged += (_, _) => UpdatePreferencesPathText();
 
         var browseButton = new Button
         {
-            Location = new Point(491, 169),
+            Font = SystemFonts.MessageBoxFont,
+            Location = new Point(477, 52),
             Size = new Size(87, 29),
             Text = "Browse…",
             UseVisualStyleBackColor = true,
@@ -109,7 +116,7 @@ internal sealed class FirstLaunchForm : System.Windows.Forms.Form
             AutoSize = true,
             Checked = false,
             Font = SystemFonts.MessageBoxFont,
-            Location = new Point(33, 210),
+            Location = new Point(16, 92),
             Text = "Start Mouse Without Borders when I sign in to Windows",
             UseVisualStyleBackColor = true,
         };
@@ -119,7 +126,7 @@ internal sealed class FirstLaunchForm : System.Windows.Forms.Form
             AutoSize = true,
             Checked = true,
             Font = SystemFonts.MessageBoxFont,
-            Location = new Point(33, 238),
+            Location = new Point(16, 121),
             Text = "Create a desktop shortcut",
             UseVisualStyleBackColor = true,
         };
@@ -128,39 +135,38 @@ internal sealed class FirstLaunchForm : System.Windows.Forms.Form
         {
             AutoSize = true,
             Font = new Font(SystemFonts.MessageBoxFont, FontStyle.Bold),
-            Location = new Point(30, 274),
-            Text = "Preferences file",
+            Location = new Point(30, 325),
+            Text = "Preferences file: " + PortableApplication.SettingsFileName,
         };
 
         preferencesPathLabel = new Label
         {
-            AutoEllipsis = true,
             AutoSize = false,
             Font = SystemFonts.MessageBoxFont,
             ForeColor = Color.FromArgb(45, 45, 45),
-            Location = new Point(33, 297),
-            Size = new Size(545, 43),
+            Location = new Point(33, 351),
+            Size = new Size(575, 48),
         };
 
         var preferencesExplanationLabel = new Label
         {
-            AutoSize = false,
+            AutoSize = true,
             Font = SystemFonts.MessageBoxFont,
             ForeColor = Color.DimGray,
-            Location = new Point(33, 343),
-            Size = new Size(545, 46),
+            Location = new Point(33, 406),
+            MaximumSize = new Size(575, 0),
             Text = installingExistingPreferences
                 ? "The current JSON preferences will be moved after MWB closes, so the installed copy keeps your security key, computer layout, and options."
-                : "This JSON file stores the shared security key, computer layout, and options locally. Keep it private and beside this copy of the EXE. Deleting it resets first-run setup.",
+                : "This JSON file stores your shared security key, computer layout, and options. Keep it private. Deleting it resets first-run setup.",
         };
 
         var privacyLabel = new Label
         {
-            AutoSize = false,
+            AutoSize = true,
             ForeColor = Color.DimGray,
             Font = SystemFonts.MessageBoxFont,
-            Location = new Point(33, 397),
-            Size = new Size(545, 36),
+            Location = new Point(33, 475),
+            MaximumSize = new Size(575, 0),
             Text = "No service is installed. Protected UAC and Windows sign-in screens are not controlled in this portable edition.",
         };
 
@@ -170,8 +176,8 @@ internal sealed class FirstLaunchForm : System.Windows.Forms.Form
             FlatStyle = FlatStyle.Flat,
             Font = new Font(SystemFonts.MessageBoxFont, FontStyle.Bold),
             ForeColor = Color.White,
-            Location = new Point(407, 446),
-            Size = new Size(171, 36),
+            Location = new Point(435, 525),
+            Size = new Size(175, 36),
             Text = "Install for me",
             UseVisualStyleBackColor = false,
         };
@@ -180,8 +186,8 @@ internal sealed class FirstLaunchForm : System.Windows.Forms.Form
 
         var portableButton = new Button
         {
-            Location = new Point(222, 446),
-            Size = new Size(175, 36),
+            Location = new Point(245, 525),
+            Size = new Size(180, 36),
             Text = "Run portable here",
             UseVisualStyleBackColor = true,
             Visible = !installingExistingPreferences,
@@ -191,7 +197,7 @@ internal sealed class FirstLaunchForm : System.Windows.Forms.Form
         var cancelButton = new Button
         {
             DialogResult = DialogResult.Cancel,
-            Location = new Point(33, 446),
+            Location = new Point(30, 525),
             Size = new Size(92, 36),
             Text = "Cancel",
             UseVisualStyleBackColor = true,
@@ -201,11 +207,12 @@ internal sealed class FirstLaunchForm : System.Windows.Forms.Form
         Controls.Add(titleLabel);
         Controls.Add(descriptionLabel);
         Controls.Add(computerNameLabel);
-        Controls.Add(locationLabel);
-        Controls.Add(installDirectoryTextBox);
-        Controls.Add(browseButton);
-        Controls.Add(startWithWindowsCheckBox);
-        Controls.Add(createDesktopShortcutCheckBox);
+        installOptionsGroup.Controls.Add(locationLabel);
+        installOptionsGroup.Controls.Add(installDirectoryTextBox);
+        installOptionsGroup.Controls.Add(browseButton);
+        installOptionsGroup.Controls.Add(startWithWindowsCheckBox);
+        installOptionsGroup.Controls.Add(createDesktopShortcutCheckBox);
+        Controls.Add(installOptionsGroup);
         Controls.Add(preferencesHeadingLabel);
         Controls.Add(preferencesPathLabel);
         Controls.Add(preferencesExplanationLabel);
@@ -216,6 +223,7 @@ internal sealed class FirstLaunchForm : System.Windows.Forms.Form
 
         AcceptButton = installButton;
         CancelButton = cancelButton;
+        ActiveControl = installButton;
         UpdatePreferencesPathText();
     }
 
@@ -229,24 +237,9 @@ internal sealed class FirstLaunchForm : System.Windows.Forms.Form
 
     private void UpdatePreferencesPathText()
     {
-        string installedPreferencesPath;
-        try
-        {
-            var expandedDirectory = Environment.ExpandEnvironmentVariables(InstallDirectory);
-            installedPreferencesPath = string.IsNullOrWhiteSpace(expandedDirectory)
-                ? "choose a valid install folder"
-                : Path.Combine(Path.GetFullPath(expandedDirectory), PortableApplication.SettingsFileName);
-        }
-        catch (Exception ex) when (ex is ArgumentException or NotSupportedException or PathTooLongException)
-        {
-            installedPreferencesPath = "choose a valid install folder";
-        }
-
         preferencesPathLabel.Text = installingExistingPreferences
-            ? "Current: " + PortableApplication.CurrentSettingsPath + "\r\n" +
-                "Installed: " + installedPreferencesPath
-            : "Install: " + installedPreferencesPath + "\r\n" +
-                "Portable: " + PortableApplication.CurrentSettingsPath;
+            ? "Current copy: beside this portable EXE.\r\nAfter installation: moved into the install folder shown above."
+            : "Install for me: saved in the install folder shown above.\r\nRun portable here: saved beside this EXE in its current folder.";
     }
 
     private void BrowseButton_Click(object sender, EventArgs e)
