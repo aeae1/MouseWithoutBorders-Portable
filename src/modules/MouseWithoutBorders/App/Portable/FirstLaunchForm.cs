@@ -1,6 +1,8 @@
 // Copyright (c) Microsoft Corporation
 // The Microsoft Corporation licenses this file to you under the MIT license.
 
+#if PORTABLE_SINGLE_FILE
+
 using System;
 using System.Drawing;
 using System.IO;
@@ -205,3 +207,5 @@ internal sealed class FirstLaunchForm : System.Windows.Forms.Form
         Close();
     }
 }
+
+#endif

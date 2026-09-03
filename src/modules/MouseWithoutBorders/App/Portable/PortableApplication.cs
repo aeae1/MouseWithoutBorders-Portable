@@ -1,6 +1,8 @@
 // Copyright (c) Microsoft Corporation
 // The Microsoft Corporation licenses this file to you under the MIT license.
 
+#if PORTABLE_SINGLE_FILE
+
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -83,14 +85,22 @@ internal static class PortableApplication
 
     internal static bool IsStartWithWindowsEnabled()
     {
-        using var key = Registry.CurrentUser.OpenSubKey(StartupRegistryPath, writable: false);
-        var command = key?.GetValue(StartupValueName) as string;
-        if (string.IsNullOrWhiteSpace(command))
+        try
         {
+            using var key = Registry.CurrentUser.OpenSubKey(StartupRegistryPath, writable: false);
+            var command = key?.GetValue(StartupValueName) as string;
+            if (string.IsNullOrWhiteSpace(command))
+            {
+                return false;
+            }
+
+            return command.Trim().Trim('"').Equals(CurrentExecutablePath, StringComparison.OrdinalIgnoreCase);
+        }
+        catch (Exception)
+        {
+            // A locked-down Windows account should still be able to run the app.
             return false;
         }
-
-        return command.Trim().Trim('"').Equals(CurrentExecutablePath, StringComparison.OrdinalIgnoreCase);
     }
 
     internal static void SetStartWithWindows(bool enabled)
@@ -129,7 +139,7 @@ internal static class PortableApplication
             "v1.0",
             "powershell.exe");
 
-        _ = Process.Start(new ProcessStartInfo
+        var cleanupProcess = Process.Start(new ProcessStartInfo
         {
             FileName = powerShellPath,
             Arguments = "-NoProfile -NonInteractive -EncodedCommand " + encodedCommand,
@@ -137,11 +147,16 @@ internal static class PortableApplication
             UseShellExecute = false,
             WindowStyle = ProcessWindowStyle.Hidden,
         });
+
+        if (cleanupProcess is null)
+        {
+            throw new InvalidOperationException("Windows could not start the uninstall cleanup process.");
+        }
     }
 
     private static bool InstallForCurrentUser(string requestedDirectory, bool startWithWindows)
     {
-        var installDirectory = Path.GetFullPath(Environment.ExpandEnvironmentVariables(requestedDirectory)).TrimEnd(Path.DirectorySeparatorChar);
+        var installDirectory = Path.GetFullPath(Environment.ExpandEnvironmentVariables(requestedDirectory));
         Directory.CreateDirectory(installDirectory);
         AssertDirectoryIsWritable(installDirectory);
 
@@ -227,6 +242,10 @@ internal static class PortableApplication
             return AppModePortable;
         }
         catch (JsonException)
+        {
+            return AppModePortable;
+        }
+        catch (UnauthorizedAccessException)
         {
             return AppModePortable;
         }
@@ -332,3 +351,5 @@ internal static class PortableApplication
 
     private static string EscapePowerShellLiteral(string value) => value.Replace("'", "''", StringComparison.Ordinal);
 }
+
+#endif

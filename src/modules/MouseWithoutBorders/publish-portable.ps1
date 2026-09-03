@@ -24,7 +24,7 @@ if (-not $msbuild) {
     throw 'MSBuild was not found. Run this script from a Visual Studio Developer PowerShell window.'
 }
 
-$Destination = [IO.Path]::GetFullPath($Destination).TrimEnd('\')
+$Destination = [IO.Path]::GetFullPath($Destination)
 if (Test-Path -LiteralPath $Destination) {
     if (Get-ChildItem -LiteralPath $Destination -Force | Select-Object -First 1) {
         throw "Portable publish destination '$Destination' must be empty."
