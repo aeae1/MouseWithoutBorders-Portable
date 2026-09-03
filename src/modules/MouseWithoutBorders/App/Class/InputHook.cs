@@ -111,8 +111,12 @@ namespace MouseWithoutBorders.Class
             hMouseHook = NativeMethods.SetWindowsHookEx(
                 WM.WH_MOUSE_LL,
                 mouseHookProcedure,
+#if PORTABLE_SINGLE_FILE
+                NativeMethods.GetModuleHandle(null),
+#else
                 Marshal.GetHINSTANCE(
                     Assembly.GetExecutingAssembly().GetModules()[0]),
+#endif
                 0);
 
             if (hMouseHook == 0)
@@ -128,8 +132,12 @@ namespace MouseWithoutBorders.Class
             hKeyboardHook = NativeMethods.SetWindowsHookEx(
                 WM.WH_KEYBOARD_LL,
                 keyboardHookProcedure,
+#if PORTABLE_SINGLE_FILE
+                NativeMethods.GetModuleHandle(null),
+#else
                 Marshal.GetHINSTANCE(
-                Assembly.GetExecutingAssembly().GetModules()[0]),
+                    Assembly.GetExecutingAssembly().GetModules()[0]),
+#endif
                 0);
             if (hKeyboardHook == 0)
             {

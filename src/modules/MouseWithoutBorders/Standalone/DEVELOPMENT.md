@@ -26,9 +26,9 @@ Unless a change is explicitly intentional, preserve these behaviors:
 2. Clipboard text/image sharing.
 3. File copy/paste and drag/drop transfer behavior.
 4. Machine matrix behavior and connection discovery.
-5. Service/UAC/logon-desktop operation.
+5. Normal-desktop operation without an installed Windows service.
 6. Named IPC/event strings used by current PowerToys MWB.
-7. Current PowerToys `settings.json` shape where practical.
+7. Current PowerToys settings shape where practical inside the portable prefs file.
 
 Old Garage standalone `2.2.1.0327` protocol compatibility is **not** assumed. Use the same modern fork/current PowerToys-compatible generation on every connected machine unless old-version interoperability is explicitly tested.
 
@@ -85,13 +85,17 @@ Prefer adding narrowly scoped `*.Standalone.cs` partials where that keeps upstre
 - `App/Core/SettingsCompatibility.cs` — MWB-local replacement for the subset of Settings.UI.Library that MWB needs.
 - `App/Core/CommandEventHandler.cs` — locally owns the exact MWB PowerToys named-event constants after removing PowerToys.Interop.
 
-## Settings location
+## Portable product behavior
 
-The standalone compatibility layer intentionally keeps the current PowerToys path by default:
+The distributed product is one self-contained `MouseWithoutBorders.exe`. It runs a hidden second copy of itself in clipboard-helper mode rather than shipping `MouseWithoutBordersHelper.exe`.
 
-`%LOCALAPPDATA%\Microsoft\PowerToys\MouseWithoutBorders\settings.json`
+Preferences are stored beside the executable as:
 
-This minimizes surprise while the fork is still protocol/settings compatible with current PowerToys MWB. We can add an import/migration and move to a standalone-specific path later if desired.
+`MouseWithoutBorders.prefs.json`
+
+If the prefs file is absent, first launch offers a portable mode or a per-user self-install. The default install directory is `%LOCALAPPDATA%\Programs\Mouse Without Borders`; Start with Windows is optional and off by default. The product does not import PowerToys settings automatically.
+
+No Windows service is registered, so protected UAC and Windows sign-in-screen input are intentionally unsupported in the portable product.
 
 ## Build validation
 
@@ -106,7 +110,8 @@ Before considering a behavior change finished:
 - build x64 Release;
 - run MWB unit tests;
 - for networking/input/file-transfer changes, manually test between two Windows machines;
-- for service changes, test normal desktop, UAC secure desktop, lock/logon screen, sleep/wake, and reconnect.
+- test first launch, portable mode, self-install, startup toggle, self-uninstall, and firewall prompting on a real Windows machine;
+- test sleep/wake and reconnect on real machines.
 
 ## Extraction status
 
@@ -125,16 +130,13 @@ Already proven by CI:
 
 - the standalone app, helper, service, and unit tests build from an archive containing only this MWB directory;
 - unit tests run successfully in that isolated directory;
-- a Windows x64 development bundle is uploaded after successful builds;
-- installer/uninstaller PowerShell syntax parses successfully;
-- the packaged installer and uninstaller complete their non-mutating `-WhatIf` validation path;
-- manual run mode is enforced by rejecting common Windows automatic-start registry/folder markers.
+- a single self-contained Windows x64 EXE is uploaded after successful builds;
+- the portable prefs path, same-EXE clipboard-helper mode, and per-user startup controls compile in the isolated source build.
 
 Still to isolate/remove:
 
 - legacy PowerToys-only project files and the native module interface from the final clean repository;
-- PowerToys-era settings-folder naming, with a safe one-time import/migration if it changes;
-- real-Windows validation of service permissions, firewall behavior, upgrades, and uninstall;
+- real-Windows validation of portable settings, firewall behavior, startup, upgrades, and self-uninstall;
 - remaining cosmetic/internal PowerToys names that are safe to change without breaking IPC or compatibility.
 
 ## Preferred modification style

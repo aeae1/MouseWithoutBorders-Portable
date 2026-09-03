@@ -2113,8 +2113,13 @@ namespace MouseWithoutBorders.Class
                     }
 
                     _ = Launch.CreateLowIntegrityProcess(
+#if PORTABLE_SINGLE_FILE
+                        $"\"{Application.ExecutablePath}\"",
+                        PortableApplication.ClipboardHelperArgument + " InternalError \"" + msg + "\"",
+#else
                         $"\"{Path.GetDirectoryName(Application.ExecutablePath)}\\{Helper.HelperProcessName}.exe\"",
                         "InternalError" + " \"" + msg + "\"",
+#endif
                         0,
                         false,
                         0,

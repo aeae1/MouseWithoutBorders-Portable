@@ -45,6 +45,9 @@ namespace MouseWithoutBorders.Class
     {
 #if !MM_HELPER
 
+        [DllImport("kernel32.dll", CharSet = CharSet.Unicode)]
+        internal static extern IntPtr GetModuleHandle(string moduleName);
+
         [DllImport("user32.dll")]
         internal static extern IntPtr SetClipboardViewer(IntPtr hWndNewViewer);
 

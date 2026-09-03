@@ -60,6 +60,24 @@ namespace MouseWithoutBorders.Class
         [STAThread]
         private static void Main()
         {
+#if PORTABLE_SINGLE_FILE
+            string[] startupArgs = Environment.GetCommandLineArgs();
+            if (PortableApplication.IsClipboardHelperInvocation(startupArgs))
+            {
+                global::MouseWithoutBorders.HelperHost.Program.Run();
+                return;
+            }
+
+            Application.EnableVisualStyles();
+            _ = Application.SetHighDpiMode(HighDpiMode.PerMonitorV2);
+            Application.SetCompatibleTextRenderingDefault(false);
+
+            if (!PortableApplication.PrepareFirstLaunch())
+            {
+                return;
+            }
+#endif
+
             ManagedCommon.Logger.InitializeLogger("\\MouseWithoutBorders\\Logs");
             Logger.Log(Application.ProductName + " Started!");
 
@@ -235,9 +253,11 @@ namespace MouseWithoutBorders.Class
                     CommandEventHandler.StartListening();
                 }
 
+#if !PORTABLE_SINGLE_FILE
                 Application.EnableVisualStyles();
                 _ = Application.SetHighDpiMode(HighDpiMode.PerMonitorV2);
                 Application.SetCompatibleTextRenderingDefault(false);
+#endif
 
                 InitAndCleanup.Init();
                 Core.Helper.WndProcCounter++;

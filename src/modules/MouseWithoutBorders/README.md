@@ -2,26 +2,27 @@
 
 ## Vibe-coded with ChatGPT
 
-This is a ChatGPT-modified, standalone-only fork of Microsoft PowerToys Mouse Without Borders. The goal is to keep the actively maintained Mouse Without Borders app while removing the need to install or build the rest of PowerToys.
+This is a ChatGPT-modified, standalone-only fork of Microsoft PowerToys Mouse Without Borders. The goal is to keep the actively maintained Mouse Without Borders app as one portable EXE without requiring the rest of PowerToys.
 
 **Last modified: September 3, 2026**
 
 > [!IMPORTANT]
-> This fork is still in development. The automated Windows build and tests pass and a manual-start development installer is included, but real-Windows installer and two-computer testing are not finished yet.
+> This fork is still in development. Automated Windows builds and tests are in place, but the new single-EXE first-launch, self-install, startup, self-uninstall, and two-computer behavior still require real-Windows testing.
 
 ## What has changed
 
 - Uses the classic Mouse Without Borders look with a green icon and green accents.
-- Runs as its own app, helper, and Windows service instead of as a PowerToys module.
+- Runs as its own app instead of as a PowerToys module.
 - Builds from the Mouse Without Borders source folder alone; the surrounding PowerToys source tree is not required.
 - Removes PowerToys telemetry from the standalone build.
 - Accepts a manually chosen security key with 4 or more characters.
 - Generates easy-to-type 10-character keys without easily confused characters.
-- Preserves modern keyboard/mouse sharing, clipboard sharing, file transfer, encryption, and service-mode code.
-- Produces a downloadable Windows x64 development bundle after a successful automated build.
+- Preserves modern keyboard/mouse sharing, clipboard sharing, file transfer, and encryption for normal Windows desktops.
+- Runs its clipboard helper as a hidden second mode of the same EXE, so no companion program is required.
+- Produces one self-contained Windows x64 EXE after a successful automated build.
 - Produces a clean, repo-ready source archive with PowerToys-only project files omitted.
-- Includes a manual-start development installer that registers the support service on demand but creates no Windows automatic-start entry.
-- Includes a one-click installation checker that explains each result and saves a report on the Desktop.
+- Creates `MouseWithoutBorders.prefs.json` beside the EXE on first launch.
+- Offers either portable use or a per-user self-install, with an optional Start with Windows setting that is off by default.
 
 ## Progress
 
@@ -30,31 +31,30 @@ The extraction is about **80% complete**.
 Finished:
 
 - standalone app project;
-- standalone helper and service projects;
+- standalone app, helper, and service comparison projects;
 - clean standalone program names;
 - PowerToys-free build configuration;
 - automated x64 build and unit tests from an isolated MWB-only folder;
 - green classic branding and friendlier key generation;
-- manual-start installer/uninstaller packaging with service, firewall, Start menu, and Installed Apps registration.
-- plain-English post-install checks for the program files, service, firewall rule, shortcuts, and manual run mode.
+- single-file publish script and first-launch portable/self-install experience;
+- installed-mode tray controls for Start with Windows and self-uninstall.
 
 Still to do:
 
-- finish real-Windows testing of the installer, service permissions, firewall setup, upgrades, and uninstall;
+- finish real-Windows testing of portable preferences, self-install, startup, firewall prompting, and self-uninstall;
 - move the finished MWB-only tree into the clean `aeae1/MouseWithoutBorders` repository;
-- test input, clipboard, file transfer, reconnect, UAC, sign-in screen, and sleep/wake behavior between real Windows computers.
+- test input, clipboard, file transfer, reconnect, and sleep/wake behavior between real Windows computers.
 
-## Current build layout
+## Running the portable app
 
-The standalone solution has three programs that work together:
+The downloadable build contains exactly one program: `MouseWithoutBorders.exe`.
 
-- `MouseWithoutBorders.exe` — the main tray app and settings window;
-- `MouseWithoutBordersHelper.exe` — the elevated helper used for privileged tasks;
-- `MouseWithoutBordersService.exe` — the Windows service used for UAC and sign-in-screen support.
+On first launch, it offers two choices:
 
-The extraction branch's focused build workflow copies only this Mouse Without Borders directory to a clean location, builds all three programs, runs the unit tests there, and uploads the x64 development bundle. The clean source archive also includes its own `.github/workflows/build.yml` for use after it becomes the standalone repository.
+- **Install for me** copies the EXE to `%LOCALAPPDATA%\Programs\Mouse Without Borders`, creates the adjacent prefs file and a Start menu shortcut, and optionally enables Start with Windows.
+- **Run portable here** creates the prefs file beside the current EXE and runs without installing anything.
 
-The development bundle uses **manual run mode**. Double-click `Install.cmd`, approve the administrator prompt, and then open **Check Mouse Without Borders installation** from the Start menu to create a plain-English health report. Open Mouse Without Borders yourself from the Start menu. The installer deliberately does not start the app after installation or add it to Windows startup.
+No Windows service is installed. This portable edition therefore does not control protected UAC prompts or the Windows sign-in screen. Normal-desktop input, clipboard, and file-transfer behavior remains in scope.
 
 ## Building from source
 
@@ -71,6 +71,12 @@ Open a Visual Studio Developer PowerShell window in the repository directory, th
 ```
 
 The output is written to `artifacts/standalone/x64/Release`.
+
+To publish the single-file app:
+
+```powershell
+.\publish-portable.ps1 -Configuration Release -Platform x64 -Destination .\portable
+```
 
 ## Safety and compatibility
 

@@ -360,6 +360,9 @@ namespace Microsoft.PowerToys.Settings.UI.Library
         [JsonPropertyName("version")]
         public string Version { get; set; } = "1.1";
 
+        [JsonPropertyName("appMode")]
+        public string AppMode { get; set; } = "Portable";
+
         [JsonPropertyName("properties")]
         public MouseWithoutBordersProperties Properties { get; set; } = new();
 
@@ -416,6 +419,10 @@ namespace Microsoft.PowerToys.Settings.UI.Library
 
         internal static string GetSettingsPath(string moduleName)
         {
+#if STANDALONE
+            _ = moduleName;
+            return Path.Combine(AppContext.BaseDirectory, MouseWithoutBorders.Core.PortableApplication.SettingsFileName);
+#else
             var root = Utilities.Helper.UserLocalAppDataPath;
             if (string.IsNullOrWhiteSpace(root))
             {
@@ -425,6 +432,7 @@ namespace Microsoft.PowerToys.Settings.UI.Library
             // Preserve current PowerToys MWB settings location so moving between PowerToys
             // and this standalone fork does not silently reset user configuration.
             return Path.Combine(root, "Microsoft", "PowerToys", moduleName, "settings.json");
+#endif
         }
     }
 }
@@ -454,6 +462,10 @@ namespace Microsoft.PowerToys.Settings.UI.Library.Utilities
                 var settingsPath = Microsoft.PowerToys.Settings.UI.Library.SettingsUtils.GetSettingsPath(moduleName);
                 var directory = Path.GetDirectoryName(settingsPath)!;
                 Directory.CreateDirectory(directory);
+
+#if STANDALONE
+                fileName = Path.GetFileName(settingsPath);
+#endif
 
                 _watcher = new FileSystemWatcher(directory, fileName)
                 {

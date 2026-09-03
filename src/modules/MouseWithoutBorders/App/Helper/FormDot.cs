@@ -7,7 +7,13 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.Windows.Forms;
 
+#if PORTABLE_SINGLE_FILE
+using static MouseWithoutBorders.HelperHost.NativeMethods;
+using NativeMethods = MouseWithoutBorders.HelperHost.NativeMethods;
+using Program = MouseWithoutBorders.HelperHost.Program;
+#else
 using static MouseWithoutBorders.NativeMethods;
+#endif
 
 namespace MouseWithoutBorders
 {

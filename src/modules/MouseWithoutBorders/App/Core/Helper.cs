@@ -30,7 +30,10 @@ namespace MouseWithoutBorders.Core;
 internal static class Helper
 {
     internal const string HELPER_FORM_TEXT = "Mouse without Borders Helper";
-#if STANDALONE
+#if PORTABLE_SINGLE_FILE
+    internal const string HelperProcessName = "MouseWithoutBorders";
+    private static int portableHelperProcessId;
+#elif STANDALONE
     internal const string HelperProcessName = "MouseWithoutBordersHelper";
 #else
     internal const string HelperProcessName = "PowerToys.MouseWithoutBordersHelper";
@@ -277,6 +280,34 @@ internal static class Helper
 
         if (cleanUp)
         {
+#if PORTABLE_SINGLE_FILE
+            try
+            {
+                _ = Helper.SendMessageToHelper(SharedConst.QUIT_CMD, IntPtr.Zero, IntPtr.Zero);
+
+                if (portableHelperProcessId > 0)
+                {
+                    try
+                    {
+                        var helperProcess = Process.GetProcessById(portableHelperProcessId);
+                        if (!helperProcess.WaitForExit(1500))
+                        {
+                            helperProcess.KillProcess();
+                        }
+                    }
+                    catch (ArgumentException)
+                    {
+                        // The helper already exited.
+                    }
+
+                    portableHelperProcessId = 0;
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.Log(e);
+            }
+#else
             try
             {
                 Process[] ps = Process.GetProcessesByName(HelperProcessName);
@@ -290,6 +321,7 @@ internal static class Helper
                 Logger.Log(e);
                 _ = Helper.SendMessageToHelper(SharedConst.QUIT_CMD, IntPtr.Zero, IntPtr.Zero);
             }
+#endif
 
             return;
         }
@@ -315,6 +347,30 @@ internal static class Helper
 
         if (h.ToInt32() <= 0)
         {
+#if PORTABLE_SINGLE_FILE
+            portableHelperProcessId = Launch.CreateProcessInInputDesktopSession(
+                $"\"{Application.ExecutablePath}\"",
+                PortableApplication.ClipboardHelperArgument,
+                WinAPI.GetInputDesktop(),
+                0);
+
+            for (int attempt = 0; attempt < 20 && h.ToInt32() <= 0; attempt++)
+            {
+                Thread.Sleep(50);
+                h = (IntPtr)NativeMethods.FindWindow(null, Helper.HELPER_FORM_TEXT);
+            }
+
+            if (portableHelperProcessId <= 0 || h.ToInt32() <= 0)
+            {
+                Logger.Log("Unable to start portable clipboard helper mode.");
+                Common.ShowToolTip("Error starting the Mouse Without Borders clipboard helper. Clipboard sharing will not work!", 5000, ToolTipIcon.Error);
+            }
+            else
+            {
+                Clipboard.HasSwitchedMachineSinceLastCopy = true;
+                Logger.Log("Portable clipboard helper mode started.");
+            }
+#else
             _ = Launch.CreateProcessInInputDesktopSession(
                 $"\"{Path.GetDirectoryName(Application.ExecutablePath)}\\{HelperProcessName}.exe\"",
                 string.Empty,
@@ -334,9 +390,13 @@ internal static class Helper
             {
                 Logger.Log("Helper process started.");
             }
+#endif
         }
         else
         {
+#if PORTABLE_SINGLE_FILE
+            Logger.Log("Portable clipboard helper mode found running.");
+#else
             var processes = Process.GetProcessesByName(HelperProcessName);
             if (processes?.Length > 0)
             {
@@ -347,6 +407,7 @@ internal static class Helper
                 Logger.Log("Invalid helper process found running.");
                 Common.ShowToolTip("Error finding Mouse Without Borders Helper, clipboard sharing will not work!", 5000, ToolTipIcon.Error);
             }
+#endif
         }
     }
 

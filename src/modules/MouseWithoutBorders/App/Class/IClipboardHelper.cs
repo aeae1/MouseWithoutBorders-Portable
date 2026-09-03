@@ -255,7 +255,9 @@ WellKnownSidType.AuthenticatedUserSid, null);
                 Logger.Log(e);
             }
         }
-#else
+#endif
+
+#if MM_HELPER || PORTABLE_SINGLE_FILE
         internal static IClipboardHelper CreateIpcClient()
         {
             try
@@ -302,7 +304,7 @@ WellKnownSidType.AuthenticatedUserSid, null);
             }
         }
     }
-#if MM_HELPER
+#if MM_HELPER || PORTABLE_SINGLE_FILE
 
     internal static class ClipboardMMHelper
     {

@@ -23,7 +23,7 @@ Unless the requested feature deliberately changes it, preserve:
 - clipboard text/image sharing;
 - file copy/paste and drag/drop transfer;
 - machine matrix and peer discovery;
-- service/UAC/logon-desktop behavior;
+- normal-desktop behavior without requiring an installed service;
 - named IPC/event strings used by modern PowerToys MWB;
 - current PowerToys MWB `settings.json` shape where practical.
 
@@ -42,6 +42,21 @@ This fork intentionally differs from upstream:
 - UI should warn that short manually chosen keys are easier to guess, but should not block them solely for strength.
 
 Do not weaken the underlying PBKDF2/AES stream encryption unless explicitly requested and security-reviewed.
+
+## Deliberate fork behavior: portable product
+
+The distributed product is one self-contained `MouseWithoutBorders.exe` with
+`MouseWithoutBorders.prefs.json` beside it. The same EXE also runs the hidden
+clipboard-helper mode; do not reintroduce a distributed helper executable.
+
+If no prefs file exists, first launch offers portable use or a per-user
+self-install. The default install location is
+`%LOCALAPPDATA%\Programs\Mouse Without Borders`, and Start with Windows is
+optional and off by default.
+
+The portable product deliberately does not install a Windows service. Protected
+UAC prompts and the Windows sign-in screen are unsupported; do not claim those
+scenarios work unless the product direction changes and they are tested again.
 
 ## Standalone compatibility layers
 

@@ -10,7 +10,15 @@ using System.Windows.Forms;
 using ManagedCommon;
 using Microsoft.PowerToys.Telemetry;
 
+#if PORTABLE_SINGLE_FILE
+using MouseWithoutBorders;
+#endif
+
+#if PORTABLE_SINGLE_FILE
+namespace MouseWithoutBorders.HelperHost
+#else
 namespace MouseWithoutBorders
+#endif
 {
     internal static class Program
     {
@@ -36,7 +44,11 @@ namespace MouseWithoutBorders
         /// The main entry point for the application.
         /// </summary>
         [STAThread]
+#if PORTABLE_SINGLE_FILE
+        internal static void Run()
+#else
         private static void Main()
+#endif
         {
             if (PowerToys.GPOWrapper.GPOWrapper.GetConfiguredMouseWithoutBordersEnabledValue() == PowerToys.GPOWrapper.GpoRuleConfigured.Disabled)
             {
@@ -55,10 +67,18 @@ namespace MouseWithoutBorders
 
             string[] args = Environment.GetCommandLineArgs();
 
-            if (args.Length > 1 && !string.IsNullOrEmpty(args[1]))
+            int commandIndex = 1;
+#if PORTABLE_SINGLE_FILE
+            if (args.Length > 1 && args[1].Equals(Core.PortableApplication.ClipboardHelperArgument, StringComparison.OrdinalIgnoreCase))
             {
-                string command = args[1];
-                string arg = args.Length > 2 && !string.IsNullOrEmpty(args[2]) ? args[2] : string.Empty;
+                commandIndex = 2;
+            }
+#endif
+
+            if (args.Length > commandIndex && !string.IsNullOrEmpty(args[commandIndex]))
+            {
+                string command = args[commandIndex];
+                string arg = args.Length > commandIndex + 1 && !string.IsNullOrEmpty(args[commandIndex + 1]) ? args[commandIndex + 1] : string.Empty;
 
                 if (command.Equals("SvcExec", StringComparison.OrdinalIgnoreCase))
                 {

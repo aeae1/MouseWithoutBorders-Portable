@@ -14,6 +14,11 @@ using System.Runtime.InteropServices;
 using System.Threading;
 using System.Windows.Forms;
 
+#if PORTABLE_SINGLE_FILE
+using NativeMethods = MouseWithoutBorders.HelperHost.NativeMethods;
+using Program = MouseWithoutBorders.HelperHost.Program;
+#endif
+
 namespace MouseWithoutBorders
 {
     public partial class FormHelper : System.Windows.Forms.Form

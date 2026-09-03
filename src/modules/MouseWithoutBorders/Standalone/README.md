@@ -13,19 +13,19 @@ This branch is producing a standalone Windows build of Mouse Without Borders fro
 - Focused Windows x64 build/test workflow: **added** at `.github/workflows/mwb-standalone-build.yml`.
 - Human-friendly shared-key policy: **added**. User-chosen keys of 4+ characters are accepted; generated keys are 10 cryptographically random easy-to-type characters.
 - Classic visual branding: **added**. The old orange MWB tray/title-bar design is green in this fork.
-- PowerToys-free app/helper/service projects: **added**. Each standalone executable has a clean `MouseWithoutBorders*` name and identity.
+- PowerToys-free app/helper/service comparison projects: **added**. The distributed portable build now combines the app and clipboard helper into one executable.
 - Shared PowerToys MSBuild/package infrastructure: **removed from the standalone build path**.
 - MWB-only build proof: **passing**. CI copies only this directory to an isolated location, builds all three programs there, and runs the unit tests there.
-- Downloadable Windows x64 development bundle: **added** to successful workflow runs.
+- Downloadable single-file Windows x64 build: **added** to successful workflow runs.
 - Clean standalone source archive: **added**. PowerToys-only project files and the native module interface are excluded automatically.
-- Manual-start installer/uninstaller: **added as a development package**. It copies the app to Program Files, registers the demand-start support service, adds the inbound TCP firewall rule, creates Start menu shortcuts, and deliberately creates no automatic-start entry.
-- Real-Windows installer and two-machine regression tests: **not finished yet**.
+- Portable first launch and per-user self-install: **added**. Preferences stay beside the EXE; installation defaults to the current user's local Programs folder and Start with Windows is optional.
+- Real-Windows portable/self-install and two-machine regression tests: **not finished yet**.
 
 ## Goals
 
 - Preserve keyboard and mouse sharing behavior.
 - Preserve clipboard sharing and **file transfer**.
-- Preserve service/UAC/logon-desktop support.
+- Preserve normal-desktop behavior without requiring an installed Windows service.
 - Keep same-fork peers compatible with each other.
 - Retain useful modern MWB fixes from upstream PowerToys.
 - Remove runtime and build-time dependence on unrelated PowerToys modules.
@@ -52,9 +52,9 @@ This fork deliberately keeps the recognizable **classic MWB tray/title-bar icon 
 
 ## Extraction strategy
 
-Remove PowerToys-only dependencies incrementally, compile/test after each meaningful change, and keep useful MWB behavior intact. Do not simplify the project by deleting functionality such as file transfer or service mode merely because it is complicated.
+Remove PowerToys-only dependencies incrementally, compile/test after each meaningful change, and keep useful MWB behavior intact. The portable product deliberately omits installed-service UAC/sign-in-screen support, but it must retain normal-desktop clipboard and file-transfer behavior.
 
-Once the MWB app/helper/service/tests can build without the surrounding PowerToys tree, move only the required files into the clean final repository `aeae1/MouseWithoutBorders` and leave unrelated PowerToys files/history behind.
+Once the single-file app and tests build without the surrounding PowerToys tree, move only the required files into the clean final repository `aeae1/MouseWithoutBorders` and leave unrelated PowerToys files/history behind.
 
 ## Dependency status
 
@@ -76,13 +76,15 @@ MWB-specific settings models/storage/helper behavior now compile from MWB-local 
 
 ### PowerToys build infrastructure — removed from standalone projects
 
-The standalone app, helper, service, and test projects now own their target framework, package versions, build properties, and output layout inside the MWB directory. The focused CI workflow proves this by archiving only `src/modules/MouseWithoutBorders`, extracting it outside the PowerToys checkout, building all four projects, and running the tests in that isolated copy.
+The standalone app, helper, service, and test projects now own their target framework, package versions, build properties, and output layout inside the MWB directory. The focused CI workflow proves this by archiving only `src/modules/MouseWithoutBorders`, extracting it outside the PowerToys checkout, building the projects, running the tests, and publishing the one-file product in that isolated copy.
 
 The older PowerToys-shaped project files remain temporarily as an upstream comparison and compatibility check. They are not needed in the final MWB-only repository.
 
-### Service/helper integration — standalone builds added, installer pending
+### Single-file helper integration — added
 
-The helper and service now have standalone project files and clean executable identities. The existing session/UAC/logon mechanics remain in place. Final Windows service registration, permissions, firewall rules, and uninstall behavior belong in the installer and still need end-to-end testing.
+The app starts a hidden second copy of `MouseWithoutBorders.exe` in clipboard-helper mode. This preserves the existing helper IPC and clipboard design without shipping a second executable. The self-install mode copies only the EXE and adjacent prefs file, creates a Start menu shortcut, and optionally adds a per-user startup entry.
+
+The service source remains available for upstream comparison, but the portable product does not install or launch a Windows service. Protected UAC prompts and the Windows sign-in screen are intentionally outside the portable edition's supported behavior.
 
 ## Work order
 
@@ -93,9 +95,10 @@ The helper and service now have standalone project files and clean executable id
 5. ~~Remove shared PowerToys MSBuild/package/build-tree dependencies from the standalone projects.~~
 6. ~~Make app + helper + service + tests build from an MWB-only directory tree.~~
 7. ~~Rename executable/service identities used by standalone builds and update matching references together.~~
-8. Create the clean `aeae1/MouseWithoutBorders` repository with only required source/assets/tests/build files.
-9. **Finish real-Windows validation of the manual-start installer; CI already syntax-checks and dry-runs the packaged scripts.**
-10. Real-machine regression testing: input switching, clipboard, file transfer, reconnect, UAC/logon/service behavior.
+8. ~~Publish the app as one self-contained EXE with adjacent portable preferences and optional per-user self-install.~~
+9. Create the clean `aeae1/MouseWithoutBorders` repository with only required source/assets/tests/build files.
+10. **Finish real-Windows validation of first launch, self-install, startup, self-uninstall, and Windows firewall prompting.**
+11. Real-machine regression testing: input switching, clipboard, file transfer, reconnect, and sleep/wake behavior.
 
 ## AI-assisted development
 

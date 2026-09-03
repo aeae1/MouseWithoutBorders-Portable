@@ -76,7 +76,7 @@ namespace MouseWithoutBorders
                     }
                 }
 
-                return System.IO.Path.GetFileNameWithoutExtension(Assembly.GetExecutingAssembly().Location);
+                return System.IO.Path.GetFileNameWithoutExtension(Application.ExecutablePath);
             }
         }
 

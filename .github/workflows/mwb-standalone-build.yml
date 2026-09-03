@@ -109,7 +109,8 @@ jobs:
             'App\MouseWithoutBorders.csproj',
             'App\Helper\MouseWithoutBordersHelper.csproj',
             'App\Service\MouseWithoutBordersService.csproj',
-            'ModuleInterface'
+            'ModuleInterface',
+            'Packaging'
           )
 
           foreach ($forbiddenPath in $forbiddenPaths) {
@@ -123,18 +124,12 @@ jobs:
             exit $LASTEXITCODE
           }
 
-      - name: Validate and stage manual-start package
+      - name: Publish single-file portable app
         shell: pwsh
         run: |
-          $mwbRoot = Join-Path $env:GITHUB_WORKSPACE 'src\modules\MouseWithoutBorders'
-          $packageRoot = Join-Path $env:RUNNER_TEMP 'mwb-package'
-          $scripts = @(
-            'Packaging\Install.ps1',
-            'Packaging\Uninstall.ps1',
-            'Packaging\Check-Installation.ps1',
-            'Packaging\Stage-Package.ps1',
-            'build.ps1'
-          )
+          $mwbRoot = Join-Path $env:RUNNER_TEMP 'mwb-isolated\MouseWithoutBorders'
+          $portableRoot = Join-Path $env:RUNNER_TEMP 'mwb-portable'
+          $scripts = @('build.ps1', 'publish-portable.ps1')
 
           foreach ($script in $scripts) {
             $tokens = $null
@@ -147,34 +142,11 @@ jobs:
             }
           }
 
-          $installerText = Get-Content -LiteralPath (Join-Path $mwbRoot 'Packaging\Install.ps1') -Raw
-          foreach ($automaticStartMarker in @('CurrentVersion\Run', 'Start Menu\Programs\Startup', 'StartupApproved')) {
-            if ($installerText.Contains($automaticStartMarker)) {
-              throw "Manual run mode violation: installer contains $automaticStartMarker."
-            }
-          }
-
-          & (Join-Path $mwbRoot 'Packaging\Stage-Package.ps1') `
-            -BuildRoot (Join-Path $mwbRoot 'artifacts\standalone\x64\Release') `
-            -Destination $packageRoot
-
-          & (Join-Path $packageRoot 'Install.ps1') `
-            -InstallDirectory (Join-Path $env:RUNNER_TEMP 'mwb-whatif-install') `
-            -UserSid 'S-1-5-21-1000-1000-1000-1000' `
-            -UserLocalAppData (Join-Path $env:RUNNER_TEMP 'mwb-user-local') `
-            -UserRoamingAppData (Join-Path $env:RUNNER_TEMP 'mwb-user-roaming') `
-            -WhatIf
-
-          & (Join-Path $packageRoot 'Uninstall.ps1') `
-            -InstallDirectory (Join-Path $env:RUNNER_TEMP 'mwb-whatif-install') `
-            -UserRoamingAppData (Join-Path $env:RUNNER_TEMP 'mwb-user-roaming') `
-            -WhatIf
-
-          foreach ($requiredPackageFile in @('Check-Installation.cmd', 'Check-Installation.ps1')) {
-            if (-not (Test-Path -LiteralPath (Join-Path $packageRoot $requiredPackageFile) -PathType Leaf)) {
-              throw "Installation checker is missing from the package: $requiredPackageFile"
-            }
-          }
+          & (Join-Path $mwbRoot 'publish-portable.ps1') `
+            -Configuration Release `
+            -Platform x64 `
+            -Destination $portableRoot `
+            -NoRestore
 
       - name: Upload clean standalone source
         uses: actions/upload-artifact@v4
@@ -184,10 +156,10 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
-      - name: Upload standalone x64 test build
+      - name: Upload single-file portable x64 build
         uses: actions/upload-artifact@v4
         with:
-          name: MouseWithoutBorders-standalone-x64-${{ github.sha }}
-          path: ${{ runner.temp }}/mwb-package/**
+          name: MouseWithoutBorders-portable-x64-${{ github.sha }}
+          path: ${{ runner.temp }}/mwb-portable/MouseWithoutBorders.exe
           if-no-files-found: error
           retention-days: 14

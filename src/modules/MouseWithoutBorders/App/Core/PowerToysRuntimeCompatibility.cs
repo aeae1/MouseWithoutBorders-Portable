@@ -46,10 +46,7 @@ namespace ManagedCommon
         {
             _ = relativePath;
 
-            var directory = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                "MouseWithoutBorders",
-                "Logs");
+            var directory = Path.Combine(Path.GetTempPath(), "MouseWithoutBorders", "Logs");
 
             Directory.CreateDirectory(directory);
             logFilePath = Path.Combine(directory, "MouseWithoutBorders.log");

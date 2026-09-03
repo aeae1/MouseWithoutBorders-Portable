@@ -79,6 +79,10 @@ namespace MouseWithoutBorders
             NotifyIcon.BalloonTipTitle = Application.ProductName;
             menuGenDumpFile.Visible = true;
 
+#if PORTABLE_SINGLE_FILE
+            InitializePortableMenu();
+#endif
+
             Helper.WndProcCounter++;
 
             try
