@@ -18,7 +18,8 @@ This branch is producing a standalone Windows build of Mouse Without Borders fro
 - MWB-only build proof: **passing**. CI copies only this directory to an isolated location, builds all three programs there, and runs the unit tests there.
 - Downloadable Windows x64 development bundle: **added** to successful workflow runs.
 - Clean standalone source archive: **added**. PowerToys-only project files and the native module interface are excluded automatically.
-- Final installer and real-machine regression tests: **not finished yet**.
+- Manual-start installer/uninstaller: **added as a development package**. It copies the app to Program Files, registers the demand-start support service, adds the inbound TCP firewall rule, creates Start menu shortcuts, and deliberately creates no automatic-start entry.
+- Real-Windows installer and two-machine regression tests: **not finished yet**.
 
 ## Goals
 
@@ -93,7 +94,7 @@ The helper and service now have standalone project files and clean executable id
 6. ~~Make app + helper + service + tests build from an MWB-only directory tree.~~
 7. ~~Rename executable/service identities used by standalone builds and update matching references together.~~
 8. Create the clean `aeae1/MouseWithoutBorders` repository with only required source/assets/tests/build files.
-9. **Package and validate a standalone installer; the portable CI bundle is already available for development testing.**
+9. **Finish real-Windows validation of the manual-start installer; CI already syntax-checks and dry-runs the packaged scripts.**
 10. Real-machine regression testing: input switching, clipboard, file transfer, reconnect, UAC/logon/service behavior.
 
 ## AI-assisted development

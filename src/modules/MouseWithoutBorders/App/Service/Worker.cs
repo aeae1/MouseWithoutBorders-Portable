@@ -61,6 +61,9 @@ namespace MouseWithoutBordersService
             try
             {
                 string me = "\"" + Path.GetDirectoryName(myBinary) + "\\" + processName + "\"";
+                string userLocalAppDataArgument = string.IsNullOrWhiteSpace(userLocalAppDataPath)
+                    ? string.Empty
+                    : " \"" + userLocalAppDataPath + "\"";
                 int waitCount = 20;
 
                 while (NativeMethods.WTSGetActiveConsoleSessionId() == 0xFFFFFFFF && waitCount > 0)
@@ -74,12 +77,12 @@ namespace MouseWithoutBordersService
                 if (activeDesktop != null)
                 {
                     LogDebug($"Executing {me} on [{activeDesktop}], {NativeMethods.WTSGetActiveConsoleSessionId()}");
-                    rv += NativeMethods.CreateProcessAsSystemAccountOnSpecificDesktop(me + " \"" + activeDesktop + "\"" + userLocalAppDataPath, activeDesktop, noOfTry) ? 1 : 0;
+                    rv += NativeMethods.CreateProcessAsSystemAccountOnSpecificDesktop(me + " \"" + activeDesktop + "\"" + userLocalAppDataArgument, activeDesktop, noOfTry) ? 1 : 0;
                 }
                 else
                 {
                     LogDebug($"Executing {me} winlogon, {NativeMethods.WTSGetActiveConsoleSessionId()}");
-                    rv += NativeMethods.CreateProcessAsSystemAccountOnSpecificDesktop(me + " \"winlogon\" " + userLocalAppDataPath, "winlogon", noOfTry) ? 1 : 0;
+                    rv += NativeMethods.CreateProcessAsSystemAccountOnSpecificDesktop(me + " \"winlogon\"" + userLocalAppDataArgument, "winlogon", noOfTry) ? 1 : 0;
                     LogDebug("====================");
 
                     // BEGIN: This may happen in some slow machine, this is a tentative fix
@@ -88,17 +91,17 @@ namespace MouseWithoutBordersService
 
                     // END
                     LogDebug($"Executing {me} default, {NativeMethods.WTSGetActiveConsoleSessionId()}");
-                    rv += NativeMethods.CreateProcessAsSystemAccountOnSpecificDesktop(me + " \"default\" " + userLocalAppDataPath, "default", noOfTry) ? 1 : 0;
+                    rv += NativeMethods.CreateProcessAsSystemAccountOnSpecificDesktop(me + " \"default\"" + userLocalAppDataArgument, "default", noOfTry) ? 1 : 0;
 
                     if (appSessionId >= 0 && appSessionId != NativeMethods.WTSGetActiveConsoleSessionId())
                     {
                         Thread.Sleep(1000);
                         LogDebug($"Executing {me} default, {(appSessionId >= 0 ? appSessionId : (int)NativeMethods.WTSGetActiveConsoleSessionId())}");
-                        rv += NativeMethods.CreateProcessAsSystemAccountOnSpecificDesktop(me + " \"default\" " + userLocalAppDataPath, "default", noOfTry, appSessionId) ? 1 : 0;
+                        rv += NativeMethods.CreateProcessAsSystemAccountOnSpecificDesktop(me + " \"default\"" + userLocalAppDataArgument, "default", noOfTry, appSessionId) ? 1 : 0;
 
                         Thread.Sleep(1000);
                         LogDebug("Executing " + me + " \"winlogon\" on session " + appSessionId.ToString(CultureInfo.InvariantCulture));
-                        rv += NativeMethods.CreateProcessAsSystemAccountOnSpecificDesktop(me + " \"winlogon\" " + userLocalAppDataPath, "winlogon", noOfTry, appSessionId) ? 1 : 0;
+                        rv += NativeMethods.CreateProcessAsSystemAccountOnSpecificDesktop(me + " \"winlogon\"" + userLocalAppDataArgument, "winlogon", noOfTry, appSessionId) ? 1 : 0;
                         LogDebug("====================");
                     }
                 }

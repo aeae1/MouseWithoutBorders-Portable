@@ -31,10 +31,17 @@ jobs:
         shell: pwsh
         run: .\build.ps1 -Configuration Release -Platform x64 -RunTests
 
+      - name: Stage manual-start package
+        shell: pwsh
+        run: >-
+          .\Packaging\Stage-Package.ps1
+          -BuildRoot .\artifacts\standalone\x64\Release
+          -Destination ${{ runner.temp }}\mwb-package
+
       - name: Upload x64 development build
         uses: actions/upload-artifact@v4
         with:
           name: MouseWithoutBorders-x64-${{ github.sha }}
-          path: artifacts/standalone/x64/Release/**
+          path: ${{ runner.temp }}/mwb-package/**
           if-no-files-found: error
           retention-days: 14

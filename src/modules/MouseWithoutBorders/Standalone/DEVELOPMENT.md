@@ -125,13 +125,16 @@ Already proven by CI:
 
 - the standalone app, helper, service, and unit tests build from an archive containing only this MWB directory;
 - unit tests run successfully in that isolated directory;
-- a Windows x64 development bundle is uploaded after successful builds.
+- a Windows x64 development bundle is uploaded after successful builds;
+- installer/uninstaller PowerShell syntax parses successfully;
+- the packaged installer and uninstaller complete their non-mutating `-WhatIf` validation path;
+- manual run mode is enforced by rejecting common Windows automatic-start registry/folder markers.
 
 Still to isolate/remove:
 
 - legacy PowerToys-only project files and the native module interface from the final clean repository;
 - PowerToys-era settings-folder naming, with a safe one-time import/migration if it changes;
-- installer logic for the standalone Windows service, permissions, firewall rule, shortcuts, upgrades, and uninstall;
+- real-Windows validation of service permissions, firewall behavior, upgrades, and uninstall;
 - remaining cosmetic/internal PowerToys names that are safe to change without breaking IPC or compatibility.
 
 ## Preferred modification style

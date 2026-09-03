@@ -4,10 +4,10 @@
 
 This is a ChatGPT-modified, standalone-only fork of Microsoft PowerToys Mouse Without Borders. The goal is to keep the actively maintained Mouse Without Borders app while removing the need to install or build the rest of PowerToys.
 
-**Last modified: September 2, 2026**
+**Last modified: September 3, 2026**
 
 > [!IMPORTANT]
-> This fork is still in development. The automated Windows build and tests pass, but the final installer and real two-computer testing are not finished yet.
+> This fork is still in development. The automated Windows build and tests pass and a manual-start development installer is included, but real-Windows installer and two-computer testing are not finished yet.
 
 ## What has changed
 
@@ -20,10 +20,11 @@ This is a ChatGPT-modified, standalone-only fork of Microsoft PowerToys Mouse Wi
 - Preserves modern keyboard/mouse sharing, clipboard sharing, file transfer, encryption, and service-mode code.
 - Produces a downloadable Windows x64 development bundle after a successful automated build.
 - Produces a clean, repo-ready source archive with PowerToys-only project files omitted.
+- Includes a manual-start development installer that registers the support service on demand but creates no Windows automatic-start entry.
 
 ## Progress
 
-The extraction is about **70% complete**.
+The extraction is about **80% complete**.
 
 Finished:
 
@@ -32,11 +33,12 @@ Finished:
 - clean standalone program names;
 - PowerToys-free build configuration;
 - automated x64 build and unit tests from an isolated MWB-only folder;
-- green classic branding and friendlier key generation.
+- green classic branding and friendlier key generation;
+- manual-start installer/uninstaller packaging with service, firewall, Start menu, and Installed Apps registration.
 
 Still to do:
 
-- create and test the installer, including Windows service and firewall setup;
+- finish real-Windows testing of the installer, service permissions, firewall setup, upgrades, and uninstall;
 - move the finished MWB-only tree into the clean `aeae1/MouseWithoutBorders` repository;
 - test input, clipboard, file transfer, reconnect, UAC, sign-in screen, and sleep/wake behavior between real Windows computers.
 
@@ -49,6 +51,8 @@ The standalone solution has three programs that work together:
 - `MouseWithoutBordersService.exe` — the Windows service used for UAC and sign-in-screen support.
 
 The extraction branch's focused build workflow copies only this Mouse Without Borders directory to a clean location, builds all three programs, runs the unit tests there, and uploads the x64 development bundle. The clean source archive also includes its own `.github/workflows/build.yml` for use after it becomes the standalone repository.
+
+The development bundle uses **manual run mode**. Double-click `Install.cmd`, approve the administrator prompt, and then open Mouse Without Borders yourself from the Start menu. The installer deliberately does not start the app after installation or add it to Windows startup.
 
 ## Building from source
 
