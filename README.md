@@ -10,9 +10,9 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/aeae1/PowerToys/releases">Download a test release</a>
+  <a href="https://github.com/aeae1/MouseWithoutBorders-Portable/releases">Download a test release</a>
   ·
-  <a href="https://github.com/aeae1/PowerToys/actions/workflows/mwb-standalone-build.yml">Windows build status</a>
+  <a href="https://github.com/aeae1/MouseWithoutBorders-Portable/actions/workflows/mwb-standalone-build.yml">Windows build status</a>
 </p>
 
 > [!IMPORTANT]
@@ -49,7 +49,7 @@ The finished product is deliberately small from a user's perspective:
 
 ## Download and run
 
-1. Open [Releases](https://github.com/aeae1/PowerToys/releases).
+1. Open [Releases](https://github.com/aeae1/MouseWithoutBorders-Portable/releases).
 2. Download `MouseWithoutBorders.exe` from the newest test release's **Assets** section.
 3. Put it in a folder where you want to keep it, then run it.
 4. Choose **Run portable here**, or choose **Install for me** and select an install folder. Installation can create a desktop shortcut (on by default) and optionally enable Start with Windows.
@@ -83,7 +83,7 @@ Still being validated:
 - clean first launch, portable mode, self-install, startup, and self-uninstall;
 - Windows firewall prompting;
 - mouse/keyboard, clipboard, file transfer, reconnect, and sleep/wake between real computers;
-- the final cutover from this temporary PowerToys fork to a clean MWB-only repository.
+- final cleanup of the remaining PowerToys source files from the renamed MWB-only repository.
 
 ## Why the repository still contains PowerToys files
 

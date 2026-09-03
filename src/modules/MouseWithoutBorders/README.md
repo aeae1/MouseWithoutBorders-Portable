@@ -29,7 +29,7 @@
 
 ## Downloading
 
-During development, builds are published under the temporary PowerToys fork's [Releases page](https://github.com/aeae1/PowerToys/releases). Download `MouseWithoutBorders.exe` from the newest test release's **Assets** section and use that same release on every connected computer.
+During development, builds are published on the project's [Releases page](https://github.com/aeae1/MouseWithoutBorders-Portable/releases). Download `MouseWithoutBorders.exe` from the newest test release's **Assets** section and use that same release on every connected computer.
 
 The adjacent `.sha256` file is an optional checksum. A release asset is attached only after the tagged source passes the Windows build, isolated-source build, unit tests, and one-file packaging checks.
 
