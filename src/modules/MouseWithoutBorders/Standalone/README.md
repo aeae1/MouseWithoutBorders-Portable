@@ -51,6 +51,8 @@ The underlying encryption remains the modern PowerToys-era implementation: AES-2
 
 This fork deliberately keeps the recognizable **classic MWB tray/title-bar icon shape** but changes its orange accent to green. The purpose is practical: a machine running this fork should be visually distinguishable from an old standalone or Microsoft build at a glance.
 
+The standalone build has one replaceable artwork source: `App/ClassicGreen.ico`. That file is embedded into the EXE, and the title-bar and tray icons are derived from the embedded EXE icon at runtime. The old `App/Icon/notify_default.bmp` and `App/Logo.ico` remain only for upstream/legacy project compatibility and do not control the standalone branding.
+
 ## Extraction strategy
 
 Remove PowerToys-only dependencies incrementally, compile/test after each meaningful change, and keep useful MWB behavior intact. The portable product deliberately omits installed-service UAC/sign-in-screen support, but it must retain normal-desktop clipboard and file-transfer behavior.

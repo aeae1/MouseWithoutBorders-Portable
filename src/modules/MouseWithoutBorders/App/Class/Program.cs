@@ -76,6 +76,11 @@ namespace MouseWithoutBorders.Class
             {
                 return;
             }
+
+            // Do not touch Setting.Values until the first-launch choice has created
+            // (or located) the adjacent preferences file. Initializing it earlier
+            // creates default preferences and leaves the first process hidden.
+            StandaloneBootstrap.InitializeAfterFirstLaunch();
 #endif
 
             ManagedCommon.Logger.InitializeLogger("\\MouseWithoutBorders\\Logs");

@@ -11,7 +11,7 @@ This is a ChatGPT-modified, standalone-only fork of Microsoft PowerToys Mouse Wi
 
 ## What has changed
 
-- Uses the classic Mouse Without Borders look with a green icon and green accents.
+- Uses the classic Mouse Without Borders look with a green icon and green accents. The EXE, title bars, and tray all derive from the single replaceable `App/ClassicGreen.ico` source.
 - Runs as its own app instead of as a PowerToys module.
 - Builds from the Mouse Without Borders source folder alone; the surrounding PowerToys source tree is not required.
 - Removes PowerToys telemetry from the standalone build.
@@ -62,6 +62,12 @@ On first launch, it offers two choices:
 - **Run portable here** creates the prefs file beside the current EXE and runs without installing anything.
 
 No Windows service is installed. This portable edition therefore does not control protected UAC prompts or the Windows sign-in screen. Normal-desktop input, clipboard, and file-transfer behavior remains in scope.
+
+### Replacing the icon artwork
+
+Replace `App/ClassicGreen.ico` before building. It is the standalone product's single icon source: Windows Explorer/the EXE, form title bars, and the tray icon all derive from the icon embedded from this file. A replacement should be a real multi-resolution Windows ICO with 16, 20, 24, 32, 48, 64, 128, and 256 pixel images, 32-bit transparency, and crisp hand-checked 16/20/24 pixel variants. The 256 pixel image may use PNG compression.
+
+`App/Icon/notify_default.bmp` and `App/Logo.ico` are retained upstream/legacy artwork and are not the standalone product icon source.
 
 ## Downloading from GitHub Releases
 

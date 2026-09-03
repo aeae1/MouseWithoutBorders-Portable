@@ -763,8 +763,13 @@ namespace MouseWithoutBorders
 
         private void LinkLabelHelp_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
+#if PORTABLE_SINGLE_FILE
+            linkLabelHelp.LinkVisited = true;
+            StandaloneProduct.OpenProjectPage(this);
+#else
             linkLabelHelp.Enabled = false;
             linkLabelHelp.Enabled = true;
+#endif
         }
 
         private void CheckBoxShareClipboard_CheckedChanged(object sender, EventArgs e)

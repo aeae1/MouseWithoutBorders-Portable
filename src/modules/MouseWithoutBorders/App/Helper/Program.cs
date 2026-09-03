@@ -90,7 +90,11 @@ namespace MouseWithoutBorders
                 }
                 else if (command.Equals("help-ex", StringComparison.OrdinalIgnoreCase))
                 {
+#if PORTABLE_SINGLE_FILE
+                    Core.StandaloneProduct.OpenProjectPage();
+#else
                     Process.Start(@"http://www.aka.ms/mm");
+#endif
                 }
                 else if (command.Equals("InternalError", StringComparison.OrdinalIgnoreCase))
                 {

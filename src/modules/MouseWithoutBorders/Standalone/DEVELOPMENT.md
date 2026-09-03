@@ -101,6 +101,10 @@ Preferences are stored beside the executable as:
 
 If the prefs file is absent, first launch offers a portable mode or a per-user self-install. The default install directory is `%LOCALAPPDATA%\Programs\Mouse Without Borders`; Start with Windows is optional and off by default. The product does not import PowerToys settings automatically.
 
+Startup must not access `Setting.Values` before `PortableApplication.PrepareFirstLaunch()` returns successfully. The settings singleton creates a default prefs file when none exists, so initializing it before the first-launch choice would bypass setup and could leave the first process hidden. `StandaloneBootstrap.InitializeAfterFirstLaunch()` deliberately runs immediately afterward.
+
+The standalone artwork source is `App/ClassicGreen.ico`. MSBuild embeds it in `MouseWithoutBorders.exe`; title bars and the tray icon read the embedded product icon at runtime. Replace that one ICO to change standalone branding. Include crisp 16/20/24/32 pixel images plus larger 48/64/128/256 pixel images with 32-bit transparency.
+
 No Windows service is registered, so protected UAC and Windows sign-in-screen input are intentionally unsupported in the portable product.
 
 ## Build validation

@@ -464,7 +464,7 @@ namespace MouseWithoutBorders
             this.checkBoxVKMap.Size = new System.Drawing.Size(115, 17);
             this.checkBoxVKMap.TabIndex = 174;
             this.checkBoxVKMap.Text = "&Use Key Mappings";
-            this.toolTip.SetToolTip(this.checkBoxVKMap, "Use key mappings to translate your key presses. See http://aka.ms/mm for help.");
+            this.toolTip.SetToolTip(this.checkBoxVKMap, "Use key mappings to translate your key presses. See the project page for help.");
             this.checkBoxVKMap.UseVisualStyleBackColor = true;
             this.checkBoxVKMap.CheckedChanged += new System.EventHandler(this.CheckBoxVKMap_CheckedChanged);
             // 
@@ -1070,12 +1070,12 @@ namespace MouseWithoutBorders
             // 
             this.linkLabelHelp.AutoSize = true;
             this.linkLabelHelp.Dock = System.Windows.Forms.DockStyle.Right;
-            this.linkLabelHelp.Location = new System.Drawing.Point(400, 0);
+            this.linkLabelHelp.Location = new System.Drawing.Point(416, 0);
             this.linkLabelHelp.Name = "linkLabelHelp";
-            this.linkLabelHelp.Size = new System.Drawing.Size(124, 13);
+            this.linkLabelHelp.Size = new System.Drawing.Size(108, 13);
             this.linkLabelHelp.TabIndex = 300;
             this.linkLabelHelp.TabStop = true;
-            this.linkLabelHelp.Text = "&Help - http://aka.ms/mm";
+            this.linkLabelHelp.Text = "&Help / Project page";
             this.linkLabelHelp.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.LinkLabelHelp_LinkClicked);
             // 
             // linkLabelMiniLog

@@ -629,7 +629,13 @@ namespace MouseWithoutBorders
             {
                 Graphics g;
                 Pen p;
+#if PORTABLE_SINGLE_FILE
+                // Keep the standalone tray icon in sync with the icon embedded in the
+                // EXE. Connection/clipboard status overlays are drawn below as before.
+                Bitmap bm = StandaloneBranding.CreateProductIconBitmap();
+#else
                 Bitmap bm = Images.notify_default;
+#endif
 
                 /*
                 if (curIcon == Common.ICON_ONE)
