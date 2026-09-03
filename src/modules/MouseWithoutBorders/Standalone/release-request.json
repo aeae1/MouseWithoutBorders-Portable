@@ -2,7 +2,7 @@
   "tag": "mwb-v0.1.0-test.4",
   "title": "Mouse Without Borders Portable 0.1 Test 4",
   "prerelease": true,
-  "summary": "This is an unsigned test build of the portable green Mouse Without Borders fork. Download `MouseWithoutBorders.exe` from Assets and use this same release on every computer.",
+  "summary": "Test 4 is an unsigned build of the portable green Mouse Without Borders fork. Download `MouseWithoutBorders.exe` from Assets and use this same release on every computer.",
   "changes": [
     "Adds a Create desktop shortcut option to installation, checked by default.",
     "Adds a Portable tab in Settings so a configured portable copy can be installed later.",
