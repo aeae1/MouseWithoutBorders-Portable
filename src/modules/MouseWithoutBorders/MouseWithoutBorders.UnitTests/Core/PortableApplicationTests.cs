@@ -53,6 +53,59 @@ public sealed class PortableApplicationTests
         });
     }
 
+    [TestMethod]
+    public void InstallingPortableCopyShouldCopyCurrentPreferencesAndChangeMode()
+    {
+        var directory = Path.Combine(Path.GetTempPath(), "MouseWithoutBorders.Tests", Guid.NewGuid().ToString("N"));
+        var installDirectory = Path.Combine(directory, "installed");
+        Directory.CreateDirectory(installDirectory);
+        try
+        {
+            var sourceSettingsPath = Path.Combine(directory, PortableApplication.SettingsFileName);
+            var installedSettingsPath = Path.Combine(installDirectory, PortableApplication.SettingsFileName);
+            var existing = new MouseWithoutBordersSettings();
+            existing.AppMode = PortableApplication.AppModePortable;
+            existing.Properties.SecurityKey.Value = "keep-this-portable-key";
+            existing.Properties.FirstRun = false;
+            File.WriteAllText(sourceSettingsPath, JsonSerializer.Serialize(existing, SettingsUtils.SerializerOptions));
+
+            PortableApplication.SavePreferencesForInstall(sourceSettingsPath, installedSettingsPath);
+
+            var installed = ReadSettings(installedSettingsPath);
+            Assert.AreEqual(PortableApplication.AppModeInstalled, installed.AppMode);
+            Assert.AreEqual("keep-this-portable-key", installed.Properties.SecurityKey.Value);
+            Assert.IsFalse(installed.Properties.FirstRun);
+            Assert.IsTrue(File.Exists(sourceSettingsPath), "The running copy keeps its source prefs until it exits.");
+        }
+        finally
+        {
+            Directory.Delete(directory, recursive: true);
+        }
+    }
+
+    [TestMethod]
+    public void InvalidPortablePreferencesShouldNotReplaceInstalledPreferences()
+    {
+        var directory = Path.Combine(Path.GetTempPath(), "MouseWithoutBorders.Tests", Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(directory);
+        try
+        {
+            var sourceSettingsPath = Path.Combine(directory, "source.json");
+            var installedSettingsPath = Path.Combine(directory, "installed.json");
+            File.WriteAllText(sourceSettingsPath, "not valid JSON");
+            File.WriteAllText(installedSettingsPath, "keep existing destination");
+
+            _ = Assert.ThrowsException<InvalidDataException>(
+                () => PortableApplication.SavePreferencesForInstall(sourceSettingsPath, installedSettingsPath));
+
+            Assert.AreEqual("keep existing destination", File.ReadAllText(installedSettingsPath));
+        }
+        finally
+        {
+            Directory.Delete(directory, recursive: true);
+        }
+    }
+
     private static MouseWithoutBordersSettings ReadSettings(string settingsPath)
     {
         return JsonSerializer.Deserialize<MouseWithoutBordersSettings>(

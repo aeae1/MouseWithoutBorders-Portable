@@ -1,26 +1,28 @@
-# Mouse Without Borders standalone extraction
+# Mouse Without Borders portable extraction
 
-This branch is producing a standalone Windows build of Mouse Without Borders from the actively maintained PowerToys-era source while preserving the useful MWB behavior and minimizing unrelated PowerToys baggage.
+This branch is producing a portable Windows build of Mouse Without Borders from the actively maintained PowerToys-era source while preserving the useful MWB behavior and minimizing unrelated PowerToys baggage. The existing `Standalone` directory, project filenames, build symbol, workflow filename, and `mwb-standalone` branch are internal compatibility identifiers; the user-facing product name is **Mouse Without Borders — Portable**.
 
 ## Current status
 
 - Direct `PowerToys.Interop` dependency: **removed**.
 - Native C++/WinRT `PowerToys.GPOWrapper` project dependency: **removed from the MWB app, helper, and service**; MWB has a small local managed compatibility implementation instead.
 - `Settings.UI.Library` project dependency: **removed**; the subset MWB needs now lives with MWB as local compatibility code.
-- `ManagedCommon` / PowerToys telemetry runtime project dependencies: **removed/replaced locally**. PowerToys telemetry is intentionally a no-op in this standalone fork.
-- PowerToys-runner lifetime coupling: **neutralized for standalone operation**.
-- Classic standalone tray/settings UI: **forced on** without requiring the separate PowerToys Settings process.
+- `ManagedCommon` / PowerToys telemetry runtime project dependencies: **removed/replaced locally**. PowerToys telemetry is intentionally a no-op in this portable fork.
+- PowerToys-runner lifetime coupling: **neutralized for portable operation**.
+- Classic MWB tray/settings UI: **forced on** without requiring the separate PowerToys Settings process.
 - Focused Windows x64 build/test workflow: **added** at `.github/workflows/mwb-standalone-build.yml`.
 - Human-friendly shared-key policy: **added**. User-chosen keys of 4+ characters are accepted; generated keys are 10 cryptographically random easy-to-type characters.
 - Classic visual branding: **added**. The original orange 32×32 MWB pixel design is mechanically recolored green, with a matching multi-resolution ICO and exact pixel-grid SVG.
 - PowerToys-free app/helper/service comparison projects: **added**. The distributed portable build now combines the app and clipboard helper into one executable.
-- Shared PowerToys MSBuild/package infrastructure: **removed from the standalone build path**.
+- Shared PowerToys MSBuild/package infrastructure: **removed from the portable build path**.
 - MWB-only build proof: **passing**. CI copies only this directory to an isolated location, builds all three programs there, and runs the unit tests there.
 - Downloadable single-file Windows x64 build: **added** to successful workflow runs.
-- Clean standalone source archive: **added**. PowerToys-only project files and the native module interface are excluded automatically.
-- Portable first launch and per-user self-install: **added**. Preferences stay beside the EXE; installation defaults to the current user's local Programs folder and Start with Windows is optional.
+- Clean portable source archive: **added**. PowerToys-only project files and the native module interface are excluded automatically.
+- Portable first launch and per-user self-install: **added**. Preferences stay beside the EXE; installation defaults to the current user's local Programs folder, a desktop shortcut is offered by default, and Start with Windows is optional.
+- Later installation from Settings: **added**. The Portable tab can install an already-configured copy, preserving and moving its key, matrix, and options before restarting from the installed directory.
+- Quiet long-term key behavior: **added**. Portable builds never expire a key and do not run the legacy timed check that demanded an auto-generated replacement.
 - First-launch startup ordering fix: **added and verified on one real Windows PC**. A brand-new folder no longer creates default preferences before the portable/install choice or leaves the initial process hidden; the two-computer test is still pending.
-- Streamlined machine setup: **added**. The standalone first run opens the classic machine matrix directly, validates checked computer names, and shows plain-language connection state on every configured tile; the legacy blue wizard and its reconfigure link are no longer part of this product flow.
+- Streamlined machine setup: **added**. The portable first run opens the classic machine matrix directly, validates checked computer names, and shows plain-language connection state on every configured tile; the legacy blue wizard and its reconfigure link are no longer part of this product flow.
 - GitHub Releases publishing: **added and proven**. The first tagged test release was built, tested, and populated with the EXE and checksum automatically.
 - Upstream MWB audit through September 3, 2026: **completed**. Microsoft's September 2 receive-safety improvements are incorporated and documented in `UPSTREAM_SYNC.md`.
 - Real-Windows portable/self-install and two-machine regression tests: **not finished yet**.
@@ -52,7 +54,7 @@ The underlying encryption remains the modern PowerToys-era implementation: AES-2
 
 ### Green classic branding
 
-This fork deliberately keeps the recognizable **classic MWB tray/title-bar icon shape** but changes its orange accent to green. The purpose is practical: a machine running this fork should be visually distinguishable from an old standalone or Microsoft build at a glance.
+This fork deliberately keeps the recognizable **classic MWB tray/title-bar icon shape** but changes its orange accent to green. The purpose is practical: a machine running this fork should be visually distinguishable from an old Microsoft build at a glance.
 
 `App/ClassicGreen.svg` reproduces the original 32×32 artwork pixel-for-pixel; the transparent grid, black edging, and pale highlights are unchanged, while only the orange pixels are mechanically shifted to green. `App/ClassicGreen.ico` contains nine nearest-neighbor sizes from 16 through 256 pixels. The ICO is embedded into the EXE, and the title-bar and tray icons derive from it at runtime. The old `App/Icon/notify_default.bmp` remains as the canonical shape reference, and `App/Logo.ico` remains only for upstream/legacy comparison.
 
@@ -78,7 +80,7 @@ MWB used it only for named event constants. The exact event-name literals are re
 
 ### `PowerToys.GPOWrapper` — external project removed
 
-`Core/GpoCompatibility.cs` supplies the policy API MWB still expects without carrying the native PowerToys GPO project into the standalone package.
+`Core/GpoCompatibility.cs` supplies the policy API MWB still expects without carrying the native PowerToys GPO project into the portable package.
 
 ### `Settings.UI.Library` — external project removed
 
@@ -88,15 +90,15 @@ MWB-specific settings models/storage/helper behavior now compile from MWB-local 
 
 `Core/PowerToysRuntimeCompatibility.cs` provides the tiny pieces MWB still calls. Logging is local to MWB and Microsoft PowerToys telemetry calls resolve to a no-op implementation in this fork.
 
-### PowerToys build infrastructure — removed from standalone projects
+### PowerToys build infrastructure — removed from portable projects
 
-The standalone app, helper, service, and test projects now own their target framework, package versions, build properties, and output layout inside the MWB directory. The focused CI workflow proves this by archiving only `src/modules/MouseWithoutBorders`, extracting it outside the PowerToys checkout, building the projects, running the tests, and publishing the one-file product in that isolated copy.
+The portable app, helper, service, and test projects now own their target framework, package versions, build properties, and output layout inside the MWB directory. The focused CI workflow proves this by archiving only `src/modules/MouseWithoutBorders`, extracting it outside the PowerToys checkout, building the projects, running the tests, and publishing the one-file product in that isolated copy.
 
 The older PowerToys-shaped project files remain temporarily as an upstream comparison and compatibility check. They are not needed in the final MWB-only repository.
 
 ### Single-file helper integration — added
 
-The app starts a hidden second copy of `MouseWithoutBorders.exe` in clipboard-helper mode. This preserves the existing helper IPC and clipboard design without shipping a second executable. The self-install mode copies only the EXE and adjacent prefs file, creates a Start menu shortcut, and optionally adds a per-user startup entry.
+The app starts a hidden second copy of `MouseWithoutBorders.exe` in clipboard-helper mode. This preserves the existing helper IPC and clipboard design without shipping a second executable. The self-install mode copies only the EXE and adjacent prefs file, creates a Start Menu shortcut, offers a desktop shortcut by default, and optionally adds a per-user startup entry. A portable copy can invoke the same install flow later from Settings; current preferences are synchronously saved and copied first, the source prefs are removed only after the old process exits, and the installed EXE is then launched.
 
 The service source remains available for upstream comparison, but the portable product does not install or launch a Windows service. Protected UAC prompts and the Windows sign-in screen are intentionally outside the portable edition's supported behavior.
 

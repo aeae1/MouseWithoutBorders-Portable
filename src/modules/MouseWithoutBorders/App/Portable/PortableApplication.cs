@@ -14,6 +14,7 @@ using System.Windows.Forms;
 
 using Microsoft.PowerToys.Settings.UI.Library;
 using Microsoft.Win32;
+using MouseWithoutBorders.Class;
 
 namespace MouseWithoutBorders.Core;
 
@@ -27,6 +28,7 @@ internal static class PortableApplication
     private const string StartupRegistryPath = @"Software\Microsoft\Windows\CurrentVersion\Run";
     private const string StartupValueName = "MouseWithoutBorders";
     private const string StartMenuShortcutName = "Mouse Without Borders.lnk";
+    private const string DesktopShortcutName = "Mouse Without Borders.lnk";
 
     internal static bool IsInstalledCopy { get; private set; }
 
@@ -69,7 +71,12 @@ internal static class PortableApplication
                     return true;
                 }
 
-                return InstallForCurrentUser(dialog.InstallDirectory, dialog.StartWithWindows);
+                return InstallForCurrentUser(
+                    dialog.InstallDirectory,
+                    dialog.StartWithWindows,
+                    dialog.CreateDesktopShortcut,
+                    preserveCurrentPreferences: false,
+                    restartCurrentProcess: false);
             }
             catch (Exception ex)
             {
@@ -108,10 +115,61 @@ internal static class PortableApplication
         SetStartWithWindows(enabled, CurrentExecutablePath);
     }
 
+    internal static bool PromptToInstallCurrentPortableCopy(IWin32Window owner)
+    {
+        if (IsInstalledCopy)
+        {
+            return true;
+        }
+
+        while (true)
+        {
+            using var dialog = new FirstLaunchForm(DefaultInstallDirectory, installingExistingPreferences: true);
+            if (dialog.ShowDialog(owner) != DialogResult.OK || dialog.Choice != FirstLaunchChoice.Install)
+            {
+                return true;
+            }
+
+            try
+            {
+                Setting.Values.SaveSettingsSynchronously();
+                var keepRunning = InstallForCurrentUser(
+                    dialog.InstallDirectory,
+                    dialog.StartWithWindows,
+                    dialog.CreateDesktopShortcut,
+                    preserveCurrentPreferences: true,
+                    restartCurrentProcess: true);
+
+                if (!keepRunning)
+                {
+                    _ = MessageBox.Show(
+                        owner,
+                        "Installation is complete. Mouse Without Borders will now restart from:\r\n\r\n" +
+                        Path.Combine(Path.GetFullPath(Environment.ExpandEnvironmentVariables(dialog.InstallDirectory)), "MouseWithoutBorders.exe"),
+                        "Mouse Without Borders installed",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Information);
+                }
+
+                return keepRunning;
+            }
+            catch (Exception ex)
+            {
+                _ = MessageBox.Show(
+                    owner,
+                    "Mouse Without Borders could not install this portable copy. Your current EXE and preferences have not been removed. You can choose another folder and try again.\r\n\r\n" + ex.Message,
+                    "Installation could not continue",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+            }
+        }
+    }
+
     internal static void BeginUninstall(bool deletePreferences)
     {
         RemoveStartupEntryIfOwnedBy(CurrentExecutablePath);
         RemoveStartMenuShortcut();
+        RemoveDesktopShortcut();
 
         var executablePath = CurrentExecutablePath;
         var settingsPath = CurrentSettingsPath;
@@ -154,7 +212,12 @@ internal static class PortableApplication
         }
     }
 
-    private static bool InstallForCurrentUser(string requestedDirectory, bool startWithWindows)
+    private static bool InstallForCurrentUser(
+        string requestedDirectory,
+        bool startWithWindows,
+        bool createDesktopShortcut,
+        bool preserveCurrentPreferences,
+        bool restartCurrentProcess)
     {
         var installDirectory = Path.GetFullPath(Environment.ExpandEnvironmentVariables(requestedDirectory));
         Directory.CreateDirectory(installDirectory);
@@ -169,24 +232,50 @@ internal static class PortableApplication
             File.Copy(CurrentExecutablePath, installedExecutablePath, overwrite: true);
         }
 
-        SaveInitialSettings(installedSettingsPath, AppModeInstalled);
+        if (preserveCurrentPreferences)
+        {
+            SavePreferencesForInstall(CurrentSettingsPath, installedSettingsPath);
+        }
+        else
+        {
+            SaveInitialSettings(installedSettingsPath, AppModeInstalled);
+        }
+
         CreateStartMenuShortcut(installedExecutablePath);
+        SetDesktopShortcut(createDesktopShortcut, installedExecutablePath);
         SetStartWithWindows(startWithWindows, installedExecutablePath);
 
-        if (isCurrentLocation)
+        if (isCurrentLocation && !restartCurrentProcess)
         {
             IsInstalledCopy = true;
             return true;
         }
 
-        _ = Process.Start(new ProcessStartInfo
-        {
-            FileName = installedExecutablePath,
-            WorkingDirectory = installDirectory,
-            UseShellExecute = true,
-        });
+        ScheduleInstalledLaunchAfterExit(
+            installedExecutablePath,
+            installDirectory,
+            installedSettingsPath.Equals(CurrentSettingsPath, StringComparison.OrdinalIgnoreCase) ? null : CurrentSettingsPath);
 
         return false;
+    }
+
+    internal static void SavePreferencesForInstall(string sourceSettingsPath, string installedSettingsPath)
+    {
+        MouseWithoutBordersSettings settings;
+        try
+        {
+            settings = JsonSerializer.Deserialize<MouseWithoutBordersSettings>(
+                File.ReadAllText(sourceSettingsPath),
+                SettingsUtils.SerializerOptions) ?? throw new InvalidDataException("The current preferences file is empty or invalid.");
+        }
+        catch (JsonException ex)
+        {
+            throw new InvalidDataException("The current preferences file is not valid JSON, so it was not moved.", ex);
+        }
+
+        settings.AppMode = AppModeInstalled;
+        settings.Properties ??= new MouseWithoutBordersProperties();
+        SaveSettingsDocument(installedSettingsPath, settings);
     }
 
     internal static void SaveInitialSettings(string settingsPath, string appMode)
@@ -220,12 +309,7 @@ internal static class PortableApplication
             settings.Properties.FirstRun = true;
         }
 
-        var directory = Path.GetDirectoryName(settingsPath)!;
-        Directory.CreateDirectory(directory);
-
-        var temporaryPath = settingsPath + ".tmp";
-        File.WriteAllText(temporaryPath, JsonSerializer.Serialize(settings, SettingsUtils.SerializerOptions));
-        File.Move(temporaryPath, settingsPath, overwrite: true);
+        SaveSettingsDocument(settingsPath, settings);
     }
 
     private static string ReadAppMode(string settingsPath)
@@ -303,7 +387,28 @@ internal static class PortableApplication
 
     private static void CreateStartMenuShortcut(string executablePath)
     {
-        var shortcutPath = GetStartMenuShortcutPath();
+        CreateShortcut(GetStartMenuShortcutPath(), executablePath);
+    }
+
+    private static string GetDesktopShortcutPath()
+    {
+        return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory), DesktopShortcutName);
+    }
+
+    private static void SetDesktopShortcut(bool enabled, string executablePath)
+    {
+        if (enabled)
+        {
+            CreateShortcut(GetDesktopShortcutPath(), executablePath);
+        }
+        else
+        {
+            RemoveDesktopShortcut();
+        }
+    }
+
+    private static void CreateShortcut(string shortcutPath, string executablePath)
+    {
         Directory.CreateDirectory(Path.GetDirectoryName(shortcutPath)!);
 
         var shellType = Type.GetTypeFromProgID("WScript.Shell") ?? throw new NotSupportedException("Windows shortcut support is unavailable.");
@@ -346,6 +451,61 @@ internal static class PortableApplication
         if (File.Exists(shortcutPath))
         {
             File.Delete(shortcutPath);
+        }
+    }
+
+    private static void RemoveDesktopShortcut()
+    {
+        var shortcutPath = GetDesktopShortcutPath();
+        if (File.Exists(shortcutPath))
+        {
+            File.Delete(shortcutPath);
+        }
+    }
+
+    private static void SaveSettingsDocument(string settingsPath, MouseWithoutBordersSettings settings)
+    {
+        var directory = Path.GetDirectoryName(settingsPath)!;
+        Directory.CreateDirectory(directory);
+
+        var temporaryPath = settingsPath + ".tmp";
+        File.WriteAllText(temporaryPath, JsonSerializer.Serialize(settings, SettingsUtils.SerializerOptions));
+        File.Move(temporaryPath, settingsPath, overwrite: true);
+    }
+
+    private static void ScheduleInstalledLaunchAfterExit(string executablePath, string workingDirectory, string settingsPathToRemove)
+    {
+        var script = new StringBuilder();
+        script.Append("$ErrorActionPreference='SilentlyContinue';");
+        script.Append("Wait-Process -Id ").Append(Environment.ProcessId).Append(';');
+        script.Append("Start-Sleep -Milliseconds 300;");
+        if (!string.IsNullOrWhiteSpace(settingsPathToRemove))
+        {
+            script.Append("Remove-Item -LiteralPath '").Append(EscapePowerShellLiteral(settingsPathToRemove)).Append("' -Force;");
+        }
+
+        script.Append("Start-Process -FilePath '").Append(EscapePowerShellLiteral(executablePath))
+            .Append("' -WorkingDirectory '").Append(EscapePowerShellLiteral(workingDirectory)).Append("';");
+
+        var encodedCommand = Convert.ToBase64String(Encoding.Unicode.GetBytes(script.ToString()));
+        var powerShellPath = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.System),
+            "WindowsPowerShell",
+            "v1.0",
+            "powershell.exe");
+
+        var launchProcess = Process.Start(new ProcessStartInfo
+        {
+            FileName = powerShellPath,
+            Arguments = "-NoProfile -NonInteractive -EncodedCommand " + encodedCommand,
+            CreateNoWindow = true,
+            UseShellExecute = false,
+            WindowStyle = ProcessWindowStyle.Hidden,
+        });
+
+        if (launchProcess is null)
+        {
+            throw new InvalidOperationException("Windows could not start the installed copy.");
         }
     }
 

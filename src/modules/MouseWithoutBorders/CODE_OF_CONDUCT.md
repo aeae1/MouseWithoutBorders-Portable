@@ -1,4 +1,4 @@
-# Mouse Without Borders — Standalone Code of Conduct
+# Mouse Without Borders — Portable Code of Conduct
 
 This project welcomes constructive participation. Communicate respectfully, critique ideas rather than people, protect private information in diagnostics, and give appropriate credit for upstream and community work.
 

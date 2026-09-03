@@ -1,6 +1,6 @@
 # AI-assisted development identity
 
-This fork is being modified interactively for aeae1 with assistance from ChatGPT.
+This portable fork is being modified interactively for aeae1 with assistance from ChatGPT.
 
 Preferred attribution for assistant-driven commits:
 

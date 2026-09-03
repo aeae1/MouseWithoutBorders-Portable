@@ -1,6 +1,6 @@
 # Upstream synchronization record
 
-This file records how the standalone fork tracks Microsoft PowerToys Mouse Without Borders. It exists so future updates can be reviewed deliberately instead of either missing important fixes or merging PowerToys-only dependencies back into the product.
+This file records how the portable fork tracks Microsoft PowerToys Mouse Without Borders. It exists so future updates can be reviewed deliberately instead of either missing important fixes or merging PowerToys-only dependencies back into the product.
 
 ## Current audit position
 
@@ -11,7 +11,7 @@ This file records how the standalone fork tracks Microsoft PowerToys Mouse Witho
 | Last upstream audit | September 3, 2026 |
 | Latest audited MWB commit | [`103d376`](https://github.com/microsoft/PowerToys/commit/103d376c0a987cf350d4594bb3f8d71282fddfd6) |
 | New MWB commits found after the baseline | One |
-| Adoption status | Incorporated into the standalone fork |
+| Adoption status | Incorporated into the portable fork |
 
 The July 31, 2026 PowerToys change increasing PBKDF2 key derivation from 50,000 to 100,000 iterations predates the baseline and is already present in this fork.
 
@@ -40,11 +40,14 @@ Do not overwrite these choices during a future sync:
 - the clipboard helper runs as a hidden mode of the same EXE;
 - `MouseWithoutBorders.prefs.json` lives beside the EXE;
 - first launch offers portable use or a per-user self-install;
+- an already-configured portable copy can install itself later and move its prefs safely;
+- installation offers a desktop shortcut by default;
 - no Windows service, protected-UAC control, or sign-in-screen control;
 - no PowerToys runner lifecycle dependency or PowerToys telemetry;
 - local settings, policy, logging, and runtime compatibility layers instead of PowerToys project references;
 - green classic branding;
 - manually chosen keys require at least four characters and generated keys use ten easy-to-type characters.
+- keys do not expire and the legacy timed generated-key/expiry enforcement is disabled.
 
 ## Future review procedure
 

@@ -1,4 +1,4 @@
-# Contributing to Mouse Without Borders — Standalone
+# Contributing to Mouse Without Borders — Portable
 
 Bug reports, real-PC testing, documentation improvements, and focused code contributions are welcome.
 

@@ -1,6 +1,6 @@
 # AI-assisted development
 
-This standalone Mouse Without Borders fork is being developed by `aeae1` with coding assistance from:
+This portable Mouse Without Borders fork is being developed by `aeae1` with coding assistance from:
 
 **aeae1's Vibe Coding Assistant — ChatGPT (GPT-5.6 Sol)**
 

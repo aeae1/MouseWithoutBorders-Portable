@@ -21,17 +21,21 @@ internal sealed class FirstLaunchForm : System.Windows.Forms.Form
 {
     private readonly TextBox installDirectoryTextBox;
     private readonly CheckBox startWithWindowsCheckBox;
+    private readonly CheckBox createDesktopShortcutCheckBox;
     private readonly Label preferencesPathLabel;
+    private readonly bool installingExistingPreferences;
 
-    internal FirstLaunchForm(string defaultInstallDirectory)
+    internal FirstLaunchForm(string defaultInstallDirectory, bool installingExistingPreferences = false)
     {
-        Text = "Welcome to Mouse Without Borders";
+        this.installingExistingPreferences = installingExistingPreferences;
+
+        Text = installingExistingPreferences ? "Install Mouse Without Borders" : "Welcome to Mouse Without Borders";
         StartPosition = FormStartPosition.CenterScreen;
         FormBorderStyle = FormBorderStyle.FixedDialog;
         MaximizeBox = false;
         MinimizeBox = false;
         ShowInTaskbar = true;
-        ClientSize = new Size(610, 455);
+        ClientSize = new Size(610, 500);
         AutoScaleMode = AutoScaleMode.Dpi;
         BackColor = Color.White;
 
@@ -51,7 +55,7 @@ internal sealed class FirstLaunchForm : System.Windows.Forms.Form
             ForeColor = Color.FromArgb(34, 107, 62),
             Location = new Point(28, 22),
             Size = new Size(550, 36),
-            Text = "How would you like to run it?",
+            Text = installingExistingPreferences ? "Install this portable copy" : "How would you like to run it?",
         };
 
         var descriptionLabel = new Label
@@ -60,7 +64,9 @@ internal sealed class FirstLaunchForm : System.Windows.Forms.Form
             Font = SystemFonts.MessageBoxFont,
             Location = new Point(30, 66),
             Size = new Size(550, 42),
-            Text = "Install a personal copy for everyday use, or run this EXE portably from its current folder. Either way, all settings stay beside the EXE.",
+            Text = installingExistingPreferences
+                ? "Choose where to keep the installed copy. Your existing security key, computer layout, and options will move with it."
+                : "Install a personal copy for everyday use, or run this EXE portably from its current folder. Either way, all settings stay beside the EXE.",
         };
 
         var computerNameLabel = new Label
@@ -108,11 +114,21 @@ internal sealed class FirstLaunchForm : System.Windows.Forms.Form
             UseVisualStyleBackColor = true,
         };
 
+        createDesktopShortcutCheckBox = new CheckBox
+        {
+            AutoSize = true,
+            Checked = true,
+            Font = SystemFonts.MessageBoxFont,
+            Location = new Point(33, 238),
+            Text = "Create a desktop shortcut",
+            UseVisualStyleBackColor = true,
+        };
+
         var preferencesHeadingLabel = new Label
         {
             AutoSize = true,
             Font = new Font(SystemFonts.MessageBoxFont, FontStyle.Bold),
-            Location = new Point(30, 243),
+            Location = new Point(30, 274),
             Text = "Preferences file",
         };
 
@@ -122,7 +138,7 @@ internal sealed class FirstLaunchForm : System.Windows.Forms.Form
             AutoSize = false,
             Font = SystemFonts.MessageBoxFont,
             ForeColor = Color.FromArgb(45, 45, 45),
-            Location = new Point(33, 266),
+            Location = new Point(33, 297),
             Size = new Size(545, 43),
         };
 
@@ -131,9 +147,11 @@ internal sealed class FirstLaunchForm : System.Windows.Forms.Form
             AutoSize = false,
             Font = SystemFonts.MessageBoxFont,
             ForeColor = Color.DimGray,
-            Location = new Point(33, 312),
+            Location = new Point(33, 343),
             Size = new Size(545, 46),
-            Text = "This JSON file stores the shared security key, computer layout, and options locally. Keep it private and beside this copy of the EXE. Deleting it resets first-run setup.",
+            Text = installingExistingPreferences
+                ? "The current JSON preferences will be moved after MWB closes, so the installed copy keeps your security key, computer layout, and options."
+                : "This JSON file stores the shared security key, computer layout, and options locally. Keep it private and beside this copy of the EXE. Deleting it resets first-run setup.",
         };
 
         var privacyLabel = new Label
@@ -141,7 +159,7 @@ internal sealed class FirstLaunchForm : System.Windows.Forms.Form
             AutoSize = false,
             ForeColor = Color.DimGray,
             Font = SystemFonts.MessageBoxFont,
-            Location = new Point(33, 359),
+            Location = new Point(33, 397),
             Size = new Size(545, 36),
             Text = "No service is installed. Protected UAC and Windows sign-in screens are not controlled in this portable edition.",
         };
@@ -152,7 +170,7 @@ internal sealed class FirstLaunchForm : System.Windows.Forms.Form
             FlatStyle = FlatStyle.Flat,
             Font = new Font(SystemFonts.MessageBoxFont, FontStyle.Bold),
             ForeColor = Color.White,
-            Location = new Point(407, 401),
+            Location = new Point(407, 446),
             Size = new Size(171, 36),
             Text = "Install for me",
             UseVisualStyleBackColor = false,
@@ -162,17 +180,18 @@ internal sealed class FirstLaunchForm : System.Windows.Forms.Form
 
         var portableButton = new Button
         {
-            Location = new Point(222, 401),
+            Location = new Point(222, 446),
             Size = new Size(175, 36),
             Text = "Run portable here",
             UseVisualStyleBackColor = true,
+            Visible = !installingExistingPreferences,
         };
         portableButton.Click += PortableButton_Click;
 
         var cancelButton = new Button
         {
             DialogResult = DialogResult.Cancel,
-            Location = new Point(33, 401),
+            Location = new Point(33, 446),
             Size = new Size(92, 36),
             Text = "Cancel",
             UseVisualStyleBackColor = true,
@@ -186,6 +205,7 @@ internal sealed class FirstLaunchForm : System.Windows.Forms.Form
         Controls.Add(installDirectoryTextBox);
         Controls.Add(browseButton);
         Controls.Add(startWithWindowsCheckBox);
+        Controls.Add(createDesktopShortcutCheckBox);
         Controls.Add(preferencesHeadingLabel);
         Controls.Add(preferencesPathLabel);
         Controls.Add(preferencesExplanationLabel);
@@ -205,6 +225,8 @@ internal sealed class FirstLaunchForm : System.Windows.Forms.Form
 
     internal bool StartWithWindows => startWithWindowsCheckBox.Checked;
 
+    internal bool CreateDesktopShortcut => createDesktopShortcutCheckBox.Checked;
+
     private void UpdatePreferencesPathText()
     {
         string installedPreferencesPath;
@@ -220,9 +242,11 @@ internal sealed class FirstLaunchForm : System.Windows.Forms.Form
             installedPreferencesPath = "choose a valid install folder";
         }
 
-        preferencesPathLabel.Text =
-            "Install: " + installedPreferencesPath + "\r\n" +
-            "Portable: " + PortableApplication.CurrentSettingsPath;
+        preferencesPathLabel.Text = installingExistingPreferences
+            ? "Current: " + PortableApplication.CurrentSettingsPath + "\r\n" +
+                "Installed: " + installedPreferencesPath
+            : "Install: " + installedPreferencesPath + "\r\n" +
+                "Portable: " + PortableApplication.CurrentSettingsPath;
     }
 
     private void BrowseButton_Click(object sender, EventArgs e)

@@ -1,11 +1,11 @@
-# Mouse Without Borders standalone development guide
+# Mouse Without Borders portable development guide
 
-This file is the working map for rapid modification of the `mwb-standalone` branch.
+This file is the working map for rapid modification of the `mwb-standalone` branch. The branch, `Standalone` directory, `.Standalone.csproj` files, and `STANDALONE` symbol are retained internal names; public documentation and release titles should call the product **Portable**.
 
 ## Branch convention
 
 - `main`: keep close to the upstream Microsoft PowerToys fork.
-- `mwb-standalone`: standalone extraction plus intentional MWB behavior changes.
+- `mwb-standalone`: portable extraction plus intentional MWB behavior changes.
 - New experiments can use short-lived branches from `mwb-standalone` when a change is invasive.
 
 Do not casually merge `mwb-standalone` back into `main`; the point of `main` is to remain a clean upstream-sync base.
@@ -85,7 +85,7 @@ Treat these files as compatibility-sensitive.
 
 Prefer adding narrowly scoped `*.Standalone.cs` partials where that keeps upstream files cleaner.
 
-### Standalone compatibility layers
+### Portable compatibility layers
 
 - `App/Core/GpoCompatibility.cs` — managed replacement for PowerToys native GPOWrapper.
 - `App/Core/SettingsCompatibility.cs` — MWB-local replacement for the subset of Settings.UI.Library that MWB needs.
@@ -101,7 +101,11 @@ Preferences are stored beside the executable as:
 
 If the prefs file is absent, first launch offers a portable mode or a per-user self-install. The default install directory is `%LOCALAPPDATA%\Programs\Mouse Without Borders`; Start with Windows is optional and off by default. The product does not import PowerToys settings automatically.
 
-After that choice, standalone builds bypass the legacy `SetupPage` wizard and open `FrmMatrix` directly. The first matrix view reveals the generated key. Applying the matrix validates every checked tile before changing the key or settings: checked names must be nonblank and unique, including the local computer. Machine tiles summarize connection state in plain language while the form is open. The removed reconfigure link must not be restored unless it leads to a maintained standalone flow.
+After that choice, portable builds bypass the legacy `SetupPage` wizard and open `FrmMatrix` directly. The first matrix view reveals the generated key. Applying the matrix validates every checked tile before changing the key or settings: checked names must be nonblank and unique, including the local computer. Machine tiles summarize connection state in plain language while the form is open. The removed reconfigure link must not be restored unless it leads to a maintained portable flow.
+
+The first-launch install flow creates a Start Menu shortcut, offers a desktop shortcut checked by default, and optionally enables Start with Windows. A portable user may install later from the **Portable** tab in `FrmMatrix`. That path must synchronously save current settings, write a validated installed-mode copy in the destination, defer removal of the source prefs until the old process exits, then restart the installed EXE. Never delete or overwrite the only valid preferences copy before the destination write succeeds.
+
+The portable build intentionally excludes the legacy one-minute security-key enforcement block. User-chosen keys are valid indefinitely; the app must not reopen Settings, close sockets, or display expiry/regeneration nags merely because a key is old or manually chosen.
 
 Startup must not access `Setting.Values` before `PortableApplication.PrepareFirstLaunch()` returns successfully. The settings singleton creates a default prefs file when none exists, so initializing it before the first-launch choice would bypass setup and could leave the first process hidden. `StandaloneBootstrap.InitializeAfterFirstLaunch()` deliberately runs immediately afterward.
 
@@ -138,15 +142,15 @@ Already removed from MWB executables:
 - direct `PowerToys.Interop` dependency;
 - native C++ `PowerToys.GPOWrapper` dependency;
 - full `Settings.UI.Library` project dependency (replaced by MWB-local compatibility types).
-- PowerToys runner lifecycle coupling in standalone mode;
-- Microsoft PowerToys telemetry in standalone mode;
+- PowerToys runner lifecycle coupling in portable mode;
+- Microsoft PowerToys telemetry in portable mode;
 - external `ManagedCommon` runtime/project dependencies;
 - root PowerToys build-system and package-version dependencies;
 - PowerToys-branded app/helper/service executable identities.
 
 Already proven by CI:
 
-- the standalone app, helper, service, and unit tests build from an archive containing only this MWB directory;
+- the portable app, helper, service, and unit tests build from an archive containing only this MWB directory;
 - unit tests run successfully in that isolated directory;
 - a single self-contained Windows x64 EXE is uploaded after successful builds;
 - the portable prefs path, same-EXE clipboard-helper mode, and per-user startup controls compile in the isolated source build.

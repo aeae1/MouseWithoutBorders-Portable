@@ -39,6 +39,7 @@ namespace ManagedCommon
     /// </summary>
     internal static class Logger
     {
+        private const long MaxLogFileBytes = 5 * 1024 * 1024;
         private static readonly object FileLock = new();
         private static string logFilePath;
 
@@ -97,6 +98,11 @@ namespace ManagedCommon
 
                 lock (FileLock)
                 {
+                    if (File.Exists(logFilePath) && new FileInfo(logFilePath).Length >= MaxLogFileBytes)
+                    {
+                        File.Move(logFilePath, logFilePath + ".previous", overwrite: true);
+                    }
+
                     File.AppendAllText(logFilePath, line + Environment.NewLine, Encoding.UTF8);
                 }
             }

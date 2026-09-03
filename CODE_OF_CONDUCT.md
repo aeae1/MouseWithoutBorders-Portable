@@ -1,4 +1,4 @@
-# Mouse Without Borders — Standalone Code of Conduct
+# Mouse Without Borders — Portable Code of Conduct
 
 This project welcomes constructive bug reports, testing, documentation, and code contributions.
 

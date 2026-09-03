@@ -151,6 +151,20 @@ namespace MouseWithoutBorders.Class
             }
         }
 
+        internal void SaveSettingsSynchronously()
+        {
+            if (Common.RunOnLogonDesktop)
+            {
+                return;
+            }
+
+            lock (_loadingSettingsLock)
+            {
+                _settings.Properties = (MouseWithoutBordersProperties)_properties.Clone();
+                _settings.Save(_settingsUtils);
+            }
+        }
+
         private void SaveSettingsToJson(MouseWithoutBordersProperties properties_to_save)
         {
             _settings.Properties = properties_to_save;

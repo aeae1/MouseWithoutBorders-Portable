@@ -4,7 +4,7 @@ Mouse Without Borders handles keyboard/mouse input, clipboard contents, files, a
 
 ## Supported versions
 
-Only the newest GitHub prerelease/release of this standalone fork is supported. Older test builds may contain known defects and should not be used to evaluate whether a security issue is still present.
+Only the newest GitHub prerelease/release of this portable fork is supported. Older test builds may contain known defects and should not be used to evaluate whether a security issue is still present.
 
 ## Reporting a vulnerability
 

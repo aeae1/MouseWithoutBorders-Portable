@@ -493,6 +493,7 @@ namespace MouseWithoutBorders
                         Helper.RunDDHelper();
                     }
 
+#if !STANDALONE
                     if (count == 600)
                     {
                         if (!Encryption.GeneratedKey)
@@ -529,6 +530,7 @@ namespace MouseWithoutBorders
                             }
                         }
                     }
+#endif
                 }
 
                 if (count == 20)

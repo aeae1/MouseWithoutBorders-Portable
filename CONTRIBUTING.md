@@ -1,6 +1,6 @@
-# Contributing to Mouse Without Borders — Standalone
+# Contributing to Mouse Without Borders — Portable
 
-Thanks for helping improve this unofficial standalone Mouse Without Borders fork.
+Thanks for helping improve this unofficial portable Mouse Without Borders fork.
 
 ## Before opening an issue
 

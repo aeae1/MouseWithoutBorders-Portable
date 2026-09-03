@@ -1,4 +1,4 @@
-name: MWB standalone build
+name: MWB portable build
 
 on:
   workflow_dispatch:
@@ -64,7 +64,7 @@ jobs:
           /p:Platform=x64
           /p:BuildTests=false
 
-      - name: Build PowerToys-free standalone app project
+      - name: Build PowerToys-free portable app project
         shell: pwsh
         run: >-
           msbuild
@@ -74,7 +74,7 @@ jobs:
           /p:Configuration=Release
           /p:Platform=x64
 
-      - name: Build PowerToys-free standalone helper project
+      - name: Build PowerToys-free helper comparison project
         shell: pwsh
         run: >-
           msbuild
@@ -84,7 +84,7 @@ jobs:
           /p:Configuration=Release
           /p:Platform=x64
 
-      - name: Build PowerToys-free standalone service project
+      - name: Build PowerToys-free service comparison project
         shell: pwsh
         run: >-
           msbuild
@@ -94,7 +94,7 @@ jobs:
           /p:Configuration=Release
           /p:Platform=x64
 
-      - name: Verify the standalone projects outside the PowerToys tree
+      - name: Verify the portable projects outside the PowerToys tree
         shell: pwsh
         run: |
           $archivePath = Join-Path $env:RUNNER_TEMP 'mwb-source.zip'
@@ -150,10 +150,10 @@ jobs:
             -Destination $portableRoot `
             -NoRestore
 
-      - name: Upload clean standalone source
+      - name: Upload clean portable source
         uses: actions/upload-artifact@v4
         with:
-          name: MouseWithoutBorders-clean-source-${{ github.sha }}
+          name: MouseWithoutBorders-portable-source-${{ github.sha }}
           path: ${{ runner.temp }}/mwb-source.zip
           if-no-files-found: error
           retention-days: 14
@@ -196,7 +196,7 @@ jobs:
             title="Mouse Without Borders ${tag#mwb-v}"
             prerelease=true
             printf '%s\n' \
-              'Unsigned test build of the standalone green Mouse Without Borders fork.' \
+              'Unsigned test build of the portable green Mouse Without Borders fork.' \
               '' \
               'Download `MouseWithoutBorders.exe` from Assets and use the same release on every computer.' \
               > "$notes_file"
