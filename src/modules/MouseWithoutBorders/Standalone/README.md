@@ -12,13 +12,15 @@ This branch is producing a standalone Windows build of Mouse Without Borders fro
 - Classic standalone tray/settings UI: **forced on** without requiring the separate PowerToys Settings process.
 - Focused Windows x64 build/test workflow: **added** at `.github/workflows/mwb-standalone-build.yml`.
 - Human-friendly shared-key policy: **added**. User-chosen keys of 4+ characters are accepted; generated keys are 10 cryptographically random easy-to-type characters.
-- Classic visual branding: **added**. The old orange MWB tray/title-bar design is green in this fork.
+- Classic visual branding: **added**. The old orange MWB tray/title-bar design is green in this fork, with a valid multi-resolution ICO and an editable SVG source.
 - PowerToys-free app/helper/service comparison projects: **added**. The distributed portable build now combines the app and clipboard helper into one executable.
 - Shared PowerToys MSBuild/package infrastructure: **removed from the standalone build path**.
 - MWB-only build proof: **passing**. CI copies only this directory to an isolated location, builds all three programs there, and runs the unit tests there.
 - Downloadable single-file Windows x64 build: **added** to successful workflow runs.
 - Clean standalone source archive: **added**. PowerToys-only project files and the native module interface are excluded automatically.
 - Portable first launch and per-user self-install: **added**. Preferences stay beside the EXE; installation defaults to the current user's local Programs folder and Start with Windows is optional.
+- First-launch startup ordering fix: **added and awaiting real-PC retest**. A brand-new folder no longer creates default preferences before the portable/install choice or leaves the initial process hidden.
+- GitHub Releases publishing: **added and proven**. The first tagged test release was built, tested, and populated with the EXE and checksum automatically.
 - Upstream MWB audit through September 3, 2026: **completed**. Microsoft's September 2 receive-safety improvements are incorporated and documented in `UPSTREAM_SYNC.md`.
 - Real-Windows portable/self-install and two-machine regression tests: **not finished yet**.
 
@@ -51,7 +53,7 @@ The underlying encryption remains the modern PowerToys-era implementation: AES-2
 
 This fork deliberately keeps the recognizable **classic MWB tray/title-bar icon shape** but changes its orange accent to green. The purpose is practical: a machine running this fork should be visually distinguishable from an old standalone or Microsoft build at a glance.
 
-The standalone build has one replaceable artwork source: `App/ClassicGreen.ico`. That file is embedded into the EXE, and the title-bar and tray icons are derived from the embedded EXE icon at runtime. The old `App/Icon/notify_default.bmp` and `App/Logo.ico` remain only for upstream/legacy project compatibility and do not control the standalone branding.
+`App/ClassicGreen.svg` is the editable vector artwork. `App/ClassicGreen.ico` is the generated Windows asset and contains nine real sizes from 16 through 256 pixels. The ICO is embedded into the EXE, and the title-bar and tray icons derive from it at runtime. The old `App/Icon/notify_default.bmp` and `App/Logo.ico` remain only for upstream/legacy comparison and do not control standalone branding.
 
 ## Extraction strategy
 
@@ -107,9 +109,9 @@ The service source remains available for upstream comparison, but the portable p
 6. ~~Make app + helper + service + tests build from an MWB-only directory tree.~~
 7. ~~Rename executable/service identities used by standalone builds and update matching references together.~~
 8. ~~Publish the app as one self-contained EXE with adjacent portable preferences and optional per-user self-install.~~
-9. Create the clean `aeae1/MouseWithoutBorders` repository with only required source/assets/tests/build files.
-10. **Finish real-Windows validation of first launch, self-install, startup, self-uninstall, and Windows firewall prompting.**
-11. Real-machine regression testing: input switching, clipboard, file transfer, reconnect, and sleep/wake behavior.
+9. **Finish real-Windows validation of first launch, self-install, startup, self-uninstall, and Windows firewall prompting.**
+10. Complete a basic two-machine regression pass: input switching, clipboard, file transfer, reconnect, and sleep/wake behavior.
+11. Create the clean `aeae1/MouseWithoutBorders` repository with only required source/assets/tests/build files, then remove the temporary PowerToys comparison tree.
 
 ## AI-assisted development
 

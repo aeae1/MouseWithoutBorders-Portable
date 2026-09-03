@@ -1,83 +1,104 @@
-# Mouse Without Borders — Standalone Vibe-Coded Fork
+<p align="center">
+  <img src="src/modules/MouseWithoutBorders/App/ClassicGreen.svg" width="180" alt="Green Mouse Without Borders standalone icon">
+</p>
 
-## What this is
+<h1 align="center">Mouse Without Borders — Standalone</h1>
 
-This is a **ChatGPT-assisted / vibe-coded modified version of Microsoft Mouse Without Borders**.
+<p align="center">
+  <strong>Modern Mouse Without Borders, separated from PowerToys and packaged as one portable Windows EXE.</strong><br>
+  Vibe-coded with ChatGPT from Microsoft's open-source implementation.
+</p>
 
-The goal is simple:
+<p align="center">
+  <a href="https://github.com/aeae1/PowerToys/releases">Download a test release</a>
+  ·
+  <a href="https://github.com/aeae1/PowerToys/actions/workflows/mwb-standalone-build.yml">Windows build status</a>
+</p>
 
-- Make **Mouse Without Borders a true standalone Windows app again**.
-- Keep the newer open-source PowerToys-era MWB fixes and improvements.
-- Remove everything that is only needed by the rest of PowerToys.
-- Preserve **mouse/keyboard sharing, clipboard sharing, file transfer, service/UAC support, and the classic machine-layout experience**.
-- Add a few quality-of-life modifications without turning MWB into a bloated project.
-- Keep the finished repository as small, clean, and easy to vibe-code as practical.
+> [!IMPORTANT]
+> This is an unofficial test build, not a Microsoft release. Automated Windows builds and unit tests pass, but the new first-launch, self-install, and two-computer behavior is still being tested on real PCs.
 
-> **Not an official Microsoft build.** This fork is based on Microsoft's open-source PowerToys implementation of Mouse Without Borders and retains the upstream MIT license/copyright notices.
+## What this project is
 
-## Current modifications
+This fork keeps the maintained PowerToys-era Mouse Without Borders engine while turning it back into a focused standalone application. It is intended for people who want MWB without installing or running the rest of PowerToys.
 
-### 2026-09-01
+The finished product is deliberately small from a user's perspective:
 
-- Created the dedicated `mwb-standalone` development branch.
-- Began extracting MWB from the larger PowerToys application.
-- Removed MWB's direct dependency on `PowerToys.Interop` while preserving the same named reconnect/toggle events.
-- Replaced direct PowerToys GPO integration with a small local MWB compatibility layer.
-- Brought the MWB settings compatibility code into the MWB project so it does not need the PowerToys Settings project at runtime.
-- Replaced PowerToys runner/telemetry plumbing with local standalone compatibility code; PowerToys telemetry is a no-op in this fork.
-- Added focused Windows GitHub Actions build/test coverage for MWB.
-- Changed security-key validation so **you may choose your own key**.
-- Reduced the custom-key minimum from 16 characters to **4 characters**.
-- Replaced the old formulaic generated-key pattern with a **10-character random, easy-to-type key**.
-- Generated keys now use an unambiguous lowercase/number alphabet instead of the repeating lowercase → uppercase → number → symbol pattern.
-- Added unit tests for the new key behavior.
-- Added **green classic MWB branding**: the familiar old orange tray/title-bar icon has green accents in this fork so it is recognizable at a glance.
-- Added AI-assisted development/commit attribution.
+- one self-contained `MouseWithoutBorders.exe`;
+- one adjacent `MouseWithoutBorders.prefs.json` settings file;
+- no installer package and no required PowerToys installation;
+- optional per-user self-install and Start with Windows support;
+- the classic MWB identity recolored green so this fork is easy to recognize.
+
+## Fork-specific changes
+
+- Runs independently of the PowerToys runner and Settings application.
+- Keeps normal-desktop mouse, keyboard, clipboard, file-transfer, drag/drop, machine-layout, reconnect, and encryption behavior.
+- Includes Microsoft's September 2, 2026 incoming-file safety improvements.
+- Folds the clipboard helper into a hidden second mode of the same EXE.
+- Stores preferences beside the EXE for genuinely portable operation.
+- Offers **Install for me** or **Run portable here** when no preferences file exists.
+- Uses a per-user install folder by default, so installation does not require administrator access.
+- Allows custom security keys of four or more characters and generates easy-to-type random ten-character keys.
+- Removes PowerToys telemetry from the standalone build.
+- Uses one green icon source for the EXE, title bars, tray, and repository artwork.
+- Builds and tests from an isolated MWB-only source tree in GitHub Actions.
+
+## Download and run
+
+1. Open [Releases](https://github.com/aeae1/PowerToys/releases).
+2. Download `MouseWithoutBorders.exe` from the newest test release's **Assets** section.
+3. Put it in a folder where you want to keep it, then run it.
+4. Choose **Run portable here**, or choose **Install for me** and select an install folder.
+
+Use the same release on every connected computer while the fork is being tested.
+
+## Intentional limitations
+
+This portable edition does not install a Windows service. It therefore does not control protected UAC prompts, the Windows sign-in screen, or other secure desktops. Those features conflict with the project's one-EXE, no-admin, portable design.
+
+Current builds are unsigned and may trigger Windows SmartScreen. The automated release workflow only attaches an EXE after the exact tagged source builds and tests successfully.
 
 ## Current status
 
-**Work in progress — but the MWB code is already substantially separated from PowerToys.**
+The project is approximately **85% complete**.
 
-The largest remaining cleanup is the **build/project infrastructure**: the MWB projects still inherit some shared PowerToys MSBuild props/package-version infrastructure. The next milestone is making the MWB app, helper, service, and tests build from an MWB-only tree.
+Completed:
 
-After that, the plan is to move the finished product into a clean repository named **`aeae1/MouseWithoutBorders`** and leave unrelated PowerToys code behind.
+- standalone compilation and PowerToys dependency removal;
+- single-EXE packaging;
+- portable preferences and optional self-install/startup controls;
+- green multi-resolution branding;
+- release automation;
+- upstream audit and September 2026 transfer-safety sync;
+- Windows builds, isolated-source builds, and unit tests.
 
-## Do not regress
+Still being validated:
 
-These are core features and should remain working while the project is modified:
+- clean first launch, portable mode, self-install, startup, and self-uninstall;
+- Windows firewall prompting;
+- mouse/keyboard, clipboard, file transfer, reconnect, and sleep/wake between real computers;
+- the final cutover from this temporary PowerToys fork to a clean MWB-only repository.
 
-- Mouse sharing
-- Keyboard sharing
-- Clipboard text/images
-- **File transfer**
-- Drag/drop behavior where supported
-- Machine matrix/layout
-- Reconnect behavior
-- Windows service mode
-- UAC / secure-desktop / logon support
+## Why the repository still contains PowerToys files
 
-## Development rules
+The `mwb-standalone` branch temporarily retains the surrounding PowerToys tree as a comparison and recovery safety net. The standalone source already builds from `src/modules/MouseWithoutBorders` alone, and CI produces a clean source archive with known PowerToys-only files excluded.
 
-- Prefer MWB-only code over PowerToys framework dependencies.
-- Delete unrelated baggage once a dependency has been proven unnecessary.
-- Do **not** delete useful MWB functionality just because it is complicated.
-- Preserve compatibility between machines running the same fork build.
-- Warn about weak user choices when useful, but do not needlessly block them.
-- Make changes in small steps and let CI catch compile/test regressions.
-- Keep this README's dated modification list current.
+After the corrected build passes basic two-PC testing, the MWB-only tree will become the final repository and unrelated PowerToys files and branches can be removed without losing a needed dependency.
 
-## AI-assisted development
+## Documentation
 
-The custom fork modifications documented above are being performed in ChatGPT coding sessions through the repository owner's authenticated GitHub connection. The repository owner has **not manually authored the current custom code changes merely because GitHub displays the authenticated account on the commits**.
+- [Standalone project README](src/modules/MouseWithoutBorders/README.md)
+- [Detailed extraction status](src/modules/MouseWithoutBorders/Standalone/README.md)
+- [Development and compatibility guide](src/modules/MouseWithoutBorders/Standalone/DEVELOPMENT.md)
+- [Upstream synchronization record](src/modules/MouseWithoutBorders/Standalone/UPSTREAM_SYNC.md)
+- [AI-assistance disclosure](src/modules/MouseWithoutBorders/Standalone/AI_ASSISTANCE.md)
+- [Contributing](CONTRIBUTING.md)
+- [Security policy](SECURITY.md)
+- [Code of Conduct](CODE_OF_CONDUCT.md)
 
-AI-assisted work is identified as:
+## License and attribution
 
-**aeae1's vibe coding assistant — ChatGPT GPT-5.6 Sol**
+This project is derived from Microsoft PowerToys Mouse Without Borders and remains under the [MIT License](LICENSE). Microsoft and the original Mouse Without Borders/PowerToys contributors retain attribution for their upstream work.
 
-Commits use an `AI-Assisted-By` trailer where practical.
-
-## Upstream
-
-Upstream source: **Microsoft PowerToys / Mouse Without Borders**
-
-This development branch temporarily remains inside the PowerToys fork so dependencies can be removed safely and tested incrementally. The intended final product repository contains **only MWB and the files actually required to build, test, package, and document it**.
+The standalone extraction and fork-specific changes are developed for repository owner `aeae1` through ChatGPT coding sessions. This repository is not affiliated with or endorsed by Microsoft.

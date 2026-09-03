@@ -1,87 +1,69 @@
-# Mouse Without Borders — Standalone Green Fork
+<p align="center">
+  <img src="App/ClassicGreen.svg" width="180" alt="Green Mouse Without Borders standalone icon">
+</p>
 
-## Vibe-coded with ChatGPT
+<h1 align="center">Mouse Without Borders — Standalone</h1>
 
-This is a ChatGPT-modified, standalone-only fork of Microsoft PowerToys Mouse Without Borders. The goal is to keep the actively maintained Mouse Without Borders app as one portable EXE without requiring the rest of PowerToys.
-
-**Last modified: September 3, 2026**
+<p align="center">
+  <strong>One portable EXE. Preferences beside it. No PowerToys installation.</strong><br>
+  An unofficial, ChatGPT-assisted standalone fork of Microsoft's open-source Mouse Without Borders.
+</p>
 
 > [!IMPORTANT]
-> This fork is still in development. Automated Windows builds and tests are in place, but the new single-EXE first-launch, self-install, startup, self-uninstall, and two-computer behavior still require real-Windows testing.
+> This project is in prerelease testing. Automated Windows builds and tests pass, but first-launch, installation, and two-computer behavior still need continued real-hardware validation.
 
-## What has changed
+## Highlights
 
-- Uses the classic Mouse Without Borders look with a green icon and green accents. The EXE, title bars, and tray all derive from the single replaceable `App/ClassicGreen.ico` source.
-- Runs as its own app instead of as a PowerToys module.
-- Builds from the Mouse Without Borders source folder alone; the surrounding PowerToys source tree is not required.
-- Removes PowerToys telemetry from the standalone build.
-- Accepts a manually chosen security key with 4 or more characters.
-- Generates easy-to-type 10-character keys without easily confused characters.
-- Preserves modern keyboard/mouse sharing, clipboard sharing, file transfer, and encryption for normal Windows desktops.
-- Includes Microsoft's September 2, 2026 receive-safety update: incoming files are staged before replacing their destination, incomplete transfers are discarded, received lengths are checked, and overlapping transfers are handled safely.
-- Runs its clipboard helper as a hidden second mode of the same EXE, so no companion program is required.
-- Produces one self-contained Windows x64 EXE after a successful automated build.
-- Produces a clean, repo-ready source archive with PowerToys-only project files omitted.
-- Creates `MouseWithoutBorders.prefs.json` beside the EXE on first launch.
-- Offers either portable use or a per-user self-install, with an optional Start with Windows setting that is off by default.
+- One self-contained x64 `MouseWithoutBorders.exe`.
+- `MouseWithoutBorders.prefs.json` stays beside the EXE.
+- First launch offers **Install for me** or **Run portable here**.
+- Per-user installation defaults to `%LOCALAPPDATA%\Programs\Mouse Without Borders` and does not require administrator access.
+- Optional Start with Windows support, off by default.
+- Clipboard-helper behavior is folded into a hidden mode of the same EXE.
+- Mouse, keyboard, clipboard, file-transfer, drag/drop, layout, reconnect, and modern encryption remain in scope for normal desktops.
+- Microsoft's September 2, 2026 incoming-file safety update is included.
+- PowerToys runtime dependencies and telemetry are removed from the standalone build.
+- The classic MWB symbol is green and shared by the EXE, title bars, tray, and repository page.
 
-## Upstream tracking
+## Downloading
 
-This fork started from PowerToys commit `becc96f59cf18f3128fedbd6856a5248104216dd` dated August 14, 2026. Microsoft PowerToys `main` was audited again on September 3, 2026. The one newer MWB-specific change, upstream commit [`103d376`](https://github.com/microsoft/PowerToys/commit/103d376c0a987cf350d4594bb3f8d71282fddfd6), has been incorporated.
+During development, builds are published under the temporary PowerToys fork's [Releases page](https://github.com/aeae1/PowerToys/releases). Download `MouseWithoutBorders.exe` from the newest test release's **Assets** section and use that same release on every connected computer.
 
-Upstream synchronization is reviewed rather than merged blindly so that useful MWB fixes are retained without restoring PowerToys runtime dependencies, telemetry, multi-program packaging, or service installation. The detailed audit record and deliberate fork differences are in [`Standalone/UPSTREAM_SYNC.md`](Standalone/UPSTREAM_SYNC.md).
+The adjacent `.sha256` file is an optional checksum. A release asset is attached only after the tagged source passes the Windows build, isolated-source build, unit tests, and one-file packaging checks.
 
-## Progress
+## First launch
 
-The extraction is about **80% complete**.
+If no prefs file exists beside the EXE, MWB offers:
 
-Finished:
+- **Install for me** — copies the EXE to a chosen per-user folder, creates its adjacent prefs file and Start Menu shortcut, and optionally enables Start with Windows.
+- **Run portable here** — creates the prefs file in the current folder and continues without installation.
+- **Cancel** — exits without installing or starting MWB.
 
-- standalone app project;
-- standalone app, helper, and service comparison projects;
-- clean standalone program names;
-- PowerToys-free build configuration;
-- automated x64 build and unit tests from an isolated MWB-only folder;
-- green classic branding and friendlier key generation;
-- single-file publish script and first-launch portable/self-install experience;
-- installed-mode tray controls for Start with Windows and self-uninstall.
+The app does not install a Windows service. Protected UAC prompts and the Windows sign-in screen are therefore intentionally unsupported; normal desktop operation remains the target.
 
-Still to do:
+## Fork-specific behavior
 
-- finish real-Windows testing of portable preferences, self-install, startup, firewall prompting, and self-uninstall;
-- move the finished MWB-only tree into the clean `aeae1/MouseWithoutBorders` repository;
-- test input, clipboard, file transfer, reconnect, and sleep/wake behavior between real Windows computers.
+### Security keys
 
-## Running the portable app
+- Users may enter their own key.
+- The minimum accepted custom key length is four characters.
+- Generated keys are ten random characters from `abcdefghjkmnpqrstuvwxyz23456789`.
+- Easily confused characters and keyboard-layout-sensitive punctuation are excluded.
+- Longer random secrets remain safer than short human-chosen keys.
 
-The downloadable build contains exactly one program: `MouseWithoutBorders.exe`.
+### Portable settings
 
-On first launch, it offers two choices:
+The only product settings file is:
 
-- **Install for me** copies the EXE to `%LOCALAPPDATA%\Programs\Mouse Without Borders`, creates the adjacent prefs file and a Start menu shortcut, and optionally enables Start with Windows.
-- **Run portable here** creates the prefs file beside the current EXE and runs without installing anything.
+`MouseWithoutBorders.prefs.json`
 
-No Windows service is installed. This portable edition therefore does not control protected UAC prompts or the Windows sign-in screen. Normal-desktop input, clipboard, and file-transfer behavior remains in scope.
+It lives beside the currently running EXE. Do not publish it: it contains the shared security key used by your connected computers.
 
-### Replacing the icon artwork
+### Green standalone branding
 
-Replace `App/ClassicGreen.ico` before building. It is the standalone product's single icon source: Windows Explorer/the EXE, form title bars, and the tray icon all derive from the icon embedded from this file. A replacement should be a real multi-resolution Windows ICO with 16, 20, 24, 32, 48, 64, 128, and 256 pixel images, 32-bit transparency, and crisp hand-checked 16/20/24 pixel variants. The 256 pixel image may use PNG compression.
+`App/ClassicGreen.svg` is the editable, resolution-independent artwork source. `App/ClassicGreen.ico` is the compiled Windows icon containing 16, 20, 24, 32, 40, 48, 64, 128, and 256 pixel images. The standalone EXE, title bars, and tray all derive from that embedded ICO.
 
-`App/Icon/notify_default.bmp` and `App/Logo.ico` are retained upstream/legacy artwork and are not the standalone product icon source.
-
-## Downloading from GitHub Releases
-
-Permanent test downloads belong on the repository's **Releases** page, under the release's **Assets** heading. Download `MouseWithoutBorders.exe`; the adjacent `.sha256` file is an optional checksum for verifying the download.
-
-To publish a test release from the current `aeae1/PowerToys` development repository:
-
-1. Open the repository's **Releases** page and select **Draft a new release**.
-2. Select **Choose a tag**, type a new tag such as `mwb-v0.1.0-test.1`, and create it from the `mwb-standalone` branch.
-3. Give the release a simple title, such as `Mouse Without Borders 0.1 test 1`.
-4. Select **Set as a pre-release**, then publish the release.
-5. GitHub automatically builds and tests that exact tagged source. After the workflow finishes, refresh the release page; `MouseWithoutBorders.exe` and `MouseWithoutBorders.exe.sha256` will appear under **Assets**.
-
-The release may appear temporarily without the EXE while GitHub is compiling it. If the build fails, no untested EXE is attached. In the future MWB-only repository, the same process uses ordinary tags such as `v0.1.0-test.1`.
+The old `App/Icon/notify_default.bmp` and `App/Logo.ico` remain temporarily for upstream/legacy comparison builds; they do not control standalone branding.
 
 ## Building from source
 
@@ -91,32 +73,32 @@ Prerequisites:
 - Visual Studio Build Tools with MSBuild and the .NET desktop workload;
 - .NET 10 SDK.
 
-Open a Visual Studio Developer PowerShell window in the repository directory, then run:
+From a Visual Studio Developer PowerShell window in this directory:
 
 ```powershell
 .\build.ps1 -Configuration Release -Platform x64 -RunTests
 ```
 
-The output is written to `artifacts/standalone/x64/Release`.
-
-To publish the single-file app:
+To publish the one-file application:
 
 ```powershell
 .\publish-portable.ps1 -Configuration Release -Platform x64 -Destination .\portable
 ```
 
-## Safety and compatibility
+## Project status
 
-Use the same fork build on every connected computer while this work is being tested. Compatibility with the old Garage standalone release `2.2.1.0327` is not assumed.
+The extraction is approximately **85% complete**. The MWB folder builds independently, and CI already packages it as a clean source archive. Remaining work is primarily real-Windows validation and the final move into the dedicated `aeae1/MouseWithoutBorders` repository.
 
-The 4-character minimum is an intentional convenience option. A longer, randomly generated key is safer, and the built-in generator remains the recommended choice.
+See:
 
-## Project notes
-
-- Detailed extraction status: [`Standalone/README.md`](Standalone/README.md)
-- Development and compatibility guide: [`Standalone/DEVELOPMENT.md`](Standalone/DEVELOPMENT.md)
-- AI-assistance disclosure: [`Standalone/AI_ASSISTANCE.md`](Standalone/AI_ASSISTANCE.md)
+- [Detailed extraction status](Standalone/README.md)
+- [Development and compatibility guide](Standalone/DEVELOPMENT.md)
+- [Upstream synchronization record](Standalone/UPSTREAM_SYNC.md)
+- [AI-assistance disclosure](Standalone/AI_ASSISTANCE.md)
+- [Contributing](CONTRIBUTING.md)
+- [Security policy](SECURITY.md)
+- [Code of Conduct](CODE_OF_CONDUCT.md)
 
 ## License and attribution
 
-This work is derived from Microsoft PowerToys Mouse Without Borders and remains under the repository's MIT License. Microsoft and the original PowerToys contributors retain attribution for the upstream work. The standalone extraction and fork-specific changes are developed through ChatGPT coding sessions for repository owner `aeae1`.
+This work is derived from Microsoft PowerToys Mouse Without Borders and remains under the [MIT License](LICENSE). Microsoft and the original contributors retain attribution for upstream work. This fork is not affiliated with or endorsed by Microsoft.

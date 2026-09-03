@@ -1,41 +1,32 @@
-<!-- BEGIN MICROSOFT SECURITY.MD V0.0.9 BLOCK -->
+# Security Policy
 
-# Security
+Mouse Without Borders handles keyboard/mouse input, clipboard contents, files, and network connections between trusted computers. Please treat potential vulnerabilities carefully.
 
-Microsoft takes the security of our software products and services seriously, which includes all source code repositories managed through our GitHub organizations, which include [Microsoft](https://github.com/Microsoft), [Azure](https://github.com/Azure), [DotNet](https://github.com/dotnet), [AspNet](https://github.com/aspnet) and [Xamarin](https://github.com/xamarin).
+## Supported versions
 
-If you believe you have found a security vulnerability in any Microsoft-owned repository that meets [Microsoft's definition of a security vulnerability](https://aka.ms/security.md/definition), please report it to us as described below.
+Only the newest GitHub prerelease/release of this standalone fork is supported. Older test builds may contain known defects and should not be used to evaluate whether a security issue is still present.
 
-## Reporting security issues
+## Reporting a vulnerability
 
-**Please do not report security vulnerabilities through public GitHub issues.**
+Do not publish an unpatched vulnerability, security key, IP address, private log, or proof-of-concept exploit in a public issue.
 
-Instead, please report them to the Microsoft Security Response Center (MSRC) at [https://msrc.microsoft.com/create-report](https://aka.ms/security.md/msrc/create-report).
+Use GitHub's private **Report a vulnerability** option on the repository's **Security** tab when available. If private reporting is unavailable, contact the repository owner privately through GitHub before disclosing technical details.
 
-If you prefer to submit without logging in, send an email to [secure@microsoft.com](mailto:secure@microsoft.com). If possible, encrypt your message with our PGP key; please download it from the [Microsoft Security Response Center PGP Key page](https://aka.ms/security.md/msrc/pgp).
+Please include:
 
-You should receive a response within 24 hours. If for some reason you do not, please follow up via email to ensure we received your original message. Additional information can be found at [microsoft.com/msrc](https://www.microsoft.com/msrc).
+- affected version/tag and commit, if known;
+- affected Windows version and configuration;
+- whether portable or installed mode was used;
+- clear reproduction steps;
+- likely impact;
+- a minimal proof of concept, if safe;
+- any suggested mitigation.
 
-Please include the requested information listed below (as much as you can provide) to help us better understand the nature and scope of the possible issue:
+This is a small, unofficial community fork. No response-time guarantee or bug-bounty program is offered, but good-faith reports will be investigated as capacity allows.
 
-- Type of issue (e.g. buffer overflow, SQL injection, cross-site scripting, etc.)
-- Full paths of source file(s) related to the manifestation of the issue
-- The location of the affected source code (tag/branch/commit or direct URL)
-- Any special configuration required to reproduce the issue
-- Step-by-step instructions to reproduce the issue
-- Proof-of-concept or exploit code (if possible)
-- Impact of the issue, including how an attacker might exploit the issue
+## Scope notes
 
-This information will help us triage your report more quickly.
-
-If you are reporting for a bug bounty, more complete reports can contribute to a higher bounty award. Please visit our [Microsoft Bug Bounty Program](https://aka.ms/security.md/msrc/bounty) page for more details about our active programs.
-
-## Preferred languages
-
-We prefer all communications to be in English.
-
-## Policy
-
-Microsoft follows the principle of [Coordinated Vulnerability Disclosure](https://aka.ms/security.md/cvd).
-
-<!-- END MICROSOFT SECURITY.MD BLOCK -->
+- This edition intentionally supports normal interactive Windows desktops only.
+- It does not install a service or support protected UAC/sign-in desktops.
+- The adjacent prefs file contains configuration needed by MWB. Protect the folder and do not publish the file because it includes the shared security key.
+- Use MWB only between computers and networks you trust.

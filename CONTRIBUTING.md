@@ -1,72 +1,45 @@
-# PowerToys contributor's guide
+# Contributing to Mouse Without Borders — Standalone
 
-Below is our guidance for reporting issues, proposing new features, and submitting contributions via Pull Requests (PRs). Our philosophy is to understand the problem and scenarios first, which is why we follow this pattern before work starts.
+Thanks for helping improve this unofficial standalone Mouse Without Borders fork.
 
-1. There is an issue.
-2. There has been a conversation.
-3. There is agreement on the problem, the fit for PowerToys, and the solution to the problem (implementation).
+## Before opening an issue
 
-## Filing an issue
+Please search existing issues first. For a bug, include:
 
-**Importance of Filing an Issue First**
+- the release/tag and Windows version you tested;
+- whether you chose portable or installed mode;
+- whether one or multiple computers are affected;
+- exact steps that reproduce the problem;
+- what you expected and what happened instead;
+- relevant logs with machine names, security keys, IP addresses, and other private information removed.
 
-Please follow this rule to help eliminate wasted effort and frustration, and to ensure an efficient and effective use of everyone's time:
+Mouse/keyboard, clipboard, file-transfer, reconnect, sleep/wake, startup, and first-launch bugs are especially useful when tested on two physical Windows computers.
 
-> 👉 If you have a question, think you've discovered an issue, or would like to propose a new feature, please find/file an issue **BEFORE** starting work to fix/implement it.
+## Proposing a change
 
-When requesting new features or enhancements, providing additional evidence, data, tweets, blog posts, or research is extremely helpful. This information gives context to the scenario that may otherwise be lost.
+Open an issue before a large change so its behavior and compatibility impact can be discussed. Pull requests should be focused and should preserve the existing wire protocol unless a coordinated protocol change is intentional.
 
-- Unsure whether it's an issue or feature request? File an issue.
-- Have a question that isn't answered in the docs, videos, etc.? File an issue.
-- Want to know if we're planning a particular feature? File an issue.
-- Got a great idea for a new utility or feature? File an issue/request/idea.
-- Don't understand how to do something? File an issue/Community Guidance Request.
-- Found an existing issue that describes yours? Great! Upvote and add additional commentary, info, or repro steps.
+The product goals are:
 
-A quick search before filing an issue could be helpful. It's likely someone else has found the same problem, and they may even be working on or have already contributed a fix!
+- one self-contained Windows EXE;
+- no PowerToys runtime requirement;
+- preferences beside the EXE;
+- normal-desktop mouse, keyboard, clipboard, and file-transfer reliability;
+- no installed service or protected-desktop support;
+- a small, understandable MWB-only source tree.
 
-### Indicating interest in issues
+## Building and testing
 
-To let the team know which issues are important, upvote by clicking the [+😊] button and the 👍 icon on the original issue post. Avoid comments like "+1" or "me too" as they clutter the discussion and make it harder to prioritize requests.
+The active project is under `src/modules/MouseWithoutBorders` while extraction is completed. See its [development guide](src/modules/MouseWithoutBorders/Standalone/DEVELOPMENT.md) for prerequisites and commands.
 
----
+Before submitting a pull request:
 
-## Contributing fixes or features
+1. Build x64 Release.
+2. Run the MWB unit tests.
+3. Confirm the portable publish contains exactly one EXE.
+4. Manually test behavior affected by the change.
+5. For networking, input, clipboard, or file-transfer changes, test between two physical Windows computers.
 
-Please comment on our [Would you like to contribute to PowerToys?](https://github.com/microsoft/PowerToys/issues/28769) thread to let us know you're interested in working on something before you start. This helps avoid multiple people unexpectedly working on the same thing and ensures everyone is clear on what should be done. It's less work for everyone to establish this up front.
+## Attribution
 
-### Localization issues
-
-For localization issues, please file an issue to notify our internal localization team, as community PRs for localization aren't accepted. Localization is handled exclusively by the internal Microsoft team.
-
-### To spec or not to spec
-
-A key point is for everyone to understand the approach that will be taken. We want to be sure that any work done will be accepted. Larger-scope items will require a spec to outline the approach and allow for discussion. Specs help collaborators consider different solutions, describe feature behavior, and plan for errors. Achieving agreement in a spec before writing code often results in simpler code and less wasted effort.
-
-Once a team member has agreed with your approach, proceed to the "Development" section below. Team members are happy to help review specs and guide them to completion.
-
-### Help wanted
-
-Once the team has approved an issue/spec approach, development can proceed. If no developers are immediately available, the spec may be parked and labeled "Help Wanted," ready for a developer to get started. For development opportunities, visit [Issues labeled Help Wanted](https://github.com/microsoft/PowerToys/labels/Help%20Wanted).
-
----
-
-## Development
-
-Follow the [development guidelines](https://github.com/microsoft/PowerToys/blob/main/doc/devdocs/readme.md).
-
-### Naming features and functionality
-
-Names should be descriptive and straightforward, clearly reflecting functionality and usefulness.
-
-### Becoming a collaborator on the PowerToys team
-
-Be an active community member! Make helpful contributions by filing bugs, offering suggestions, developing fixes and features, conducting code reviews, and updating documentation.
-
-When the time comes, Microsoft will reach out to you about becoming a formal team member. Just make sure they have a way to contact you. 😊
-
----
-
-## Thank you
-
-Thank you in advance for your contribution! We appreciate your help in making PowerToys a better tool for everyone.
+Keep existing Microsoft and upstream copyright/license notices intact. Clearly document substantial fork-specific behavior changes. AI-assisted contributions are welcome when the contributor reviews the result, explains the change, and includes meaningful validation.

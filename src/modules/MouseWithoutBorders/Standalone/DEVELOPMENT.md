@@ -103,7 +103,7 @@ If the prefs file is absent, first launch offers a portable mode or a per-user s
 
 Startup must not access `Setting.Values` before `PortableApplication.PrepareFirstLaunch()` returns successfully. The settings singleton creates a default prefs file when none exists, so initializing it before the first-launch choice would bypass setup and could leave the first process hidden. `StandaloneBootstrap.InitializeAfterFirstLaunch()` deliberately runs immediately afterward.
 
-The standalone artwork source is `App/ClassicGreen.ico`. MSBuild embeds it in `MouseWithoutBorders.exe`; title bars and the tray icon read the embedded product icon at runtime. Replace that one ICO to change standalone branding. Include crisp 16/20/24/32 pixel images plus larger 48/64/128/256 pixel images with 32-bit transparency.
+`App/ClassicGreen.svg` is the editable vector artwork. `App/ClassicGreen.ico` is the compiled Windows asset; it contains 16/20/24/32/40/48/64/128/256 pixel images with 32-bit transparency. MSBuild embeds the ICO in `MouseWithoutBorders.exe`, and title bars and the tray read the embedded product icon at runtime. When artwork changes, update both files together and verify the small tray sizes as well as the 256-pixel Explorer view.
 
 No Windows service is registered, so protected UAC and Windows sign-in-screen input are intentionally unsupported in the portable product.
 
