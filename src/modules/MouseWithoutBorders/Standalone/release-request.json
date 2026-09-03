@@ -1,0 +1,19 @@
+{
+  "tag": "mwb-v0.1.0-test.2",
+  "title": "Mouse Without Borders 0.1 Test 2",
+  "prerelease": true,
+  "summary": "This is an unsigned test build of the standalone green Mouse Without Borders fork. Download `MouseWithoutBorders.exe` from Assets and use this same release on every computer.",
+  "changes": [
+    "Fixes the first launch that could create a prefs file but leave MWB invisible until it was run again.",
+    "Uses the embedded green application icon for the notification-area tray icon.",
+    "Replaces the malformed two-size icon with a validated multi-resolution Windows icon.",
+    "Makes the Settings Help link open this standalone project's repository.",
+    "Updates the visible product version to 0.1.0 and refreshes the repository documentation."
+  ],
+  "testing": [
+    "Start in a new empty folder with no `MouseWithoutBorders.prefs.json` file and confirm the first-launch choice appears immediately.",
+    "Choose Run portable here and confirm the Settings window and green tray icon appear during that same run.",
+    "Open Help and confirm it opens the standalone project page.",
+    "Use this same Test 2 EXE on both computers for mouse, keyboard, clipboard, file-transfer, reconnect, and sleep/wake checks."
+  ]
+}

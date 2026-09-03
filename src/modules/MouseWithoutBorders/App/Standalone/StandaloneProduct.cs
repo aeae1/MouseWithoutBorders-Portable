@@ -24,7 +24,7 @@ internal static class StandaloneProduct
         }
         catch (Exception ex)
         {
-            Logger.Log(ex);
+            Debug.WriteLine(ex);
             _ = MessageBox.Show(
                 owner,
                 "Windows could not open the project page. You can copy this address into your browser:\r\n\r\n" + ProjectUrl,
