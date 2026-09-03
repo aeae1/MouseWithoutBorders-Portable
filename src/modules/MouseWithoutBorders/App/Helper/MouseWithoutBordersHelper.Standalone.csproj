@@ -41,6 +41,7 @@
     <Compile Include="..\Core\IpcChannelHelper.cs" Link="IpcChannelHelper.cs" />
     <Compile Include="..\Core\GpoCompatibility.cs" Link="GpoCompatibility.cs" />
     <Compile Include="..\Core\PowerToysRuntimeCompatibility.cs" Link="PowerToysRuntimeCompatibility.cs" />
+    <Compile Include="..\Standalone\StandaloneProduct.cs" Link="StandaloneProduct.cs" />
   </ItemGroup>
 
   <ItemGroup>

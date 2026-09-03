@@ -56,6 +56,9 @@
     <Compile Include="..\Core\PowerToysRuntimeCompatibility.cs">
       <Link>PowerToysRuntimeCompatibility.cs</Link>
     </Compile>
+    <Compile Include="..\Standalone\StandaloneProduct.cs">
+      <Link>StandaloneProduct.cs</Link>
+    </Compile>
   </ItemGroup>
 
   <ItemGroup>
