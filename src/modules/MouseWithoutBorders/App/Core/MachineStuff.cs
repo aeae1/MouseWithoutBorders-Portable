@@ -850,7 +850,15 @@ internal static class MachineStuff
 #if NEW_SETTINGS_FORM
         Common.ShowSetupForm();
 #else
-        if (Setting.Values.FirstRun && !Common.AtLeastOneSocketConnected())
+        bool useLegacySetupExperience = Setting.Values.FirstRun && !Common.AtLeastOneSocketConnected();
+#if STANDALONE
+        // The standalone first-launch dialog already explains installation and
+        // preferences. Power users can configure the generated key and machine
+        // names directly in the classic matrix without a second, legacy wizard.
+        useLegacySetupExperience = false;
+#endif
+
+        if (useLegacySetupExperience)
         {
             MachineStuff.ShowSetupForm();
         }

@@ -4,6 +4,7 @@
 
 using System;
 using System.ComponentModel;
+using System.Drawing;
 using System.Windows.Forms;
 
 // <summary>
@@ -31,6 +32,7 @@ namespace MouseWithoutBorders
         internal Machine()
         {
             InitializeComponent();
+            textBoxName.TextChanged += (_, _) => UpdateStatusPresentation();
             Visible = false;
             MachineEnabled = false;
         }
@@ -51,6 +53,7 @@ namespace MouseWithoutBorders
                 checkBoxEnabled.Checked = value;
                 Editable = value;
                 pictureBoxLogo.Image = value ? Images.MachineEnabled : (System.Drawing.Image)Images.MachineDisabled;
+                UpdateStatusPresentation();
                 OnEnabledChanged(EventArgs.Empty); // Borrow this event since we do not use it for any other purpose:) (we can create one but l...:))
             }
         }
@@ -81,23 +84,27 @@ namespace MouseWithoutBorders
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)]
         internal bool LocalHost
         {
-            // get { return localhost; }
+            get => localhost;
             set
             {
                 localhost = value;
                 if (localhost)
                 {
-                    labelStatusClient.Text = "local machine";
-                    labelStatusServer.Text = "...";
                     CheckAble = false;
                 }
                 else
                 {
-                    labelStatusClient.Text = "...";
-                    labelStatusServer.Text = "...";
                     CheckAble = true;
                 }
+
+                UpdateStatusPresentation();
             }
+        }
+
+        internal void FocusNameEditor()
+        {
+            _ = textBoxName.Focus();
+            textBoxName.SelectAll();
         }
 
         private void PictureBoxLogo_MouseDown(object sender, MouseEventArgs e)
@@ -118,57 +125,67 @@ namespace MouseWithoutBorders
             MachineEnabled = checkBoxEnabled.Checked;
         }
 
-        private static string StatusString(SocketStatus status)
+        private void SetStatusPresentation(string firstLine, string secondLine, Color color)
         {
-            string rv = string.Empty;
+            labelStatusClient.Text = firstLine;
+            labelStatusServer.Text = secondLine;
+            labelStatusClient.ForeColor = color;
+            labelStatusServer.ForeColor = color;
+        }
 
-            switch (status)
+        private void UpdateStatusPresentation()
+        {
+            if (localhost)
             {
-                case SocketStatus.Resolving:
-                    rv = "Resolving";
-                    break;
-
-                case SocketStatus.Connected:
-                    rv = "Connected";
-                    break;
-
-                case SocketStatus.Connecting:
-                    rv = "Connecting";
-                    break;
-
-                case SocketStatus.Error:
-                    rv = "Error";
-                    break;
-
-                case SocketStatus.ForceClosed:
-                    rv = "Closed";
-                    break;
-
-                case SocketStatus.Handshaking:
-                    rv = "Handshaking";
-                    break;
-
-                case SocketStatus.SendError:
-                    rv = "Send error";
-                    break;
-
-                case SocketStatus.InvalidKey:
-                    rv = "KeysNotMatched";
-                    break;
-
-                case SocketStatus.Timeout:
-                    rv = "Timed out";
-                    break;
-
-                case SocketStatus.NA:
-                    rv = "...";
-                    break;
-
-                default:
-                    break;
+                SetStatusPresentation("This computer", string.Empty, Color.FromArgb(34, 139, 72));
+                return;
             }
 
-            return rv;
+            if (!MachineEnabled || string.IsNullOrWhiteSpace(MachineName))
+            {
+                SetStatusPresentation("Not configured", string.Empty, Color.DimGray);
+                return;
+            }
+
+            if (statusClient == SocketStatus.InvalidKey || statusServer == SocketStatus.InvalidKey)
+            {
+                SetStatusPresentation("● Key mismatch", string.Empty, Color.Firebrick);
+                return;
+            }
+
+            if (statusClient == SocketStatus.Connected || statusServer == SocketStatus.Connected)
+            {
+                SetStatusPresentation("● Connected", string.Empty, Color.FromArgb(34, 139, 72));
+                return;
+            }
+
+            if (statusClient is SocketStatus.Resolving or SocketStatus.Connecting or SocketStatus.Handshaking ||
+                statusServer is SocketStatus.Resolving or SocketStatus.Connecting or SocketStatus.Handshaking)
+            {
+                SetStatusPresentation("Connecting…", string.Empty, Color.FromArgb(0, 102, 180));
+                return;
+            }
+
+            if (statusClient == SocketStatus.Timeout || statusServer == SocketStatus.Timeout)
+            {
+                SetStatusPresentation("● Timed out", string.Empty, Color.Firebrick);
+                return;
+            }
+
+            if (statusClient is SocketStatus.Error or SocketStatus.SendError ||
+                statusServer is SocketStatus.Error or SocketStatus.SendError)
+            {
+                SetStatusPresentation("● Connection", "error", Color.Firebrick);
+                return;
+            }
+
+            if (statusClient == SocketStatus.ForceClosed || statusServer == SocketStatus.ForceClosed)
+            {
+                SetStatusPresentation("Disconnected", string.Empty, Color.DimGray);
+                return;
+            }
+
+            SetStatusPresentation("Waiting for", "connection", Color.DimGray);
         }
 
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
@@ -185,7 +202,7 @@ namespace MouseWithoutBorders
                     Editable = false;
                 }
 
-                labelStatusClient.Text = StatusString(statusClient) + " -->";
+                UpdateStatusPresentation();
             }
         }
 
@@ -203,7 +220,7 @@ namespace MouseWithoutBorders
                     Editable = false;
                 }
 
-                labelStatusServer.Text = StatusString(statusServer) + " <--";
+                UpdateStatusPresentation();
             }
         }
 

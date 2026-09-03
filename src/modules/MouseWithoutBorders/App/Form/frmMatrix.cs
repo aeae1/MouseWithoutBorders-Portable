@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Drawing;
@@ -72,6 +73,31 @@ namespace MouseWithoutBorders
         {
             buttonOK.Enabled = false;
 
+            var configuredNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (Machine machine in machines)
+            {
+                if (!machine.MachineEnabled)
+                {
+                    continue;
+                }
+
+                string machineName = machine.MachineName.Trim();
+                if (string.IsNullOrEmpty(machineName))
+                {
+                    ShowMachineNameError(machine, "Enter a computer name or clear its checkbox before applying the layout.");
+                    return;
+                }
+
+                if (!configuredNames.Add(machineName))
+                {
+                    string message = machineName.Equals(Common.MachineName, StringComparison.OrdinalIgnoreCase)
+                        ? "This computer can appear only once in the layout."
+                        : $"The computer name '{machineName}' appears more than once.";
+                    ShowMachineNameError(machine, message);
+                    return;
+                }
+            }
+
             if (!UpdateKey(Regex.Replace(textBoxEnc.Text, @"\s+", string.Empty)))
             {
                 buttonOK.Enabled = true;
@@ -83,16 +109,7 @@ namespace MouseWithoutBorders
             {
                 if (machines[i].MachineEnabled)
                 {
-                    for (int j = 0; j < i; j++)
-                    {
-                        if (st[j].Equals(machines[i].MachineName, StringComparison.OrdinalIgnoreCase))
-                        {
-                            machines[i].MachineName = string.Empty;
-                            machines[i].MachineEnabled = false;
-                        }
-                    }
-
-                    st[i] = machines[i].MachineName;
+                    st[i] = machines[i].MachineName.Trim();
                 }
                 else
                 {
@@ -130,6 +147,18 @@ namespace MouseWithoutBorders
             }
 
             buttonOK.Enabled = true;
+        }
+
+        private void ShowMachineNameError(Machine machine, string message)
+        {
+            buttonOK.Enabled = true;
+            _ = MessageBox.Show(
+                this,
+                message,
+                "Check computer names",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Information);
+            machine.FocusNameEditor();
         }
 
         internal void UpdateKeyTextBox()
@@ -204,7 +233,8 @@ namespace MouseWithoutBorders
 
         private void FrmMatrix_Shown(object sender, EventArgs e)
         {
-            if (Setting.Values.FirstRun)
+            bool wasFirstRun = Setting.Values.FirstRun;
+            if (wasFirstRun)
             {
                 Setting.Values.FirstRun = false;
                 Common.ReopenSockets(false);
@@ -230,7 +260,7 @@ namespace MouseWithoutBorders
 
             InitAll();
 
-            if (Setting.Values.IsMyKeyRandom)
+            if (wasFirstRun || Setting.Values.IsMyKeyRandom)
             {
                 Setting.Values.IsMyKeyRandom = false;
                 checkBoxShowKey.Checked = true;
@@ -1174,24 +1204,6 @@ namespace MouseWithoutBorders
         private void ComboBoxScreenCapture_TextChanged(object sender, EventArgs e)
         {
             ShowUpdateMessage();
-        }
-
-        private void LinkLabelReConfigure_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
-        {
-            string message = "WARNING: This will clear the Computer Matrix and allows you to run the setup experience like the first time you installed the program.\r\n";
-            message += "You need to start this setup experience in all machines. In the next Dialog, click NO in the first machine and click YES in the rest of the machines.\r\n";
-            message += "And then follow the steps to complete the configuration.\r\n\r\n";
-            message += "Are you sure you want to continue?";
-
-            if (MessageBox.Show(message, Application.ProductName, MessageBoxButtons.YesNo, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button2) == System.Windows.Forms.DialogResult.Yes)
-            {
-                PowerToysTelemetry.Log.WriteEvent(new MouseWithoutBorders.Telemetry.MouseWithoutBordersOldUIReconfigureEvent());
-                ButtonCancel_Click(this, new EventArgs());
-                Setting.Values.FirstRun = true;
-                Setting.Values.EasyMouse = (int)EasyMouseOption.Enable;
-                MachineStuff.ClearComputerMatrix();
-                MachineStuff.ShowSetupForm(true);
-            }
         }
 
         private void CheckBoxSameSubNet_CheckedChanged(object sender, EventArgs e)

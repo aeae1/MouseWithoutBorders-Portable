@@ -86,7 +86,6 @@ namespace MouseWithoutBorders
             this.tabPageMain = new System.Windows.Forms.TabPage();
             this.buttonCancel = new System.Windows.Forms.Button();
             this.groupBoxMachineMatrix = new System.Windows.Forms.GroupBox();
-            this.linkLabelReConfigure = new System.Windows.Forms.LinkLabel();
             this.tabControlSetting = new System.Windows.Forms.TabControl();
             this.tabPageAdvancedSettings = new System.Windows.Forms.TabPage();
             this.groupBoxName2IPPolicyList = new System.Windows.Forms.GroupBox();
@@ -943,27 +942,13 @@ namespace MouseWithoutBorders
             // 
             this.groupBoxMachineMatrix.BackColor = System.Drawing.Color.Transparent;
             this.groupBoxMachineMatrix.Controls.Add(this.checkBoxTwoRow);
-            this.groupBoxMachineMatrix.Controls.Add(this.linkLabelReConfigure);
             this.groupBoxMachineMatrix.Location = new System.Drawing.Point(3, 78);
             this.groupBoxMachineMatrix.Name = "groupBoxMachineMatrix";
             this.groupBoxMachineMatrix.Size = new System.Drawing.Size(558, 244);
             this.groupBoxMachineMatrix.TabIndex = 5;
             this.groupBoxMachineMatrix.TabStop = false;
-            this.groupBoxMachineMatrix.Text = " Computer &Matrix  - Drag and drop computer thumbnails below to match computer ph" +
-    "ysical layout. Check the box next to each computer thumbnail to type in computer" +
-    " name. ";
-            // 
-            // linkLabelReConfigure
-            // 
-            this.linkLabelReConfigure.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.linkLabelReConfigure.Location = new System.Drawing.Point(3, 221);
-            this.linkLabelReConfigure.Name = "linkLabelReConfigure";
-            this.linkLabelReConfigure.Size = new System.Drawing.Size(552, 20);
-            this.linkLabelReConfigure.TabIndex = 304;
-            this.linkLabelReConfigure.TabStop = true;
-            this.linkLabelReConfigure.Text = "Go through the setup experience";
-            this.linkLabelReConfigure.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
-            this.linkLabelReConfigure.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.LinkLabelReConfigure_LinkClicked);
+            this.groupBoxMachineMatrix.Text = " Computer &Matrix — Drag tiles to match the physical layout. Check an empty tile," +
+    " then enter that computer's Windows name. ";
             // 
             // tabControlSetting
             // 
@@ -1191,7 +1176,6 @@ namespace MouseWithoutBorders
         private LinkLabel linkLabelMiniLog;
         private ComboBox comboBoxScreenCapture;
         private Label labelScreenCapture;
-        private LinkLabel linkLabelReConfigure;
         private CheckBox checkBoxSameSubNet;
         private CheckBox checkBoxClipNetStatus;
         private CheckBox checkBoxSendLog;

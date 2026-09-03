@@ -23,7 +23,7 @@
 - Mouse, keyboard, clipboard, file-transfer, drag/drop, layout, reconnect, and modern encryption remain in scope for normal desktops.
 - Microsoft's September 2, 2026 incoming-file safety update is included.
 - PowerToys runtime dependencies and telemetry are removed from the standalone build.
-- The classic MWB symbol is green and shared by the EXE, title bars, tray, and repository page.
+- The original classic MWB pixel symbol is mechanically recolored green and shared by the EXE, title bars, tray, and repository page.
 
 ## Downloading
 
@@ -38,6 +38,8 @@ If no prefs file exists beside the EXE, MWB offers:
 - **Install for me** — copies the EXE to a chosen per-user folder, creates its adjacent prefs file and Start Menu shortcut, and optionally enables Start with Windows.
 - **Run portable here** — creates the prefs file in the current folder and continues without installation.
 - **Cancel** — exits without installing or starting MWB.
+
+After either run choice, the standalone app opens the machine matrix directly instead of launching the old blue setup wizard. The generated key is visible on that first screen: use the same key on each computer, check an empty tile, and enter the other computer's Windows name. Applying the layout rejects blank or duplicate checked names, and each tile reports whether it is waiting, connecting, connected, mismatched, timed out, or disconnected.
 
 The app does not install a Windows service. Protected UAC prompts and the Windows sign-in screen are therefore intentionally unsupported; normal desktop operation remains the target.
 
@@ -61,9 +63,9 @@ It lives beside the currently running EXE. Do not publish it: it contains the sh
 
 ### Green standalone branding
 
-`App/ClassicGreen.svg` is the editable, resolution-independent artwork source. `App/ClassicGreen.ico` is the compiled Windows icon containing 16, 20, 24, 32, 40, 48, 64, 128, and 256 pixel images. The standalone EXE, title bars, and tray all derive from that embedded ICO.
+`App/ClassicGreen.svg` reproduces the original 32×32 classic artwork on its exact pixel grid; only the orange pixels were mechanically recolored green. `App/ClassicGreen.ico` contains nearest-neighbor 16, 20, 24, 32, 40, 48, 64, 128, and 256 pixel versions. The standalone EXE, title bars, and tray all derive from that embedded ICO.
 
-The old `App/Icon/notify_default.bmp` and `App/Logo.ico` remain temporarily for upstream/legacy comparison builds; they do not control standalone branding.
+The old `App/Icon/notify_default.bmp` is retained as the canonical legacy-shape reference, and `App/Logo.ico` remains for upstream/legacy comparison builds. Neither is loaded as the standalone runtime icon.
 
 ## Building from source
 

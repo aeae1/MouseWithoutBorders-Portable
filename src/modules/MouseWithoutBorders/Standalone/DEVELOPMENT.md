@@ -101,9 +101,11 @@ Preferences are stored beside the executable as:
 
 If the prefs file is absent, first launch offers a portable mode or a per-user self-install. The default install directory is `%LOCALAPPDATA%\Programs\Mouse Without Borders`; Start with Windows is optional and off by default. The product does not import PowerToys settings automatically.
 
+After that choice, standalone builds bypass the legacy `SetupPage` wizard and open `FrmMatrix` directly. The first matrix view reveals the generated key. Applying the matrix validates every checked tile before changing the key or settings: checked names must be nonblank and unique, including the local computer. Machine tiles summarize connection state in plain language while the form is open. The removed reconfigure link must not be restored unless it leads to a maintained standalone flow.
+
 Startup must not access `Setting.Values` before `PortableApplication.PrepareFirstLaunch()` returns successfully. The settings singleton creates a default prefs file when none exists, so initializing it before the first-launch choice would bypass setup and could leave the first process hidden. `StandaloneBootstrap.InitializeAfterFirstLaunch()` deliberately runs immediately afterward.
 
-`App/ClassicGreen.svg` is the editable vector artwork. `App/ClassicGreen.ico` is the compiled Windows asset; it contains 16/20/24/32/40/48/64/128/256 pixel images with 32-bit transparency. MSBuild embeds the ICO in `MouseWithoutBorders.exe`, and title bars and the tray read the embedded product icon at runtime. When artwork changes, update both files together and verify the small tray sizes as well as the 256-pixel Explorer view.
+`App/Icon/notify_default.bmp` is the canonical 32×32 legacy-shape reference. `App/ClassicGreen.svg` expresses that exact pixel grid after a mechanical orange-to-green recolor; transparent pixels, black edging, and pale highlights stay unchanged. `App/ClassicGreen.ico` contains nearest-neighbor 16/20/24/32/40/48/64/128/256 pixel images with 32-bit transparency. MSBuild embeds the ICO in `MouseWithoutBorders.exe`, and title bars and the tray read the embedded product icon at runtime. When the green mapping changes, update the SVG and ICO together and verify the small tray sizes as well as the 256-pixel Explorer view.
 
 No Windows service is registered, so protected UAC and Windows sign-in-screen input are intentionally unsupported in the portable product.
 
