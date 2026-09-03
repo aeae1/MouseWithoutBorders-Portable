@@ -111,6 +111,12 @@ The focused workflow is:
 
 It is triggered by relevant pushes to `mwb-standalone` and is intended to build/test only MWB rather than all of PowerToys.
 
+### GitHub release publishing
+
+In the current PowerToys development fork, tags beginning with `mwb-v` run the focused build and then attach the tested `MouseWithoutBorders.exe` and its SHA-256 checksum to the matching GitHub release. The release job has `contents: write`; ordinary branch and pull-request builds retain read-only repository access and never publish releases.
+
+The clean MWB-only source workflow uses ordinary `v*` release tags. Both workflows validate that the downloadable package contains exactly one compiled program before publishing it.
+
 Before considering a behavior change finished:
 
 - build x64 Release;

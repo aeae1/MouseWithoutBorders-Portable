@@ -63,6 +63,20 @@ On first launch, it offers two choices:
 
 No Windows service is installed. This portable edition therefore does not control protected UAC prompts or the Windows sign-in screen. Normal-desktop input, clipboard, and file-transfer behavior remains in scope.
 
+## Downloading from GitHub Releases
+
+Permanent test downloads belong on the repository's **Releases** page, under the release's **Assets** heading. Download `MouseWithoutBorders.exe`; the adjacent `.sha256` file is an optional checksum for verifying the download.
+
+To publish a test release from the current `aeae1/PowerToys` development repository:
+
+1. Open the repository's **Releases** page and select **Draft a new release**.
+2. Select **Choose a tag**, type a new tag such as `mwb-v0.1.0-test.1`, and create it from the `mwb-standalone` branch.
+3. Give the release a simple title, such as `Mouse Without Borders 0.1 test 1`.
+4. Select **Set as a pre-release**, then publish the release.
+5. GitHub automatically builds and tests that exact tagged source. After the workflow finishes, refresh the release page; `MouseWithoutBorders.exe` and `MouseWithoutBorders.exe.sha256` will appear under **Assets**.
+
+The release may appear temporarily without the EXE while GitHub is compiling it. If the build fails, no untested EXE is attached. In the future MWB-only repository, the same process uses ordinary tags such as `v0.1.0-test.1`.
+
 ## Building from source
 
 Prerequisites:

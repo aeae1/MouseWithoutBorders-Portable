@@ -5,6 +5,8 @@ on:
   push:
     branches:
       - mwb-standalone
+    tags:
+      - 'mwb-v*'
     paths:
       - 'src/modules/MouseWithoutBorders/**'
       - 'src/common/GPOWrapper/**'
@@ -163,3 +165,56 @@ jobs:
           path: ${{ runner.temp }}/mwb-portable/MouseWithoutBorders.exe
           if-no-files-found: error
           retention-days: 14
+
+  publish-release:
+    name: Attach build to GitHub release
+    if: startsWith(github.ref, 'refs/tags/mwb-v')
+    needs: build-x64
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download tested portable build
+        uses: actions/download-artifact@v4
+        with:
+          name: MouseWithoutBorders-portable-x64-${{ github.sha }}
+          path: release
+
+      - name: Validate release package and create checksum
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f release/MouseWithoutBorders.exe
+          file_count=$(find release -maxdepth 1 -type f | wc -l)
+          if [ "$file_count" -ne 1 ]; then
+            echo "Expected exactly one compiled file, found $file_count."
+            exit 1
+          fi
+          (
+            cd release
+            sha256sum MouseWithoutBorders.exe > MouseWithoutBorders.exe.sha256
+          )
+
+      - name: Publish release assets
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            gh release upload "$RELEASE_TAG" \
+              release/MouseWithoutBorders.exe \
+              release/MouseWithoutBorders.exe.sha256 \
+              --clobber
+          else
+            gh release create "$RELEASE_TAG" \
+              release/MouseWithoutBorders.exe \
+              release/MouseWithoutBorders.exe.sha256 \
+              --target "$GITHUB_SHA" \
+              --title "Mouse Without Borders $RELEASE_TAG" \
+              --notes "Unsigned test build of the standalone green Mouse Without Borders fork. Download MouseWithoutBorders.exe from Assets and use the same release on every computer." \
+              --prerelease
+          fi
