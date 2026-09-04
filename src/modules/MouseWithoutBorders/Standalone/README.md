@@ -24,7 +24,7 @@ This branch is producing a portable Windows build of Mouse Without Borders from 
 - First-launch startup ordering fix: **added and verified on one real Windows PC**. A brand-new folder no longer creates default preferences before the portable/install choice or leaves the initial process hidden; the two-computer test is still pending.
 - Streamlined machine setup: **added**. The portable first run opens the classic machine matrix directly, validates checked computer names, and shows plain-language connection state on every configured tile; the legacy blue wizard and its reconfigure link are no longer part of this product flow.
 - Essential tray menu: **added**. Portable copies show Settings, About, and Exit; installed copies also show Start with Windows and Uninstall. Rare legacy commands are no longer presented in the portable product's tray menu.
-- Small-icon rollback: **completed**. The rejected Test 5 tiny-frame redesign lost some of the classic black pixel structure, so the multi-resolution green ICO is restored byte-for-byte to its pre-Test-5 artwork.
+- Small-icon rollback: **completed in Test 7**. The rejected Test 5 tiny-frame redesign lost some of the classic black pixel structure, so the multi-resolution green ICO is restored byte-for-byte to its pre-Test-5 artwork.
 - GitHub Releases publishing: **added and proven**. The first tagged test release was built, tested, and populated with the EXE and checksum automatically.
 - Upstream MWB audit through September 3, 2026: **completed**. Microsoft's September 2 receive-safety improvements are incorporated and documented in `UPSTREAM_SYNC.md`.
 - Real-Windows portable/self-install and two-machine regression tests: **not finished yet**.

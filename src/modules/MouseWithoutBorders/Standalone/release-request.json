@@ -1,8 +1,8 @@
 {
-  "tag": "mwb-v0.1.0-test.6",
-  "title": "Mouse Without Borders Portable 0.1 Test 6",
+  "tag": "mwb-v0.1.0-test.7",
+  "title": "Mouse Without Borders Portable 0.1 Test 7",
   "prerelease": true,
-  "summary": "Test 6 is an unsigned build of the portable green Mouse Without Borders fork. Download `MouseWithoutBorders.exe` from Assets and use this same release on every computer.",
+  "summary": "Test 7 is the definitive unsigned build of the simplified portable tray menu with the accepted pre-Test-5 green icon restored. Download `MouseWithoutBorders.exe` from Assets and use this same release on every computer.",
   "changes": [
     "Reduces the portable tray menu to Settings, About, and Exit.",
     "Adds Start with Windows and Uninstall to that minimal menu only when running an installed copy.",
@@ -15,6 +15,6 @@
     "Install a copy and confirm its tray menu contains Settings, Start with Windows, Uninstall, About, and Exit.",
     "Toggle Start with Windows, close and reopen the tray menu, and confirm its checkmark remains accurate.",
     "Check the EXE, title-bar, About, and tray icons at both small and large Windows icon sizes and confirm the green-and-black classic artwork is complete.",
-    "Use this same Test 6 EXE on both computers and confirm that removing tray shortcuts did not affect mouse, keyboard, clipboard, file transfer, reconnect, firewall prompting, or sleep/wake behavior."
+    "Use this same Test 7 EXE on both computers and confirm that removing tray shortcuts did not affect mouse, keyboard, clipboard, file transfer, reconnect, firewall prompting, or sleep/wake behavior."
   ]
 }
