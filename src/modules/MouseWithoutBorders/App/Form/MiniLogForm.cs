@@ -13,7 +13,7 @@ namespace MouseWithoutBorders;
 /// Displays the small diagnostic report without changing the clipboard unless
 /// the user explicitly asks to copy it.
 /// </summary>
-internal sealed class MiniLogForm : Form
+internal sealed class MiniLogForm : System.Windows.Forms.Form
 {
     private readonly TextBox logTextBox;
 
