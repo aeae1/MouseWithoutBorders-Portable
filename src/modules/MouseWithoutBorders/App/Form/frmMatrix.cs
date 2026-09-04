@@ -1201,8 +1201,7 @@ namespace MouseWithoutBorders
         private void LinkLabelMiniLog_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
             string miniLog = Helper.GetMiniLog(new[] { groupBoxOtherOptions.Controls, groupBoxShortcuts.Controls });
-            using var miniLogForm = new MiniLogForm(miniLog);
-            _ = miniLogForm.ShowDialog(this);
+            MiniLogForm.ShowOrActivate(this, miniLog);
         }
 
         private void ComboBoxScreenCapture_TextChanged(object sender, EventArgs e)

@@ -15,7 +15,28 @@ namespace MouseWithoutBorders;
 /// </summary>
 internal sealed class MiniLogForm : System.Windows.Forms.Form
 {
+    private static MiniLogForm activeForm;
     private readonly TextBox logTextBox;
+
+    internal static void ShowOrActivate(IWin32Window owner, string miniLog)
+    {
+        if (activeForm is null || activeForm.IsDisposed)
+        {
+            activeForm = new MiniLogForm(miniLog);
+            activeForm.FormClosed += ActiveForm_FormClosed;
+            activeForm.Show(owner);
+            return;
+        }
+
+        activeForm.logTextBox.Text = miniLog ?? string.Empty;
+        if (activeForm.WindowState == FormWindowState.Minimized)
+        {
+            activeForm.WindowState = FormWindowState.Normal;
+        }
+
+        activeForm.BringToFront();
+        _ = activeForm.Activate();
+    }
 
     internal MiniLogForm(string miniLog)
     {
@@ -107,5 +128,10 @@ internal sealed class MiniLogForm : System.Windows.Forms.Form
                 MessageBoxButtons.OK,
                 MessageBoxIcon.Warning);
         }
+    }
+
+    private static void ActiveForm_FormClosed(object sender, FormClosedEventArgs e)
+    {
+        activeForm = null;
     }
 }
