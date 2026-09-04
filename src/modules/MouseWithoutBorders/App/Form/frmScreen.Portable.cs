@@ -17,29 +17,41 @@ internal partial class FrmScreen
 
     private void InitializePortableMenu()
     {
-        if (!PortableApplication.IsInstalledCopy)
+        MainMenu.Items.Clear();
+        MainMenu.Items.Add(menuMachineMatrix);
+
+        if (PortableApplication.IsInstalledCopy)
         {
-            return;
+            portableStartupMenu = new ToolStripMenuItem
+            {
+                Checked = PortableApplication.IsStartWithWindowsEnabled(),
+                CheckOnClick = false,
+                Text = "Start with Windows",
+            };
+            portableStartupMenu.Click += PortableStartupMenu_Click;
+
+            portableUninstallMenu = new ToolStripMenuItem
+            {
+                Text = "Uninstall this copy…",
+            };
+            portableUninstallMenu.Click += PortableUninstallMenu_Click;
+
+            MainMenu.Items.Add(portableStartupMenu);
+            MainMenu.Items.Add(portableUninstallMenu);
         }
 
-        portableStartupMenu = new ToolStripMenuItem
-        {
-            Checked = PortableApplication.IsStartWithWindowsEnabled(),
-            CheckOnClick = false,
-            Text = "Start with Windows",
-        };
-        portableStartupMenu.Click += PortableStartupMenu_Click;
+        MainMenu.Items.Add(new ToolStripSeparator());
+        MainMenu.Items.Add(menuAbout);
+        MainMenu.Items.Add(new ToolStripSeparator());
+        MainMenu.Items.Add(menuExit);
+    }
 
-        portableUninstallMenu = new ToolStripMenuItem
+    private void RefreshPortableMenu()
+    {
+        if (portableStartupMenu != null)
         {
-            Text = "Uninstall this copy…",
-        };
-        portableUninstallMenu.Click += PortableUninstallMenu_Click;
-
-        var insertIndex = MainMenu.Items.IndexOf(menuMachineMatrix) + 1;
-        MainMenu.Items.Insert(insertIndex++, new ToolStripSeparator());
-        MainMenu.Items.Insert(insertIndex++, portableStartupMenu);
-        MainMenu.Items.Insert(insertIndex, portableUninstallMenu);
+            portableStartupMenu.Checked = PortableApplication.IsStartWithWindowsEnabled();
+        }
     }
 
     private void PortableStartupMenu_Click(object sender, EventArgs e)

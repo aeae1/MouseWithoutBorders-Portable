@@ -1255,7 +1255,11 @@ namespace MouseWithoutBorders
 
         private void MainMenu_Opening(object sender, CancelEventArgs e)
         {
+#if PORTABLE_SINGLE_FILE
+            RefreshPortableMenu();
+#else
             UpdateMenu();
+#endif
         }
     }
 }
