@@ -16,7 +16,7 @@
 </p>
 
 > [!IMPORTANT]
-> This is an unofficial fork, not a Microsoft release. Version 1.0.0 Release Candidate 5 keeps the responsive shortcut layout from RC4, removes the deprecated key-mapping checkbox, and explains unavailable or dependent options directly instead of relying on inaccessible disabled-control tooltips. Its core portable behavior was proven through Test 12, but installation, firewall, sleep/wake, and long-term behavior still deserve a final real-hardware validation pass before 1.0.0 stable.
+> This is an unofficial fork, not a Microsoft release. Version 1.0.0 Release Candidate 6 separates mouse-edge switching from keyboard shortcuts and adds a master hotkey switch that defaults off without erasing individual assignments. Its core portable behavior was proven through Test 12, but installation, firewall, sleep/wake, and long-term behavior still deserve a final real-hardware validation pass before 1.0.0 stable.
 
 ## What this project is
 
@@ -57,6 +57,8 @@ The finished product is deliberately small from a user's perspective:
 - Keeps the four supported shortcut rows centered, evenly spaced, and aligned as the Settings window or Windows display scaling changes.
 - Keeps only the two newest `1.0.0-rc.*` download pages after publishing a release candidate, while retaining older source tags and commit history.
 - Hides the deprecated, disconnected **Use Key Mappings** checkbox and gives disabled sign-in/clipboard-dependent options self-explanatory labels.
+- Presents mouse-edge switching as an ordinary Other Options checkbox with Always, Hold Ctrl, and Hold Shift activation choices instead of mixing that behavior into the shortcut panel.
+- Provides one **Enable keyboard shortcuts** master switch, defaulting off, that suppresses every configured hotkey while preserving its individual assignment.
 
 ## Download and run
 
@@ -77,7 +79,7 @@ Current builds are unsigned and may trigger Windows SmartScreen. The automated r
 
 ## Current status
 
-The project is now at **1.0.0 Release Candidate 5**: feature-complete for the intended 1.0 scope and awaiting a final real-PC validation pass.
+The project is now at **1.0.0 Release Candidate 6**: feature-complete for the intended 1.0 scope and awaiting a final real-PC validation pass.
 
 Completed:
 
@@ -143,3 +145,4 @@ This section records how the PowerToys module became this portable product. It i
 18. **Repaired the Settings-to-install window ordering.** RC1 exposed a Windows z-order conflict: the modal installer disabled its Settings owner but could appear behind that owner's always-on-top window. The configured-copy installer now centers on its parent, stays above that topmost owner, and omits a redundant taskbar button. The true first-launch window retains its normal centered, taskbar-visible behavior.
 19. **Made the reduced shortcut panel responsive.** After RC3 hid three obsolete PowerToys-era shortcut rows, their remaining controls were initially pinned near the panel's top edge while the panel itself continued to expand with Settings. RC4 lays out the four supported rows from the panel's current scaled dimensions, distributes them evenly, and caps their separation so both normal and maximized windows stay readable.
 20. **Removed inaccessible grey-control explanations.** WinForms does not normally deliver hover events to disabled controls, so their tooltips could not explain why they were unavailable. RC5 hides the fully deprecated and disconnected **Use Key Mappings** switch, labels the two service-only sign-in options inline, and makes the disabled file-transfer label state its Share Clipboard dependency.
+21. **Separated mouse-edge behavior from optional hotkeys.** RC6 moves Easy Mouse into Other Options as a plain screen-edge-switching checkbox while retaining Always, Hold Ctrl, and Hold Shift activation. Keyboard Shortcuts gains a persisted master switch that defaults off, gates both local and remotely processed assigned hotkeys, and preserves individual choices while inactive. The ambiguous per-row Disable wording becomes None, and the responsive panel is reorganized as a master row plus three assignment rows.

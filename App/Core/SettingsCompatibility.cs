@@ -265,6 +265,9 @@ namespace Microsoft.PowerToys.Settings.UI.Library
 
         public IntProperty HotKeySwitchMachine { get; set; }
 
+        [JsonConverter(typeof(BoolPropertyJsonConverter))]
+        public bool KeyboardShortcutsEnabled { get; set; }
+
         [Obsolete("Use ToggleEasyMouseShortcut instead", false)]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         [CmdConfigureIgnore]
@@ -330,6 +333,7 @@ namespace Microsoft.PowerToys.Settings.UI.Library
             DisableEasyMouseWhenForegroundWindowIsFullscreen = true;
             EasyMouseFullscreenSwitchBlockExcludedApps = new GenericProperty<HashSet<string>>(new HashSet<string>(StringComparer.OrdinalIgnoreCase));
             HotKeySwitchMachine = new IntProperty(0);
+            KeyboardShortcutsEnabled = false;
             ToggleEasyMouseShortcut = DefaultHotKeyToggleEasyMouse;
             LockMachineShortcut = DefaultHotKeyLockMachine;
             ReconnectShortcut = DefaultHotKeyReconnect;

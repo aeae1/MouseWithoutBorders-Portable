@@ -17,6 +17,9 @@ namespace MouseWithoutBorders;
 
 internal partial class FrmMatrix
 {
+    private CheckBox checkBoxEnableKeyboardShortcuts;
+    private CheckBox checkBoxMouseEdgeSwitching;
+
     protected override void OnLoad(EventArgs e)
     {
         base.OnLoad(e);
@@ -25,22 +28,119 @@ internal partial class FrmMatrix
             textBoxEnc,
             $"Use the same key on every machine. You can type your own key ({Core.Encryption.MinimumKeyLength}+ characters) or click New Key for an easy-to-type {Core.Encryption.GeneratedKeyLength}-character key. Short custom keys are less secure.");
 
-        ConfigurePortableUnavailableOptions();
+        ConfigurePortableOtherOptions();
         ConfigurePortableShortcutControls();
         AddPortableSettingsTab();
     }
 
-    private void ConfigurePortableUnavailableOptions()
+    private void ConfigurePortableOtherOptions()
     {
         // Disabled WinForms controls cannot show their tooltips. Explain permanent
         // limitations inline, and remove the deprecated mapping switch altogether.
         checkBoxDisableCAD.Text = "Skip Ctrl+Alt+Del [service required]";
         checkBoxHideLogo.Text = "Hide logon-screen logo [service required]";
+        int mouseEdgeSwitchingTop = checkBoxClipNetStatus.Top;
+        int activationTop = checkBoxSendLog.Top;
+
         checkBoxVKMap.Visible = false;
         checkBoxClipNetStatus.Top = checkBoxVKMap.Top;
 
         checkBoxShareClipboard.CheckedChanged += CheckBoxShareClipboard_PortableTextChanged;
         UpdatePortableTransferFileText();
+
+        EasyMouseOption easyMouseOption = (EasyMouseOption)Setting.Values.EasyMouse;
+        checkBoxMouseEdgeSwitching = new CheckBox
+        {
+            AutoSize = true,
+            Checked = easyMouseOption != EasyMouseOption.Disable,
+            Font = groupBoxOtherOptions.Font,
+            Location = new Point(checkBoxVKMap.Left, mouseEdgeSwitchingTop),
+            Name = "checkBoxMouseEdgeSwitching",
+            TabIndex = checkBoxClipNetStatus.TabIndex + 1,
+            Text = "Switch computers at screen edge",
+            UseVisualStyleBackColor = true,
+        };
+        toolTip.SetToolTip(checkBoxMouseEdgeSwitching, "Move the pointer through a configured screen edge to switch computers.");
+        checkBoxMouseEdgeSwitching.CheckedChanged += CheckBoxMouseEdgeSwitching_CheckedChanged;
+        groupBoxOtherOptions.Controls.Add(checkBoxMouseEdgeSwitching);
+
+        int activationRight = comboBoxEasyMouseOption.Right;
+        comboBoxEasyMouseOption.TextChanged -= ComboBoxEasyMouseOption_TextChanged;
+        comboBoxEasyMouseOption.Items.Clear();
+        comboBoxEasyMouseOption.Items.AddRange(new object[] { "Always", "Hold Ctrl", "Hold Shift" });
+        comboBoxEasyMouseOption.DropDownStyle = ComboBoxStyle.DropDownList;
+        comboBoxEasyMouseOption.Width = Math.Max(
+            comboBoxEasyMouseOption.Width,
+            TextRenderer.MeasureText("Hold Shift", comboBoxEasyMouseOption.Font).Width + SystemInformation.VerticalScrollBarWidth + 10);
+        comboBoxEasyMouseOption.Left = activationRight - comboBoxEasyMouseOption.Width;
+        comboBoxEasyMouseOption.Text = PortableEasyMouseActivationText(easyMouseOption);
+        comboBoxEasyMouseOption.Enabled = checkBoxMouseEdgeSwitching.Checked;
+        comboBoxEasyMouseOption.TabIndex = checkBoxTransferFile.TabIndex + 1;
+        comboBoxEasyMouseOption.Top = activationTop;
+        comboBoxEasyMouseOption.TextChanged += ComboBoxEasyMouseActivation_TextChanged;
+        groupBoxOtherOptions.Controls.Add(comboBoxEasyMouseOption);
+
+        labelEasyMouse.Text = "Activation:";
+        labelEasyMouse.Left = checkBoxVKMap.Left;
+        labelEasyMouse.Top = activationTop + ((comboBoxEasyMouseOption.Height - labelEasyMouse.Height) / 2);
+        groupBoxOtherOptions.Controls.Add(labelEasyMouse);
+    }
+
+    private static string PortableEasyMouseActivationText(EasyMouseOption option)
+    {
+        return option switch
+        {
+            EasyMouseOption.Ctrl => "Hold Ctrl",
+            EasyMouseOption.Shift => "Hold Shift",
+            _ => "Always",
+        };
+    }
+
+    private void CheckBoxMouseEdgeSwitching_CheckedChanged(object sender, EventArgs e)
+    {
+        comboBoxEasyMouseOption.Enabled = checkBoxMouseEdgeSwitching.Checked;
+        Setting.Values.EasyMouse = checkBoxMouseEdgeSwitching.Checked
+            ? (int)PortableEasyMouseOption(comboBoxEasyMouseOption.Text)
+            : (int)EasyMouseOption.Disable;
+    }
+
+    private void ComboBoxEasyMouseActivation_TextChanged(object sender, EventArgs e)
+    {
+        if (checkBoxMouseEdgeSwitching.Checked)
+        {
+            Setting.Values.EasyMouse = (int)PortableEasyMouseOption(comboBoxEasyMouseOption.Text);
+        }
+    }
+
+    private static EasyMouseOption PortableEasyMouseOption(string selection)
+    {
+        return selection switch
+        {
+            "Hold Ctrl" => EasyMouseOption.Ctrl,
+            "Hold Shift" => EasyMouseOption.Shift,
+            _ => EasyMouseOption.Enable,
+        };
+    }
+
+    private void RefreshPortableEasyMouseControls()
+    {
+        if (checkBoxMouseEdgeSwitching == null)
+        {
+            return;
+        }
+
+        EasyMouseOption option = (EasyMouseOption)Setting.Values.EasyMouse;
+        string activation = PortableEasyMouseActivationText(option);
+        if (!string.Equals(comboBoxEasyMouseOption.Text, activation, StringComparison.Ordinal))
+        {
+            comboBoxEasyMouseOption.Text = activation;
+        }
+
+        bool enabled = option != EasyMouseOption.Disable;
+        if (checkBoxMouseEdgeSwitching.Checked != enabled)
+        {
+            checkBoxMouseEdgeSwitching.Checked = enabled;
+        }
     }
 
     private void CheckBoxShareClipboard_PortableTextChanged(object sender, EventArgs e)
@@ -67,6 +167,25 @@ internal partial class FrmMatrix
         labelScreenCapture.Visible = comboBoxScreenCapture.Visible = false;
 
         comboBoxSwitchToAllPC.Items.Remove("Ctrl*3");
+        ConfigurePortableNoneChoice(comboBoxLockMachine);
+        ConfigurePortableNoneChoice(comboBoxReconnect);
+        ConfigurePortableNoneChoice(comboBoxSwitchToAllPC);
+        ConfigurePortableNoneChoice(comboBoxEasyMouse);
+        radioButtonDisable.Text = "&None";
+
+        checkBoxEnableKeyboardShortcuts = new CheckBox
+        {
+            AutoSize = true,
+            Checked = Setting.Values.KeyboardShortcutsEnabled,
+            Font = groupBoxShortcuts.Font,
+            Location = new Point(labelSwitchBetweenMachine.Left, labelSwitchBetweenMachine.Top),
+            Name = "checkBoxEnableKeyboardShortcuts",
+            TabIndex = radioButtonF1.TabIndex - 1,
+            UseVisualStyleBackColor = true,
+        };
+        toolTip.SetToolTip(checkBoxEnableKeyboardShortcuts, "Master switch for every keyboard shortcut listed below. Assignments are preserved while off.");
+        checkBoxEnableKeyboardShortcuts.CheckedChanged += CheckBoxEnableKeyboardShortcuts_CheckedChanged;
+        groupBoxShortcuts.Controls.Add(checkBoxEnableKeyboardShortcuts);
 
         groupBoxShortcuts.SizeChanged += GroupBoxShortcuts_SizeChanged;
         LayoutPortableShortcutControls();
@@ -74,8 +193,50 @@ internal partial class FrmMatrix
         comboBoxLockMachine.Text = PortableHotkeyText(Setting.Values.HotKeyLockMachine);
         comboBoxReconnect.Text = PortableHotkeyText(Setting.Values.HotKeyReconnect);
         comboBoxSwitchToAllPC.Text = PortableHotkeyText(Setting.Values.HotKeySwitch2AllPC);
-        comboBoxEasyMouseOption.Text = ((Class.EasyMouseOption)Setting.Values.EasyMouse).ToString();
         comboBoxEasyMouse.Text = PortableHotkeyText(Setting.Values.HotKeyToggleEasyMouse);
+        UpdatePortableShortcutControlState();
+    }
+
+    private static void ConfigurePortableNoneChoice(ComboBox comboBox)
+    {
+        comboBox.Items.Remove("Disable");
+        if (!comboBox.Items.Contains("None"))
+        {
+            comboBox.Items.Add("None");
+        }
+    }
+
+    private void CheckBoxEnableKeyboardShortcuts_CheckedChanged(object sender, EventArgs e)
+    {
+        Setting.Values.KeyboardShortcutsEnabled = checkBoxEnableKeyboardShortcuts.Checked;
+        UpdatePortableShortcutControlState();
+    }
+
+    private void UpdatePortableShortcutControlState()
+    {
+        bool enabled = checkBoxEnableKeyboardShortcuts.Checked;
+        checkBoxEnableKeyboardShortcuts.Text = enabled
+            ? "Enable keyboard shortcuts"
+            : "Enable keyboard shortcuts (currently off; assignments below are preserved)";
+
+        foreach (Control control in new Control[]
+        {
+            labelSwitchBetweenMachine,
+            radioButtonF1,
+            radioButtonNum,
+            radioButtonDisable,
+            labelLockMachine,
+            comboBoxLockMachine,
+            labelSwitch2AllPCMode,
+            comboBoxSwitchToAllPC,
+            labelReconnect,
+            comboBoxReconnect,
+            LabelToggleEasyMouse,
+            comboBoxEasyMouse,
+        })
+        {
+            control.Enabled = enabled;
+        }
     }
 
     private void GroupBoxShortcuts_SizeChanged(object sender, EventArgs e)
@@ -85,8 +246,8 @@ internal partial class FrmMatrix
 
     private void LayoutPortableShortcutControls()
     {
-        // The shortcut group grows with the Settings window. Keep the four useful
-        // rows centered and evenly separated instead of pinning them to the top.
+        // The shortcut group grows with the Settings window. Keep the master switch
+        // and three assignment rows centered and evenly separated.
         int groupHeight = groupBoxShortcuts.ClientSize.Height;
         int rowGap = Math.Clamp((groupHeight - 48) / 3, 24, 58);
         int contentHeight = rowGap * 3;
@@ -99,24 +260,23 @@ internal partial class FrmMatrix
 
         CenterControlsVertically(
             firstRowCenter,
+            checkBoxEnableKeyboardShortcuts);
+        CenterControlsVertically(
+            firstRowCenter + rowGap,
             labelSwitchBetweenMachine,
             radioButtonF1,
             radioButtonNum,
             radioButtonDisable);
         CenterControlsVertically(
-            firstRowCenter + rowGap,
+            firstRowCenter + (rowGap * 2),
             labelLockMachine,
             comboBoxLockMachine,
             labelSwitch2AllPCMode,
             comboBoxSwitchToAllPC);
         CenterControlsVertically(
-            firstRowCenter + (rowGap * 2),
+            firstRowCenter + (rowGap * 3),
             labelReconnect,
             comboBoxReconnect,
-            labelEasyMouse,
-            comboBoxEasyMouseOption);
-        CenterControlsVertically(
-            firstRowCenter + (rowGap * 3),
             LabelToggleEasyMouse,
             comboBoxEasyMouse);
     }
@@ -132,13 +292,15 @@ internal partial class FrmMatrix
     private static string PortableHotkeyText(HotkeySettings hotkey)
     {
         return hotkey == null || hotkey.IsEmpty() || hotkey.Code < 'A' || hotkey.Code > 'Z'
-            ? "Disable"
+            ? "None"
             : ((char)hotkey.Code).ToString();
     }
 
     private static HotkeySettings PortableCtrlAltHotkey(string selection)
     {
-        if (string.IsNullOrWhiteSpace(selection) || selection.Contains("Disable", StringComparison.OrdinalIgnoreCase))
+        if (string.IsNullOrWhiteSpace(selection)
+            || selection.Contains("Disable", StringComparison.OrdinalIgnoreCase)
+            || selection.Contains("None", StringComparison.OrdinalIgnoreCase))
         {
             return new HotkeySettings();
         }

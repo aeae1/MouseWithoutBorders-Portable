@@ -758,6 +758,29 @@ namespace MouseWithoutBorders.Class
             }
         }
 
+        internal bool KeyboardShortcutsEnabled
+        {
+            get
+            {
+                lock (_loadingSettingsLock)
+                {
+                    return _properties.KeyboardShortcutsEnabled;
+                }
+            }
+
+            set
+            {
+                lock (_loadingSettingsLock)
+                {
+                    _properties.KeyboardShortcutsEnabled = value;
+                    if (!PauseInstantSaving)
+                    {
+                        SaveSettings();
+                    }
+                }
+            }
+        }
+
         internal HotkeySettings HotKeySwitch2AllPC
         {
             get

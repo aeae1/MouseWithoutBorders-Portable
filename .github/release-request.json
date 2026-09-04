@@ -1,22 +1,22 @@
 {
-  "tag": "mwb-v1.0.0-rc.5",
-  "title": "Mouse Without Borders Portable 1.0.0 Release Candidate 5",
+  "tag": "mwb-v1.0.0-rc.6",
+  "title": "Mouse Without Borders Portable 1.0.0 Release Candidate 6",
   "prerelease": true,
-  "summary": "Version 1.0.0 Release Candidate 5 removes a deprecated mystery option and explains unavailable or dependent settings directly in the interface instead of relying on tooltips that disabled WinForms controls cannot display.",
+  "summary": "Version 1.0.0 Release Candidate 6 separates mouse-edge switching from keyboard shortcuts and adds one master switch that keeps every assigned hotkey inactive by default without erasing saved assignments.",
   "changes": [
-    "Hides Use Key Mappings because that inherited PowerToys-era checkbox is deprecated, permanently disabled, and disconnected from settings.",
-    "Relabels the two unavailable sign-in controls to state directly that they require the Windows service omitted from this portable edition.",
-    "Marks Transfer file as requiring Share Clipboard whenever clipboard sharing is switched off, then restores its normal label when available.",
-    "Closes the visual gap left by the removed key-mapping checkbox.",
-    "Keeps the responsive RC4 shortcut layout and all supported shortcut behavior unchanged."
+    "Moves Easy Mouse out of Keyboard Shortcuts and presents it as a clear Switch computers at screen edge checkbox in Other Options.",
+    "Preserves the Always, Hold Ctrl, and Hold Shift mouse-edge activation modes in a separate selector.",
+    "Adds an Enable keyboard shortcuts master checkbox that defaults off for new and existing preference files that do not already contain the new setting.",
+    "Gates local and remotely injected configured hotkeys at runtime while preserving every individual assignment for later reuse.",
+    "Renames the per-shortcut Disable choices to None and reorganizes the shortcut panel into one master row plus three assignment rows."
   ],
   "testing": [
-    "Open Other Options and confirm Use Key Mappings is absent rather than greyed out.",
-    "Confirm the two grey sign-in controls say service required directly in their labels.",
-    "Turn off Share Clipboard and confirm Transfer file becomes unavailable and says it requires Share Clipboard; turn sharing back on and confirm both recover.",
-    "Confirm the RC4 keyboard-shortcut spacing remains correct at normal and maximized Settings sizes.",
-    "Start RC5 in a fresh folder and confirm every shortcut defaults to disabled.",
-    "Open About and confirm the displayed product version is 1.0.0-rc.5.",
-    "Run the same RC5 EXE on both computers and briefly recheck mouse, keyboard, clipboard, file transfer, and reconnect behavior."
+    "Upgrade an existing preferences file and confirm Enable keyboard shortcuts starts unchecked while the old individual assignments remain visible but inactive.",
+    "Enable the master switch and confirm each configured shortcut works; turn it off and confirm none of them fire.",
+    "Confirm the machine-switch row says None rather than Disable and that selecting it affects only that row.",
+    "In Other Options, turn screen-edge switching off and on and test Always, Hold Ctrl, and Hold Shift activation.",
+    "Resize and maximize Settings and confirm the new four-row shortcut layout stays evenly spaced and aligned.",
+    "Open About and confirm the displayed product version is 1.0.0-rc.6.",
+    "Run the same RC6 EXE on both computers and briefly recheck mouse, keyboard, clipboard, file transfer, and reconnect behavior."
   ]
 }

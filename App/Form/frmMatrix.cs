@@ -430,7 +430,11 @@ namespace MouseWithoutBorders
             // 1 sec
             if (helperTimerCounter % 5 == 0)
             {
+#if PORTABLE_SINGLE_FILE
+                RefreshPortableEasyMouseControls();
+#else
                 comboBoxEasyMouseOption.Text = ((EasyMouseOption)Setting.Values.EasyMouse).ToString();
+#endif
 
                 if (!textBoxMachineName2IP.Text.Equals(Setting.Values.Name2IP, StringComparison.OrdinalIgnoreCase))
                 {
@@ -1042,6 +1046,10 @@ namespace MouseWithoutBorders
                     c.Enabled = true;
                 }
             }
+
+#if PORTABLE_SINGLE_FILE
+            UpdatePortableShortcutControlState();
+#endif
         }
 
         private void CheckBoxBlockScreenSaver_CheckedChanged(object sender, EventArgs e)

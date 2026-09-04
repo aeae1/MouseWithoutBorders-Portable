@@ -403,7 +403,8 @@ namespace MouseWithoutBorders.Class
             }
             else
             {
-                if (Common.HotkeyMatched(vkCode, winDown, ctrlDown, altDown, shiftDown, Setting.Values.HotKeyLockMachine))
+                if (Setting.Values.KeyboardShortcutsEnabled
+                    && Common.HotkeyMatched(vkCode, winDown, ctrlDown, altDown, shiftDown, Setting.Values.HotKeyLockMachine))
                 {
                     if (!Common.RunOnLogonDesktop
                         && !Common.RunOnScrSaverDesktop)

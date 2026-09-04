@@ -523,6 +523,11 @@ namespace MouseWithoutBorders.Class
 
         private bool ProcessHotKeys(int vkCode, KEYBDDATA hookCallbackKeybdData)
         {
+            if (!Setting.Values.KeyboardShortcutsEnabled)
+            {
+                return true;
+            }
+
             if (Common.HotkeyMatched(vkCode, winDown, CtrlDown, altDown, shiftDown, Setting.Values.HotKeySwitch2AllPC))
             {
                 ResetLastSwitchKeys();
