@@ -35,7 +35,7 @@ internal sealed class MiniLogForm : System.Windows.Forms.Form
         }
 
         activeForm.BringToFront();
-        _ = activeForm.Activate();
+        activeForm.Activate();
     }
 
     internal MiniLogForm(string miniLog)
