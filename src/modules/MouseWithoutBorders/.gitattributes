@@ -1,7 +1,0 @@
-# Files kept on the extraction branch for comparison with PowerToys, but omitted
-# from clean source archives intended for the standalone repository.
-/AGENTS.md export-ignore
-/App/MouseWithoutBorders.csproj export-ignore
-/App/Helper/MouseWithoutBordersHelper.csproj export-ignore
-/App/Service/MouseWithoutBordersService.csproj export-ignore
-/ModuleInterface export-ignore

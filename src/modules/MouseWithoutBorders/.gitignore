@@ -1,8 +1,0 @@
-/.vs/
-/artifacts/
-**/bin/
-**/obj/
-**/TestResults/
-*.suo
-*.user
-*.userosscache

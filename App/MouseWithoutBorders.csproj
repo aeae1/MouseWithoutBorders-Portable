@@ -1,0 +1,68 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows10.0.26100.0</TargetFramework>
+    <TargetPlatformMinVersion>10.0.19041.0</TargetPlatformMinVersion>
+    <SupportedOSPlatformVersion>10.0.19041.0</SupportedOSPlatformVersion>
+    <RuntimeIdentifiers>win-x64;win-arm64</RuntimeIdentifiers>
+    <RuntimeIdentifier Condition="'$(Platform)' == 'x64'">win-x64</RuntimeIdentifier>
+    <RuntimeIdentifier Condition="'$(Platform)' == 'ARM64'">win-arm64</RuntimeIdentifier>
+    <SelfContained>true</SelfContained>
+
+    <OutputType>WinExe</OutputType>
+    <StartupObject>MouseWithoutBorders.Class.Program</StartupObject>
+    <UseWindowsForms>true</UseWindowsForms>
+    <AssemblyName>MouseWithoutBorders</AssemblyName>
+    <RootNamespace>MouseWithoutBorders</RootNamespace>
+    <DisableWinExeOutputInference>true</DisableWinExeOutputInference>
+    <ImportWindowsDesktopTargets>true</ImportWindowsDesktopTargets>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <ApplicationIcon>ClassicGreen.ico</ApplicationIcon>
+    <NoWin32Manifest>true</NoWin32Manifest>
+    <ErrorOnDuplicatePublishOutputFiles>false</ErrorOnDuplicatePublishOutputFiles>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
+
+    <BaseOutputPath>$(MSBuildThisFileDirectory)..\artifacts\app\</BaseOutputPath>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
+    <DefineConstants>TRACE;DEBUG;STANDALONE;PORTABLE_SINGLE_FILE;SHOW_ON_WINLOGON;CODE_ANALYSIS;CUSTOMIZE_LOGON_SCREEN</DefineConstants>
+    <DebugType>full</DebugType>
+    <DebugSymbols>true</DebugSymbols>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <DefineConstants>TRACE;STANDALONE;PORTABLE_SINGLE_FILE;SHOW_ON_WINLOGON;CODE_ANALYSIS;CUSTOMIZE_LOGON_SCREEN</DefineConstants>
+    <DebugType>pdbonly</DebugType>
+    <DebugSymbols>false</DebugSymbols>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <AssemblyAttribute Include="System.Runtime.InteropServices.ComVisible">
+      <_Parameter1>false</_Parameter1>
+      <_Parameter1_IsLiteral>true</_Parameter1_IsLiteral>
+    </AssemblyAttribute>
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="ClassicGreen.ico" LogicalName="MouseWithoutBorders.ClassicGreen.ico" />
+
+    <Compile Update="Properties\Images.Designer.cs">
+      <DesignTime>true</DesignTime>
+      <AutoGen>true</AutoGen>
+      <DependentUpon>Images.resx</DependentUpon>
+    </Compile>
+    <EmbeddedResource Update="Properties\Images.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Images.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MessagePack" />
+    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" />
+    <PackageReference Include="Microsoft.Windows.Compatibility" />
+    <PackageReference Include="Newtonsoft.Json" />
+    <PackageReference Include="StreamJsonRpc" />
+  </ItemGroup>
+</Project>

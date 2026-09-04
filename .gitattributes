@@ -1,21 +1,13 @@
-###############################################################################
-# Set default behavior to automatically normalize line endings.
-###############################################################################
 * text=auto
 
 *.cs text eol=crlf
+*.resx text eol=crlf
+*.ps1 text eol=crlf
+*.yml text eol=lf
+*.json text eol=lf
+*.md text eol=lf
 
-###############################################################################
-# diff behavior for common document formats
-# 
-# Convert binary document formats to text before diffing them. This feature
-# is only available from the command line. Turn it on by uncommenting the 
-# entries below.
-###############################################################################
-*.rc diff
-
-*.gcode linguist-detectable=false
-
-*.vsconfig linguist-language=json
-
-.github/workflows/*.lock.yml linguist-generated=true merge=ours
+*.bmp binary
+*.ico binary
+*.jpg binary
+*.png binary

@@ -1,45 +1,16 @@
 # Contributing to Mouse Without Borders — Portable
 
-Thanks for helping improve this unofficial portable Mouse Without Borders fork.
+Bug reports, real-PC testing, documentation improvements, and focused code contributions are welcome.
 
-## Before opening an issue
+For bugs, include the tested release/tag, Windows version, portable or installed mode, number of affected computers, reproduction steps, expected result, and actual result. Remove security keys, machine names, IP addresses, clipboard contents, and other private information from logs or screenshots.
 
-Please search existing issues first. For a bug, include:
+Please discuss large changes before implementation. Preserve the existing wire protocol unless a coordinated protocol change is intentional, and keep the one-EXE/no-PowerToys/no-service product goals intact.
 
-- the release/tag and Windows version you tested;
-- whether you chose portable or installed mode;
-- whether one or multiple computers are affected;
-- exact steps that reproduce the problem;
-- what you expected and what happened instead;
-- relevant logs with machine names, security keys, IP addresses, and other private information removed.
+Before submitting code:
 
-Mouse/keyboard, clipboard, file-transfer, reconnect, sleep/wake, startup, and first-launch bugs are especially useful when tested on two physical Windows computers.
+1. Run `.\build.ps1 -Configuration Release -Platform x64 -RunTests`.
+2. Confirm the portable publish contains exactly one EXE.
+3. Manually test affected behavior.
+4. Test networking, input, clipboard, or file-transfer changes between two physical Windows computers.
 
-## Proposing a change
-
-Open an issue before a large change so its behavior and compatibility impact can be discussed. Pull requests should be focused and should preserve the existing wire protocol unless a coordinated protocol change is intentional.
-
-The product goals are:
-
-- one self-contained Windows EXE;
-- no PowerToys runtime requirement;
-- preferences beside the EXE;
-- normal-desktop mouse, keyboard, clipboard, and file-transfer reliability;
-- no installed service or protected-desktop support;
-- a small, understandable MWB-only source tree.
-
-## Building and testing
-
-The active project is under `src/modules/MouseWithoutBorders` while extraction is completed. See its [development guide](src/modules/MouseWithoutBorders/Standalone/DEVELOPMENT.md) for prerequisites and commands.
-
-Before submitting a pull request:
-
-1. Build x64 Release.
-2. Run the MWB unit tests.
-3. Confirm the portable publish contains exactly one EXE.
-4. Manually test behavior affected by the change.
-5. For networking, input, clipboard, or file-transfer changes, test between two physical Windows computers.
-
-## Attribution
-
-Keep existing Microsoft and upstream copyright/license notices intact. Clearly document substantial fork-specific behavior changes. AI-assisted contributions are welcome when the contributor reviews the result, explains the change, and includes meaningful validation.
+See [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) for the detailed development and compatibility rules. Keep existing Microsoft/upstream copyright and license notices intact, and clearly document substantial fork-specific behavior.

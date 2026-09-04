@@ -1,172 +1,117 @@
----
-description: 'Top-level AI contributor guidance for developing PowerToys - a collection of Windows productivity utilities'
-applyTo: '**'
----
+# AGENTS.md — Mouse Without Borders portable fork
 
-# PowerToys – AI contributor guide
+These instructions apply to this cleaned portable repository on the `mwb-standalone` branch.
 
-This is the top-level guidance for AI contributions to PowerToys. Keep changes atomic, follow existing patterns, and cite exact paths in PRs.
+## Product intent
 
-## Overview
+This branch turns Microsoft PowerToys Mouse Without Borders into a clean portable Windows application while staying close enough to upstream MWB that fixes can continue to be reviewed and ported.
 
-PowerToys is a set of utilities for power users to tune and streamline their Windows experience.
+Do not treat this as a greenfield rewrite. Prefer small compatibility layers and focused changes over replacing mature input/network/file-transfer code.
 
-| Area | Location | Description |
-|------|----------|-------------|
-| Runner | `src/runner/` | Main executable, tray icon, module loader, hotkey management |
-| Settings UI | `src/settings-ui/` | WinUI/WPF configuration app communicating via named pipes |
-| Modules | `src/modules/` | Individual PowerToys utilities (each in its own subfolder) |
-| Common Libraries | `src/common/` | Shared code: logging, IPC, settings, DPI, telemetry, utilities |
-| Build Tools | `tools/build/` | Build scripts and automation |
-| Documentation | `doc/devdocs/` | Developer documentation |
-| Installer | `installer/` | WiX-based installer projects |
+## Branches
 
-For architecture details and module types, see [Architecture Overview](doc/devdocs/core/architecture.md).
+- `main` is the historical/upstream-sync base. Keep it close to Microsoft PowerToys.
+- `mwb-standalone` is the cleaned portable product branch and default repository view.
+- Do not merge standalone-specific changes into `main` unless explicitly requested.
 
-## Conventions
+## Compatibility-sensitive behavior
 
-For detailed coding conventions, see:
+Unless the requested feature deliberately changes it, preserve:
 
-- [Coding Guidelines](doc/devdocs/development/guidelines.md) – Dependencies, testing, PR management
-- [Coding Style](doc/devdocs/development/style.md) – Formatting, C++/C#/XAML style rules
-- [Logging](doc/devdocs/development/logging.md) – C++ spdlog and C# Logger usage
+- MWB packet/wire protocol and network constants;
+- keyboard and mouse capture/injection behavior;
+- clipboard text/image sharing;
+- file copy/paste and drag/drop transfer;
+- machine matrix and peer discovery;
+- normal-desktop behavior without requiring an installed service;
+- named IPC/event strings used by modern PowerToys MWB;
+- current PowerToys MWB `settings.json` shape where practical.
 
-### Component-specific instructions
+Do not assume compatibility with the old Garage standalone `2.2.1.0327`; explicitly test it before claiming it.
 
-These instruction files are automatically applied when working in their respective areas:
+## Deliberate fork behavior: security key UX
 
-- [Runner & Settings UI](.github/instructions/runner-settings-ui.instructions.md) – IPC contracts, schema migrations
-- [Common Libraries](.github/instructions/common-libraries.instructions.md) – ABI stability, shared code guidelines
+This fork intentionally differs from upstream:
 
-## Build
+- users may type their own shared key;
+- minimum manual key length is 4 characters;
+- generated keys are 12 characters;
+- generated alphabet is `abcdefghjkmnpqrstuvwxyz23456789`;
+- generated positions are independently selected with `RandomNumberGenerator`;
+- do not restore the upstream forced lower/upper/digit/symbol position pattern;
+- UI should warn that short manually chosen keys are easier to guess, but should not block them solely for strength.
 
-### Prerequisites
+Do not weaken the underlying PBKDF2/AES stream encryption unless explicitly requested and security-reviewed.
 
-- Visual Studio 2022 17.4+ or Visual Studio 2026
-- Windows 10 1803+ (April 2018 Update or newer)
-- Initialize submodules once: `git submodule update --init --recursive`
+## Deliberate fork behavior: portable product
 
-### Build commands
+The distributed product is one self-contained `MouseWithoutBorders.exe` with
+`MouseWithoutBorders.prefs.json` beside it. The same EXE also runs the hidden
+clipboard-helper mode; do not reintroduce a distributed helper executable.
 
-| Task | Command |
-|------|---------|
-| First build / NuGet restore | `tools\build\build-essentials.cmd` |
-| Build current folder | `tools\build\build.cmd` |
-| Build with options | `build.ps1 -Platform x64 -Configuration Release` |
+If no prefs file exists, first launch offers portable use or a per-user
+self-install. The default install location is
+`%LOCALAPPDATA%\Programs\Mouse Without Borders`, and Start with Windows is
+optional and off by default.
 
-### Build discipline
+The portable product deliberately does not install a Windows service. Protected
+UAC prompts and the Windows sign-in screen are unsupported; do not claim those
+scenarios work unless the product direction changes and they are tested again.
 
-1. One terminal per operation (build → test). Do not switch or open new ones mid-flow
-2. After making changes, `cd` to the project folder that changed (`.csproj`/`.vcxproj`)
-3. Use scripts to build: `tools/build/build.ps1` or `tools/build/build.cmd`
-4. For first build or missing NuGet packages, run `build-essentials.cmd` first
-5. **Exit code 0 = success; non-zero = failure** – treat this as absolute
-6. On failure, read the errors log: `build.<config>.<platform>.errors.log`
-7. Do not start tests or launch Runner until the build succeeds
+## Portable compatibility layers
 
-### Build logs
+Prefer these instead of reintroducing PowerToys project dependencies:
 
-Located next to the solution/project being built:
+- `App/Core/GpoCompatibility.cs` — managed policy access replacing native `PowerToys.GPOWrapper`.
+- `App/Core/SettingsCompatibility.cs` — local subset of `Settings.UI.Library` used by MWB.
+- `App/Core/PowerToysRuntimeCompatibility.cs` — standalone logging plus no-op PowerToys runner/telemetry APIs.
+- `App/Core/CommandEventHandler.cs` — owns preserved MWB named-event strings locally.
 
-- `build.<configuration>.<platform>.errors.log` – errors only (check this first)
-- `build.<configuration>.<platform>.all.log` – full log
-- `build.<configuration>.<platform>.trace.binlog` – for MSBuild Structured Log Viewer
+PowerToys telemetry must remain a no-op in the standalone product.
 
-For complete details, see [Build Guidelines](tools/build/BUILD-GUIDELINES.md).
+## Important source areas
 
-## Tests
+Treat these as high-risk and test behavior after editing:
 
-### Test discovery
+- `App/Class/InputHook.cs`
+- `App/Class/InputSimulation.cs`
+- `App/Class/SocketStuff.cs`
+- `App/Class/TcpServer.cs`
+- `App/Class/MachinePool.cs`
+- `App/Core/Encryption.cs`
+- `App/Core/Clipboard.cs`
+- `App/Core/DragDrop.cs`
+- `App/Class/IClipboardHelper.cs`
+- `App/Core/Service.cs`
 
-- Find test projects by product code prefix (e.g., `FancyZones`, `AdvancedPaste`)
-- Look for sibling folders or 1-2 levels up named `<Product>*UnitTests` or `<Product>*UITests`
+For standalone-only UI tweaks, prefer narrowly scoped `*.Standalone.cs` partial files when that avoids unnecessary upstream diffs.
 
-### Running tests
+## Build/test loop
 
-1. **Build the test project first**, wait for exit code 0
-2. Run via VS Test Explorer (`Ctrl+E, T`) or `vstest.console.exe` with filters
-3. **Avoid `dotnet test`** in this repo – use VS Test Explorer or vstest.console.exe
+Use `.github/workflows/build.yml` as the focused Windows x64 validation path.
 
-### Test types
+Before calling a change complete:
 
-| Type | Requirements | Setup |
-|------|--------------|-------|
-| Unit Tests | Standard dev environment | None |
-| UI Tests | WinAppDriver v1.2.1, Developer Mode | Install from [WinAppDriver releases](https://github.com/microsoft/WinAppDriver/releases/tag/v1.2.1) |
-| Fuzz Tests | OneFuzz, .NET 10 | See [Fuzzing Tests](doc/devdocs/tools/fuzzingtesting.md) |
+1. Build Release x64.
+2. Run MWB unit tests.
+3. If input/network/clipboard/file transfer changed, test between two Windows machines.
+4. Test normal desktop, lock/unlock, sleep/wake, and reconnect on real machines.
 
-### Test discipline
+A compile-only success does not prove file-transfer or service correctness.
 
-1. Add or adjust tests when changing behavior
-2. If tests skipped, state why (e.g., comment-only change, string rename)
-3. New modules handling file I/O or user input **must** implement fuzzing tests
+## Commit attribution
 
-### Special requirements
+For changes produced through the connected ChatGPT coding workflow, include:
 
-- **Mouse Without Borders**: Requires 2+ physical computers (not VMs)
-- **Multi-monitor utilities**: Test with 2+ monitors, different DPI settings
+`Assisted-by: ChatGPT (GPT-5.6 Sol)`
 
-For UI test setup details, see [UI Tests](doc/devdocs/development/ui-tests.md).
+GitHub will still show the authenticated account (`aeae1`) as the actual author/committer. See `docs/AI_ASSISTANCE.md`.
 
-## Boundaries
+## More context
 
-### Ask for clarification when
+Read:
 
-- Ambiguous spec after scanning relevant docs
-- Cross-module impact (shared enum/struct) is unclear
-- Security, elevation, or installer changes involved
-- GPO or policy handling modifications needed
-
-### Areas requiring extra care
-
-| Area | Concern | Reference |
-|------|---------|-----------|
-| `src/common/` | ABI breaks | [Common Libraries Instructions](.github/instructions/common-libraries.instructions.md) |
-| `src/runner/`, `src/settings-ui/` | IPC contracts, schema | [Runner & Settings UI Instructions](.github/instructions/runner-settings-ui.instructions.md) |
-| Installer files | Release impact | Careful review required |
-| Elevation/GPO logic | Security | Confirm no regression in policy handling |
-
-### What not to do
-
-- Don't merge incomplete features into main (use feature branches)
-- Don't break IPC/JSON contracts without updating both runner and settings-ui
-- Don't add noisy logs in hot paths
-- Don't introduce third-party deps without PM approval and `NOTICE.md` update
-
-## Validation Checklist
-
-Before finishing, verify:
-
-- [ ] Build clean with exit code 0
-- [ ] Tests updated and passing locally
-- [ ] No unintended ABI breaks or schema changes
-- [ ] IPC contracts consistent between runner and settings-ui
-- [ ] New dependencies added to `NOTICE.md`
-- [ ] PR is atomic (one logical change), with issue linked
-
-## Documentation Index
-
-### Core architecture
-
-- [Architecture Overview](doc/devdocs/core/architecture.md)
-- [Runner](doc/devdocs/core/runner.md)
-- [Settings System](doc/devdocs/core/settings/readme.md)
-- [Module Interface](doc/devdocs/modules/interface.md)
-
-### Development
-
-- [Coding Guidelines](doc/devdocs/development/guidelines.md)
-- [Coding Style](doc/devdocs/development/style.md)
-- [Logging](doc/devdocs/development/logging.md)
-- [UI Tests](doc/devdocs/development/ui-tests.md)
-- [Fuzzing Tests](doc/devdocs/tools/fuzzingtesting.md)
-
-### Build & tools
-
-- [Build Guidelines](tools/build/BUILD-GUIDELINES.md)
-- [Tools Overview](doc/devdocs/tools/readme.md)
-
-### Instructions (auto-applied)
-
-- [Runner & Settings UI](.github/instructions/runner-settings-ui.instructions.md)
-- [Common Libraries](.github/instructions/common-libraries.instructions.md)
+- `docs/README.md`
+- `docs/DEVELOPMENT.md`
+- `docs/UPSTREAM_SYNC.md`
+- `docs/AI_ASSISTANCE.md`

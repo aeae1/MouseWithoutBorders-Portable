@@ -1,17 +1,7 @@
 # Mouse Without Borders — Portable Code of Conduct
 
-This project welcomes constructive bug reports, testing, documentation, and code contributions.
+This project welcomes constructive participation. Communicate respectfully, critique ideas rather than people, protect private information in diagnostics, and give appropriate credit for upstream and community work.
 
-Participants are expected to:
+Harassment, discrimination, threats, disclosure of private information, or deliberately disruptive behavior are not acceptable. Repository content that violates this policy may be edited, removed, or locked, and repeated or serious violations may result in exclusion from the project.
 
-- communicate respectfully and assume good faith;
-- critique ideas and code without attacking people;
-- avoid harassment, discrimination, threats, or deliberately disruptive behavior;
-- protect private information found in logs, screenshots, or network diagnostics;
-- give credit for upstream and community work.
-
-Unacceptable behavior may be edited, removed, locked, or referred to GitHub. Repeated or serious violations may result in temporary or permanent exclusion from the project.
-
-To report conduct concerns, contact the repository owner privately through GitHub rather than posting personal or sensitive details publicly. GitHub-wide abuse can also be reported through [GitHub Support](https://support.github.com/contact/report-abuse).
-
-This policy applies in repository issues, pull requests, discussions, and other spaces officially associated with this fork.
+Report conduct concerns privately to the repository owner through GitHub. GitHub-wide abuse may be reported through [GitHub Support](https://support.github.com/contact/report-abuse).
