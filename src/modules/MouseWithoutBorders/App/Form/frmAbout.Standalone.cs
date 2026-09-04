@@ -12,6 +12,7 @@ internal partial class FrmAbout
 {
     private void ApplyPortableAboutContent()
     {
+        Opacity = 1D;
         Text = "About Mouse Without Borders — Portable";
         labelProductName.Text = $"Mouse Without Borders — Portable {AssemblyVersion}";
         labelCompanyName.Text = "Original creator: Truong Do (Đỗ Đức Trường)";

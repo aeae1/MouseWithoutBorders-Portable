@@ -156,7 +156,7 @@ jobs:
           name: MouseWithoutBorders-portable-source-${{ github.sha }}
           path: ${{ runner.temp }}/mwb-source.zip
           if-no-files-found: error
-          retention-days: 14
+          retention-days: 1
 
       - name: Upload single-file portable x64 build
         uses: actions/upload-artifact@v4
@@ -164,7 +164,7 @@ jobs:
           name: MouseWithoutBorders-portable-x64-${{ github.sha }}
           path: ${{ runner.temp }}/mwb-portable/MouseWithoutBorders.exe
           if-no-files-found: error
-          retention-days: 14
+          retention-days: 1
 
   publish-release:
     name: Attach build to GitHub release

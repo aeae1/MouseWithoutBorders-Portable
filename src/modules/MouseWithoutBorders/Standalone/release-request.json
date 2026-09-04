@@ -1,20 +1,19 @@
 {
-  "tag": "mwb-v0.1.0-test.7",
-  "title": "Mouse Without Borders Portable 0.1 Test 7",
+  "tag": "mwb-v0.1.0-test.8",
+  "title": "Mouse Without Borders Portable 0.1 Test 8",
   "prerelease": true,
-  "summary": "Test 7 is the definitive unsigned build of the simplified portable tray menu with the accepted pre-Test-5 green icon restored. Download `MouseWithoutBorders.exe` from Assets and use this same release on every computer.",
+  "summary": "Test 8 is an unsigned build of the portable green Mouse Without Borders fork. It keeps the Test 7 icon and minimal tray menu while making the About window fully opaque. Download `MouseWithoutBorders.exe` from Assets and use this same release on every computer.",
   "changes": [
-    "Reduces the portable tray menu to Settings, About, and Exit.",
-    "Adds Start with Windows and Uninstall to that minimal menu only when running an installed copy.",
-    "Removes the visible legacy screen-capture, broadcast-control, machine-switching, diagnostic-log, and nonfunctional Help commands from the portable tray menu.",
-    "Restores the complete pre-Test-5 green icon artwork after rejecting a simplified small-icon experiment that lost black pixels.",
-    "Documents the simplified menu and icon rollback in the user, extraction, and developer guides."
+    "Makes the About window fully opaque instead of retaining the original form's 90% transparency.",
+    "Keeps the accepted pre-Test-5 green-and-black icon artwork restored in Test 7.",
+    "Keeps the minimal portable and installed tray menus introduced in Test 7.",
+    "Reduces temporary GitHub Actions artifact retention from 14 days to one day to prevent duplicate test builds from accumulating.",
+    "Documents the About-window and build-retention changes in the user, extraction, and developer guides."
   ],
   "testing": [
-    "Run portably and confirm the tray menu contains only Settings, About, and Exit.",
-    "Install a copy and confirm its tray menu contains Settings, Start with Windows, Uninstall, About, and Exit.",
-    "Toggle Start with Windows, close and reopen the tray menu, and confirm its checkmark remains accurate.",
-    "Check the EXE, title-bar, About, and tray icons at both small and large Windows icon sizes and confirm the green-and-black classic artwork is complete.",
-    "Use this same Test 7 EXE on both computers and confirm that removing tray shortcuts did not affect mouse, keyboard, clipboard, file transfer, reconnect, firewall prompting, or sleep/wake behavior."
+    "Open About over both a light and dark window and confirm nothing behind it shows through.",
+    "Confirm the About icon and EXE icon still show the complete accepted green-and-black artwork.",
+    "Confirm the portable tray menu contains Settings, About, and Exit; an installed copy should additionally contain Start with Windows and Uninstall.",
+    "Use this same Test 8 EXE on both computers and test mouse, keyboard, clipboard, file transfer, reconnect, firewall prompting, and sleep/wake behavior."
   ]
 }

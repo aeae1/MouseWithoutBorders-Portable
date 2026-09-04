@@ -127,6 +127,8 @@ It is triggered by relevant pushes to `mwb-standalone` and is intended to build/
 
 In the current PowerToys development fork, tags beginning with `mwb-v` run the focused build and then attach the tested `MouseWithoutBorders.exe` and its SHA-256 checksum to the matching GitHub release. A branch commit whose message contains `[release]` does the same using the reviewed metadata in `Standalone/release-request.json`; this lets a coding session request a release without asking the repository owner to build or upload files manually. The release job has `contents: write`; ordinary branch and pull-request builds retain read-only repository access and never publish releases.
 
+Workflow copies of the portable EXE and clean source archive use a one-day retention period. They exist only to carry a tested binary into the release job and support immediate diagnosis; GitHub Release assets are the durable distribution channel. Keep this retention short while rapid test iterations would otherwise accumulate duplicate self-contained runtimes.
+
 The clean MWB-only source workflow uses ordinary `v*` release tags. Both workflows validate that the downloadable package contains exactly one compiled program before publishing it.
 
 Before considering a behavior change finished:
