@@ -35,7 +35,7 @@ This fork intentionally differs from upstream:
 
 - users may type their own shared key;
 - minimum manual key length is 4 characters;
-- generated keys are 10 characters;
+- generated keys are 12 characters;
 - generated alphabet is `abcdefghjkmnpqrstuvwxyz23456789`;
 - generated positions are independently selected with `RandomNumberGenerator`;
 - do not restore the upstream forced lower/upper/digit/symbol position pattern;

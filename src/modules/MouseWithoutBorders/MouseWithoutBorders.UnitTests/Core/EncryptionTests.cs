@@ -90,6 +90,7 @@ public sealed class EncryptionTests
         const string allowedCharacters = "abcdefghjkmnpqrstuvwxyz23456789";
         var key = Encryption.CreateRandomKey();
 
+        Assert.AreEqual(12, key.Length);
         Assert.AreEqual(Encryption.GeneratedKeyLength, key.Length);
         foreach (var character in key)
         {

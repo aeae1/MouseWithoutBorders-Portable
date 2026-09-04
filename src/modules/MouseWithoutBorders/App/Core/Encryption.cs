@@ -34,7 +34,7 @@ internal static class Encryption
     // remain free to choose their own shared secret. Short custom keys are intentionally
     // allowed for trusted-LAN convenience; callers/UI should warn rather than block them.
     internal const int MinimumKeyLength = 4;
-    internal const int GeneratedKeyLength = 10;
+    internal const int GeneratedKeyLength = 12;
     private const string GeneratedKeyAlphabet = "abcdefghjkmnpqrstuvwxyz23456789";
 
     // Size (in bytes) of the random, per-connection PBKDF2 salt that is exchanged in the

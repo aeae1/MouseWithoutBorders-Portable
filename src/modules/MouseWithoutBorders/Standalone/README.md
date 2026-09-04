@@ -50,7 +50,7 @@ Upstream PowerToys MWB requires at least 16 characters and its generator produce
 - users may type their own key;
 - minimum accepted length is 4 characters;
 - short custom keys are allowed even though they are easier to guess;
-- generated keys are 10 characters long;
+- generated keys are 12 characters long, providing about 59.5 bits of entropy from this 31-character alphabet;
 - generated characters come from `abcdefghjkmnpqrstuvwxyz23456789` to avoid ambiguous characters and keyboard-layout-hostile punctuation;
 - every generated position is selected independently with `RandomNumberGenerator` instead of following a character-class formula.
 

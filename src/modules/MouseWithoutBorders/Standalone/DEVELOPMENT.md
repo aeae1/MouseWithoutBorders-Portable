@@ -46,7 +46,7 @@ The fork intentionally differs from upstream:
 
 - manually chosen keys are allowed;
 - minimum manual key length: 4 characters;
-- generated key length: 10 characters;
+- generated key length: 12 characters;
 - generated alphabet: `abcdefghjkmnpqrstuvwxyz23456789`;
 - each generated character is independently selected with `RandomNumberGenerator`;
 - no forced lowercase/uppercase/digit/symbol position pattern;

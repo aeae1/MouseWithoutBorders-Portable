@@ -1,19 +1,19 @@
 {
-  "tag": "mwb-v0.1.0-test.8",
-  "title": "Mouse Without Borders Portable 0.1 Test 8",
+  "tag": "mwb-v0.1.0-test.9",
+  "title": "Mouse Without Borders Portable 0.1 Test 9",
   "prerelease": true,
-  "summary": "Test 8 is an unsigned build of the portable green Mouse Without Borders fork. It keeps the Test 7 icon and minimal tray menu while making the About window fully opaque. Download `MouseWithoutBorders.exe` from Assets and use this same release on every computer.",
+  "summary": "Test 9 is an unsigned build of the portable green Mouse Without Borders fork. It increases automatically generated security keys to 12 easy-to-type characters while preserving existing saved keys and the four-character minimum for manually chosen keys.",
   "changes": [
-    "Makes the About window fully opaque instead of retaining the original form's 90% transparency.",
-    "Keeps the accepted pre-Test-5 green-and-black icon artwork restored in Test 7.",
-    "Keeps the minimal portable and installed tray menus introduced in Test 7.",
-    "Reduces temporary GitHub Actions artifact retention from 14 days to one day to prevent duplicate test builds from accumulating.",
-    "Documents the About-window and build-retention changes in the user, extraction, and developer guides."
+    "Increases newly generated security keys from 10 to 12 characters.",
+    "Keeps the same 31-character lowercase-and-number alphabet that avoids ambiguous characters and punctuation.",
+    "Provides about 59.5 bits of entropy for generated keys while keeping them practical to type once on another computer.",
+    "Leaves existing saved keys untouched and continues allowing manually chosen keys of four or more characters.",
+    "Updates the automated policy test and all relevant documentation."
   ],
   "testing": [
-    "Open About over both a light and dark window and confirm nothing behind it shows through.",
-    "Confirm the About icon and EXE icon still show the complete accepted green-and-black artwork.",
-    "Confirm the portable tray menu contains Settings, About, and Exit; an installed copy should additionally contain Start with Windows and Uninstall.",
-    "Use this same Test 8 EXE on both computers and test mouse, keyboard, clipboard, file transfer, reconnect, firewall prompting, and sleep/wake behavior."
+    "Click New Key several times and confirm every generated key contains exactly 12 characters drawn only from abcdefghjkmnpqrstuvwxyz23456789.",
+    "Start with an existing prefs file and confirm its saved key is not replaced during upgrade.",
+    "Use the same generated key on both computers and confirm they connect normally.",
+    "Retest mouse, keyboard, clipboard, file transfer, reconnect, firewall prompting, and sleep/wake behavior with this same Test 9 EXE on both computers."
   ]
 }
