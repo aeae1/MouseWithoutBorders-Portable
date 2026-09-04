@@ -131,6 +131,8 @@ It is triggered by relevant pushes to `mwb-standalone` and is intended to build/
 
 Tags beginning with `mwb-v` run the focused build and then attach the tested `MouseWithoutBorders.exe` and its SHA-256 checksum to the matching GitHub release. A branch commit whose message contains `[release]` does the same using the reviewed metadata in `.github/release-request.json`; this lets a coding session request a release without asking the repository owner to build or upload files manually. The release job has `contents: write`; ordinary branch and pull-request builds retain read-only repository access and never publish releases.
 
+Public versions use semantic versioning. The `0.1.0-test.*` series recorded exploratory hardware tests. `1.0.0-rc.*` identifies feature-complete release candidates undergoing final real-PC validation, and `1.0.0` will be the first stable portable release. Keep `Directory.Build.props`, the Git tag, release title, and release notes aligned so About, diagnostics, Explorer metadata, and GitHub all identify the same build.
+
 Temporary workflow copies of the portable EXE use a one-day retention period. They exist only to carry a tested binary into the release job and support immediate diagnosis; GitHub Release assets are the durable distribution channel.
 
 The workflow validates that the downloadable package contains exactly one compiled program before publishing it.

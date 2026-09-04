@@ -10,13 +10,13 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/aeae1/MouseWithoutBorders-Portable/releases">Download a test release</a>
+  <a href="https://github.com/aeae1/MouseWithoutBorders-Portable/releases">Download the latest release</a>
   ·
   <a href="https://github.com/aeae1/MouseWithoutBorders-Portable/actions/workflows/build.yml">Windows build status</a>
 </p>
 
 > [!IMPORTANT]
-> This is an unofficial test build, not a Microsoft release. Test 12 is working between real Windows PCs, but installation, firewall, sleep/wake, and long-term behavior still deserve continued real-hardware testing.
+> This is an unofficial fork, not a Microsoft release. Version 1.0.0 Release Candidate 1 is built from the cleaned MWB-only repository. Its core portable behavior was proven through Test 12, but installation, firewall, sleep/wake, and long-term behavior still deserve a final real-hardware validation pass before 1.0.0 stable.
 
 ## What this project is
 
@@ -55,13 +55,13 @@ The finished product is deliberately small from a user's perspective:
 ## Download and run
 
 1. Open [Releases](https://github.com/aeae1/MouseWithoutBorders-Portable/releases).
-2. Download `MouseWithoutBorders.exe` from the newest test release's **Assets** section.
+2. Download `MouseWithoutBorders.exe` from the newest release's **Assets** section.
 3. Put it in a folder where you want to keep it, then run it.
 4. Choose **Run portable here**, or choose **Install for me** and select an install folder. Installation can create a desktop shortcut (on by default) and optionally enable Start with Windows.
 
 If you start portably and decide to install later, open Settings and select the **Portable** tab. MWB moves the existing prefs after the running copy closes, then restarts from the installed folder with the same key, layout, and options.
 
-Use the same release on every connected computer while the fork is being tested.
+Use the same release on every connected computer.
 
 ## Intentional limitations
 
@@ -71,7 +71,7 @@ Current builds are unsigned and may trigger Windows SmartScreen. The automated r
 
 ## Current status
 
-The project is approximately **90% complete**.
+The project is now at **1.0.0 Release Candidate 1**: feature-complete for the intended 1.0 scope and awaiting a final real-PC validation pass.
 
 Completed:
 
@@ -95,7 +95,7 @@ Still being validated:
 
 The default `mwb-standalone` branch now contains only this product: `App`, unit tests, focused build/release automation, documentation, and required legal notices. The portable application project is simply `App/MouseWithoutBorders.csproj`; the old parallel `.Standalone.csproj`, helper/service comparison projects, native PowerToys module interface, and surrounding PowerToys source tree are gone from this branch.
 
-The historical `main` branch and the Test 12 tag remain available as recovery and upstream-comparison points. Future Microsoft MWB updates should be reviewed from upstream and ported deliberately rather than merging the full PowerToys tree back into the product branch.
+The historical `main` branch and the Test 12 tag remain available as recovery and upstream-comparison points. Release Candidate 1 is the first versioned build produced directly from the cleaned repository. Future Microsoft MWB updates should be reviewed from upstream and ported deliberately rather than merging the full PowerToys tree back into the product branch.
 
 ## Documentation
 

@@ -108,7 +108,7 @@ jobs:
             title="Mouse Without Borders ${tag#mwb-v}"
             prerelease=true
             printf '%s\n' \
-              'Unsigned test build of the portable green Mouse Without Borders fork.' \
+              'Unsigned prerelease build of the portable green Mouse Without Borders fork.' \
               '' \
               'Download `MouseWithoutBorders.exe` from Assets and use the same release on every computer.' \
               > "$notes_file"

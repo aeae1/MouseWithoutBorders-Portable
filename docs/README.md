@@ -30,9 +30,9 @@ This branch contains a portable Windows build of Mouse Without Borders derived f
 - Small-icon rollback: **completed in Test 7**. The rejected Test 5 tiny-frame redesign lost some of the classic black pixel structure, so the multi-resolution green ICO is restored byte-for-byte to its pre-Test-5 artwork.
 - Opaque About window: **added**. The portable About screen overrides the legacy 90% opacity so windows behind it do not show through.
 - Short-lived CI artifacts: **added**. Temporary workflow copies of the EXE expire after one day; published GitHub Release downloads remain available independently.
-- GitHub Releases publishing: **added and proven**. The first tagged test release was built, tested, and populated with the EXE and checksum automatically.
+- GitHub Releases publishing: **added and proven**. Tagged and requested releases are built, tested, and populated with the EXE and checksum automatically.
 - Upstream MWB audit through September 3, 2026: **completed**. Microsoft's September 2 receive-safety improvements are incorporated and documented in `UPSTREAM_SYNC.md`.
-- Real-Windows connection testing: **working in Test 12**. A broader portable/self-install, firewall, sleep/wake, and two-machine regression pass remains worthwhile.
+- Real-Windows connection testing: **working through Test 12**. Version 1.0.0 Release Candidate 1 rebuilds that behavior from the cleaned MWB-only repository; a final portable/self-install, firewall, sleep/wake, and two-machine regression pass remains worthwhile before 1.0.0 stable.
 
 ## Goals
 
@@ -69,7 +69,7 @@ This fork deliberately keeps the recognizable **classic MWB tray/title-bar icon 
 
 PowerToys-only dependencies were removed incrementally, with compile/test checkpoints after meaningful changes so useful MWB behavior stayed intact. The portable product deliberately omits installed-service UAC/sign-in-screen support, but retains normal-desktop clipboard and file-transfer behavior.
 
-The portable source is now promoted to the root of `aeae1/MouseWithoutBorders-Portable`. The historical branch and Test 12 tag remain available for recovery and upstream comparison; unrelated PowerToys files no longer appear in the default product branch.
+The portable source is now promoted to the root of `aeae1/MouseWithoutBorders-Portable`. The historical branch and Test 12 tag remain available for recovery and upstream comparison; Version 1.0.0 Release Candidate 1 is the first versioned release built from the cleaned layout. Unrelated PowerToys files no longer appear in the default product branch.
 
 ## Upstream synchronization
 
