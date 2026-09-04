@@ -22,7 +22,7 @@ This branch is producing a portable Windows build of Mouse Without Borders from 
 - Later installation from Settings: **added**. The Portable tab can install an already-configured copy, preserving and moving its key, matrix, and options before restarting from the installed directory.
 - Quiet long-term key behavior: **added**. Portable builds never expire a key and do not run the legacy timed check that demanded an auto-generated replacement.
 - Reliable key application: **added**. Apply writes an edited, case-sensitive key to both the live encryption state and adjacent preferences before reconnecting.
-- Inspectable Mini Log: **added**. The diagnostic snapshot opens in a modeless, scrollable/selectable viewer and changes the clipboard only through an explicit Copy all action.
+- Inspectable Diagnostic Log: **added**. Mini Log opens a resizable/maximizable, modeless viewer containing the configuration/connection snapshot, environment details, and a bounded recent-event tail; it changes the clipboard only through an explicit Copy all action and redacts the security key.
 - Conservative edge behavior: **added**. New preference files default Wrap mouse to off; existing saved values remain unchanged.
 - First-launch startup ordering fix: **added and verified on one real Windows PC**. A brand-new folder no longer creates default preferences before the portable/install choice or leaves the initial process hidden; the two-computer test is still pending.
 - Streamlined machine setup: **added**. The portable first run opens the classic machine matrix directly, validates checked computer names, and shows plain-language connection state on every configured tile; the legacy blue wizard and its reconfigure link are no longer part of this product flow.

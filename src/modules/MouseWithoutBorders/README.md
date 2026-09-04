@@ -62,7 +62,7 @@ New preference files default **Wrap mouse** to off. Users can still enable it un
 
 ### Mini Log
 
-The **Mini Log** link opens a compact diagnostic snapshot in a separate modeless window, so the main Settings window remains clickable while it is open. Its text is scrollable and selectable, and **Copy all** copies it only when requested; merely opening the window does not replace the current clipboard contents. Reopening Mini Log refreshes and focuses the existing viewer. The shared key itself is represented by a checksum rather than being printed in the report.
+The **Mini Log** link opens a resizable/maximizable **Diagnostic Log** in a separate modeless window, so the main Settings window remains clickable while it is open. It includes the version, run mode, EXE/preferences paths, Windows and runtime information, process details, machine/configuration/connection snapshot, key length/checksum, and the most recent bounded portion of the on-disk program log. Its text is scrollable and selectable, and **Copy all** copies it only when requested; merely opening the window does not replace the current clipboard contents. Reopening Mini Log refreshes and focuses the existing viewer. The actual shared key is redacted. Review before sharing because computer names, IP addresses, and local paths can appear.
 
 ### Portable settings
 

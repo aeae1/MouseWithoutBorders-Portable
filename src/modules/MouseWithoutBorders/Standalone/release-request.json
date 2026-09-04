@@ -1,8 +1,8 @@
 {
-  "tag": "mwb-v0.1.0-test.11",
-  "title": "Mouse Without Borders Portable 0.1 Test 11",
+  "tag": "mwb-v0.1.0-test.12",
+  "title": "Mouse Without Borders Portable 0.1 Test 12",
   "prerelease": true,
-  "summary": "Test 11 is an unsigned build of the portable green Mouse Without Borders fork. It keeps Test 10's applied-key persistence repair and changes Mini Log from a modal dialog into a modeless viewer so the main Settings window remains usable while the report is open.",
+  "summary": "Test 12 is an unsigned build of the portable green Mouse Without Borders fork. It expands the modeless Mini Log into a resizable Diagnostic Log with relevant environment, configuration, connection, and recent-event information while continuing to redact the security key.",
   "changes": [
     "Fixes the Apply path so a typed security key updates both the running connection and MouseWithoutBorders.prefs.json.",
     "Forces an edited key to finish saving before sockets reconnect, preventing an immediate restart from restoring the old key.",
@@ -12,6 +12,10 @@
     "Replaces Test 10's modal Mini Log dialog with a modeless viewer that does not disable the Settings window.",
     "Keeps Settings usable while Mini Log remains open; connection and tray behavior are unchanged.",
     "Refreshes and focuses the existing Mini Log viewer on repeated clicks instead of stacking modal windows.",
+    "Makes the Diagnostic Log window freely resizable and maximizable.",
+    "Removes the ineffective modeless Close button; the normal title-bar X closes the viewer.",
+    "Adds version, run mode, EXE and preferences paths, Windows/.NET/architecture, process details, key length/checksum, and the latest bounded portion of the real program log.",
+    "Caps the recent-event section at 96 KiB so opening the viewer stays quick, and warns before sharing because names, IPs, and local paths can appear.",
     "Defaults Wrap mouse to off in newly created preference files without changing existing users' saved value.",
     "Documents the key-application repair and revised diagnostic behavior throughout the project."
   ],
@@ -23,7 +27,9 @@
     "Confirm Mini Log text is visible, scrollable, selectable, and copyable with both Ctrl+C and Copy all.",
     "Leave Mini Log open and confirm Settings, the tray menu, and normal mouse/keyboard sharing remain responsive.",
     "Click Mini Log repeatedly and confirm the existing viewer refreshes and comes forward without opening duplicate windows.",
+    "Resize and maximize the Diagnostic Log, then close it with the title-bar X and reopen it.",
+    "Confirm the report contains environment, configuration, connection, and recent-event sections but never displays the actual security key.",
     "Create a brand-new portable preferences file and confirm Wrap mouse is off; separately confirm an existing saved Wrap mouse choice is preserved.",
-    "Retest mouse, keyboard, clipboard, file transfer, reconnect, firewall prompting, and sleep/wake behavior with this same Test 11 EXE on both computers."
+    "Retest mouse, keyboard, clipboard, file transfer, reconnect, firewall prompting, and sleep/wake behavior with this same Test 12 EXE on both computers."
   ]
 }

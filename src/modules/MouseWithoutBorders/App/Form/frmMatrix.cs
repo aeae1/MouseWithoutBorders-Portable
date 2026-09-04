@@ -1200,7 +1200,7 @@ namespace MouseWithoutBorders
 
         private void LinkLabelMiniLog_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
-            string miniLog = Helper.GetMiniLog(new[] { groupBoxOtherOptions.Controls, groupBoxShortcuts.Controls });
+            string miniLog = DiagnosticLog.Create(new[] { groupBoxOtherOptions.Controls, groupBoxShortcuts.Controls });
             MiniLogForm.ShowOrActivate(this, miniLog);
         }
 

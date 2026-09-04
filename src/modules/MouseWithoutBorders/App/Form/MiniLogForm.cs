@@ -42,15 +42,16 @@ internal sealed class MiniLogForm : System.Windows.Forms.Form
     {
         AutoScaleDimensions = new SizeF(96F, 96F);
         AutoScaleMode = AutoScaleMode.Dpi;
-        ClientSize = new Size(487, 561);
-        FormBorderStyle = FormBorderStyle.FixedDialog;
-        MaximizeBox = false;
-        MinimizeBox = false;
+        ClientSize = new Size(700, 561);
+        FormBorderStyle = FormBorderStyle.Sizable;
+        MaximizeBox = true;
+        MinimizeBox = true;
+        MinimumSize = new Size(500, 350);
         Opacity = 1D;
         Padding = new Padding(12);
         ShowInTaskbar = false;
         StartPosition = FormStartPosition.CenterParent;
-        Text = "Mouse Without Borders — Mini Log";
+        Text = "Mouse Without Borders — Diagnostic Log";
 
         StandaloneBranding.Apply(this);
 
@@ -59,15 +60,15 @@ internal sealed class MiniLogForm : System.Windows.Forms.Form
             AutoSize = true,
             Font = new Font(SystemFonts.MessageBoxFont, FontStyle.Bold),
             Location = new Point(12, 12),
-            Text = "Mini Log",
+            Text = "Diagnostic Log",
         };
 
         var descriptionLabel = new Label
         {
             AutoSize = false,
             Location = new Point(12, 38),
-            Size = new Size(463, 38),
-            Text = "A compact diagnostic snapshot. Select any text below, or use Copy all when sharing it for troubleshooting.",
+            Size = new Size(676, 38),
+            Text = "Review before sharing: this report can include computer names, IP addresses, and local paths. The security key is redacted.",
         };
 
         logTextBox = new TextBox
@@ -79,7 +80,7 @@ internal sealed class MiniLogForm : System.Windows.Forms.Form
             ReadOnly = true,
             ScrollBars = ScrollBars.Both,
             ShortcutsEnabled = true,
-            Size = new Size(463, 428),
+            Size = new Size(676, 428),
             Text = miniLog ?? string.Empty,
             WordWrap = false,
         };
@@ -87,30 +88,17 @@ internal sealed class MiniLogForm : System.Windows.Forms.Form
         var copyButton = new Button
         {
             Anchor = AnchorStyles.Bottom | AnchorStyles.Right,
-            Location = new Point(309, 526),
+            Location = new Point(608, 526),
             Size = new Size(80, 27),
             Text = "Copy &all",
             UseVisualStyleBackColor = true,
         };
         copyButton.Click += CopyButton_Click;
 
-        var closeButton = new Button
-        {
-            Anchor = AnchorStyles.Bottom | AnchorStyles.Right,
-            DialogResult = DialogResult.Cancel,
-            Location = new Point(395, 526),
-            Size = new Size(80, 27),
-            Text = "Close",
-            UseVisualStyleBackColor = true,
-        };
-
-        AcceptButton = closeButton;
-        CancelButton = closeButton;
         Controls.Add(titleLabel);
         Controls.Add(descriptionLabel);
         Controls.Add(logTextBox);
         Controls.Add(copyButton);
-        Controls.Add(closeButton);
     }
 
     private void CopyButton_Click(object sender, EventArgs e)
