@@ -7,14 +7,14 @@
     "Reduces the portable tray menu to Settings, About, and Exit.",
     "Adds Start with Windows and Uninstall to that minimal menu only when running an installed copy.",
     "Removes the visible legacy screen-capture, broadcast-control, machine-switching, diagnostic-log, and nonfunctional Help commands from the portable tray menu.",
-    "Fixes the remaining clipped Portable-tab descriptions by wrapping them within the settings panel's actual usable width.",
-    "Documents the simplified menu and display-scaling constraint in the user, extraction, and developer guides."
+    "Restores the complete pre-Test-5 green icon artwork after rejecting a simplified small-icon experiment that lost black pixels.",
+    "Documents the simplified menu and icon rollback in the user, extraction, and developer guides."
   ],
   "testing": [
     "Run portably and confirm the tray menu contains only Settings, About, and Exit.",
     "Install a copy and confirm its tray menu contains Settings, Start with Windows, Uninstall, About, and Exit.",
     "Toggle Start with Windows, close and reopen the tray menu, and confirm its checkmark remains accurate.",
-    "At your normal Windows display scaling, open Settings > Portable and confirm both explanatory paragraphs wrap cleanly with no missing words.",
+    "Check the EXE, title-bar, About, and tray icons at both small and large Windows icon sizes and confirm the green-and-black classic artwork is complete.",
     "Use this same Test 6 EXE on both computers and confirm that removing tray shortcuts did not affect mouse, keyboard, clipboard, file transfer, reconnect, firewall prompting, or sleep/wake behavior."
   ]
 }

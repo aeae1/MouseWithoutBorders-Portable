@@ -49,7 +49,7 @@ internal partial class FrmMatrix
             AutoSize = true,
             Font = SystemFonts.MessageBoxFont,
             Location = new Point(24, 54),
-            MaximumSize = new Size(505, 0),
+            MaximumSize = new Size(620, 0),
             Text = PortableApplication.IsInstalledCopy
                 ? "This copy is installed for your Windows account. Use the tray menu to change Start with Windows or uninstall it."
                 : "This EXE is running directly from its current folder. You can keep using it this way or install this configured copy later.",
@@ -109,7 +109,7 @@ internal partial class FrmMatrix
             Font = SystemFonts.MessageBoxFont,
             ForeColor = Color.DimGray,
             Location = new Point(24, 292),
-            MaximumSize = new Size(505, 0),
+            MaximumSize = new Size(620, 0),
             Text = PortableApplication.IsInstalledCopy
                 ? "Your preferences remain beside the installed EXE. No background updater or Windows service is added."
                 : "Installing copies the EXE and moves these preferences only after the current app closes, preserving your key, layout, and options.",
