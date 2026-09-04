@@ -1,22 +1,20 @@
 {
-  "tag": "mwb-v0.1.0-test.5",
-  "title": "Mouse Without Borders Portable 0.1 Test 5",
+  "tag": "mwb-v0.1.0-test.6",
+  "title": "Mouse Without Borders Portable 0.1 Test 6",
   "prerelease": true,
-  "summary": "Test 5 is an unsigned build of the portable green Mouse Without Borders fork. Download `MouseWithoutBorders.exe` from Assets and use this same release on every computer.",
+  "summary": "Test 6 is an unsigned build of the portable green Mouse Without Borders fork. Download `MouseWithoutBorders.exe` from Assets and use this same release on every computer.",
   "changes": [
-    "Fixes clipped text on the first-run welcome screen and the Portable settings tab.",
-    "Groups Start with Windows and Create a desktop shortcut as installation-only options.",
-    "Makes the preferences-file explanations clearer and fully visible.",
-    "Rewrites About to explain this portable edition first while preserving the original creator and complete contributor credits.",
-    "Uses the green classic icon consistently in About and other runtime windows.",
-    "Rebuilds the 16, 20, and 24 pixel EXE icon frames from the original classic artwork so Windows small-icon views render cleanly."
+    "Reduces the portable tray menu to Settings, About, and Exit.",
+    "Adds Start with Windows and Uninstall to that minimal menu only when running an installed copy.",
+    "Removes the visible legacy screen-capture, broadcast-control, machine-switching, diagnostic-log, and nonfunctional Help commands from the portable tray menu.",
+    "Fixes the remaining clipped Portable-tab descriptions by wrapping them within the settings panel's actual usable width.",
+    "Documents the simplified menu and display-scaling constraint in the user, extraction, and developer guides."
   ],
   "testing": [
-    "At your normal Windows display scaling, start with no prefs file and confirm the welcome screen has no clipped or overlapping text.",
-    "Confirm Start with Windows and Create a desktop shortcut are clearly marked as options used only when installing.",
-    "Run portably, open Settings > Portable, and confirm all descriptions are fully visible.",
-    "Open About and confirm its icon is green, the portable-edition explanation comes first, and the original creator and complete contributor list remain visible below.",
-    "View MouseWithoutBorders.exe with Windows Explorer set to small icons and confirm the green icon is crisp rather than garbled.",
-    "Use this same Test 5 EXE on both computers and test mouse, keyboard, clipboard, file transfer, reconnect, firewall prompting, and sleep/wake."
+    "Run portably and confirm the tray menu contains only Settings, About, and Exit.",
+    "Install a copy and confirm its tray menu contains Settings, Start with Windows, Uninstall, About, and Exit.",
+    "Toggle Start with Windows, close and reopen the tray menu, and confirm its checkmark remains accurate.",
+    "At your normal Windows display scaling, open Settings > Portable and confirm both explanatory paragraphs wrap cleanly with no missing words.",
+    "Use this same Test 6 EXE on both computers and confirm that removing tray shortcuts did not affect mouse, keyboard, clipboard, file transfer, reconnect, firewall prompting, or sleep/wake behavior."
   ]
 }
