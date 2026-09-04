@@ -41,11 +41,13 @@ If no prefs file exists beside the EXE, MWB offers:
 - **Run portable here** — creates the prefs file in the current folder and continues without installation.
 - **Cancel** — exits without installing or starting MWB.
 
-After either run choice, the portable app opens the machine matrix directly instead of launching the old blue setup wizard. The generated key is visible on that first screen: use the same key on each computer, check an empty tile, and enter the other computer's Windows name. Applying the layout rejects blank or duplicate checked names, and each tile reports whether it is waiting, connecting, connected, mismatched, timed out, or disconnected.
+After either run choice, the portable app opens the machine matrix directly instead of launching the old blue setup wizard. The generated key is visible on that first screen: use the same case-sensitive key on each computer, check an empty tile, and enter the other computer's Windows name. Applying the layout rejects blank or duplicate checked names, immediately saves an edited key to the adjacent prefs file before reconnecting, and reports whether each tile is waiting, connecting, connected, mismatched, timed out, or disconnected.
 
 Choosing portable mode is not permanent. The **Portable** tab in Settings can install the currently configured copy later. MWB saves and moves the existing prefs after the running process closes, then restarts from the installed folder with the same key, machine layout, and options.
 
 The app does not install a Windows service. Protected UAC prompts and the Windows sign-in screen are therefore intentionally unsupported; normal desktop operation remains the target.
+
+New preference files default **Wrap mouse** to off. Users can still enable it under **Other Options**, and upgrades preserve whatever value is already saved.
 
 ## Fork-specific behavior
 
@@ -53,10 +55,14 @@ The app does not install a Windows service. Protected UAC prompts and the Window
 
 - Users may enter their own key.
 - The minimum accepted custom key length is four characters.
-- Generated keys are ten random characters from `abcdefghjkmnpqrstuvwxyz23456789`.
+- Generated keys are twelve random characters from `abcdefghjkmnpqrstuvwxyz23456789`.
 - Easily confused characters and keyboard-layout-sensitive punctuation are excluded.
 - Longer random secrets remain safer than short human-chosen keys.
 - Keys do not expire automatically, and the portable build does not periodically demand a generated replacement.
+
+### Mini Log
+
+The **Mini Log** link opens a compact diagnostic snapshot in a separate window. Its text is scrollable and selectable, and **Copy all** copies it only when requested; merely opening the window does not replace the current clipboard contents. The shared key itself is represented by a checksum rather than being printed in the report.
 
 ### Portable settings
 

@@ -311,7 +311,7 @@ namespace Microsoft.PowerToys.Settings.UI.Library
         public MouseWithoutBordersProperties()
         {
             SecurityKey = new StringProperty(string.Empty);
-            WrapMouse = true;
+            WrapMouse = false;
             ShareClipboard = true;
             TransferFile = true;
             HideMouseAtScreenEdge = true;

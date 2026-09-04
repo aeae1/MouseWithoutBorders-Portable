@@ -31,6 +31,7 @@ public sealed class PortableApplicationTests
             var settings = ReadSettings(settingsPath);
             Assert.AreEqual(PortableApplication.AppModePortable, settings.AppMode);
             Assert.IsTrue(settings.Properties.FirstRun);
+            Assert.IsFalse(settings.Properties.WrapMouse, "New preferences should not wrap the pointer across the outside edges of the matrix by default.");
         });
     }
 

@@ -541,10 +541,15 @@ namespace MouseWithoutBorders
                 return false;
             }
 
-            if (!newKey.Equals(Encryption.MyKey, StringComparison.OrdinalIgnoreCase))
+            if (!newKey.Equals(Encryption.MyKey, StringComparison.Ordinal))
             {
-                Encryption.MyKey = newKey;
+                Setting.Values.MyKey = Encryption.MyKey = newKey;
                 Encryption.GeneratedKey = false;
+
+                // Applying a key is a deliberate, security-sensitive action. Persist it
+                // before reopening the sockets so an immediate exit/restart cannot restore
+                // the previous key from the adjacent preferences file.
+                Setting.Values.SaveSettingsSynchronously();
             }
 
             Encryption.MagicNumber = Encryption.Get24BitHash(Encryption.MyKey);
@@ -1196,9 +1201,8 @@ namespace MouseWithoutBorders
         private void LinkLabelMiniLog_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
             string miniLog = Helper.GetMiniLog(new[] { groupBoxOtherOptions.Controls, groupBoxShortcuts.Controls });
-
-            Clipboard.SetText(miniLog);
-            Common.ShowToolTip("Log has been placed in the clipboard.", 30000, ToolTipIcon.Info, false);
+            using var miniLogForm = new MiniLogForm(miniLog);
+            _ = miniLogForm.ShowDialog(this);
         }
 
         private void ComboBoxScreenCapture_TextChanged(object sender, EventArgs e)

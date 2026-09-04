@@ -1,19 +1,24 @@
 {
-  "tag": "mwb-v0.1.0-test.9",
-  "title": "Mouse Without Borders Portable 0.1 Test 9",
+  "tag": "mwb-v0.1.0-test.10",
+  "title": "Mouse Without Borders Portable 0.1 Test 10",
   "prerelease": true,
-  "summary": "Test 9 is an unsigned build of the portable green Mouse Without Borders fork. It increases automatically generated security keys to 12 easy-to-type characters while preserving existing saved keys and the four-character minimum for manually chosen keys.",
+  "summary": "Test 10 is an unsigned build of the portable green Mouse Without Borders fork. It fixes Settings so an applied security key is immediately persisted before reconnection, and changes Mini Log from an automatic clipboard copy into a readable diagnostic window.",
   "changes": [
-    "Increases newly generated security keys from 10 to 12 characters.",
-    "Keeps the same 31-character lowercase-and-number alphabet that avoids ambiguous characters and punctuation.",
-    "Provides about 59.5 bits of entropy for generated keys while keeping them practical to type once on another computer.",
-    "Leaves existing saved keys untouched and continues allowing manually chosen keys of four or more characters.",
-    "Updates the automated policy test and all relevant documentation."
+    "Fixes the Apply path so a typed security key updates both the running connection and MouseWithoutBorders.prefs.json.",
+    "Forces an edited key to finish saving before sockets reconnect, preventing an immediate restart from restoring the old key.",
+    "Treats uppercase and lowercase as distinct in manually entered keys, matching the encryption behavior.",
+    "Opens Mini Log in an About-sized window with scrollable, selectable text and an explicit Copy all button.",
+    "Leaves the clipboard unchanged when Mini Log is merely opened and continues redacting the shared key as a checksum.",
+    "Defaults Wrap mouse to off in newly created preference files without changing existing users' saved value.",
+    "Documents the key-application repair and revised diagnostic behavior throughout the project."
   ],
   "testing": [
-    "Click New Key several times and confirm every generated key contains exactly 12 characters drawn only from abcdefghjkmnpqrstuvwxyz23456789.",
-    "Start with an existing prefs file and confirm its saved key is not replaced during upgrade.",
-    "Use the same generated key on both computers and confirm they connect normally.",
-    "Retest mouse, keyboard, clipboard, file transfer, reconnect, firewall prompting, and sleep/wake behavior with this same Test 9 EXE on both computers."
+    "On each computer, enter the same replacement key in Settings, click Apply, close Settings, reopen it, and confirm the replacement key remains.",
+    "Restart both copies and confirm MouseWithoutBorders.prefs.json and the Settings box still contain the replacement key.",
+    "Confirm the two computers connect without a key-mismatch warning and repeat with a key whose letter case differs to verify case-sensitive handling.",
+    "Copy some recognizable text, open Mini Log, and confirm the existing clipboard remains unchanged until Copy all is pressed.",
+    "Confirm Mini Log text is visible, scrollable, selectable, and copyable with both Ctrl+C and Copy all.",
+    "Create a brand-new portable preferences file and confirm Wrap mouse is off; separately confirm an existing saved Wrap mouse choice is preserved.",
+    "Retest mouse, keyboard, clipboard, file transfer, reconnect, firewall prompting, and sleep/wake behavior with this same Test 10 EXE on both computers."
   ]
 }

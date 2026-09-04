@@ -48,6 +48,9 @@ The finished product is deliberately small from a user's perspective:
 - Keeps only the current and previous 5 MB local diagnostic logs instead of allowing one log to grow indefinitely.
 - Reduces the tray menu to the everyday controls: Settings, About, and Exit, plus Start with Windows and Uninstall for installed copies.
 - Makes the About window fully opaque instead of retaining the original 90% transparency.
+- Makes an applied security-key edit persist immediately before reconnecting, and treats letter case as significant.
+- Opens Mini Log in a readable, selectable window instead of overwriting the clipboard automatically.
+- Defaults **Wrap mouse** to off for newly created preferences while preserving existing users' saved choice.
 
 ## Download and run
 
@@ -128,3 +131,4 @@ This section records how the PowerToys module became this portable product. It i
 12. **Added long-running and release safety rails.** The local diagnostic log rolls at 5 MB and retains only one previous file; there is no updater, survey, or telemetry sender. The fork audited PowerToys MWB through September 3, 2026 and ported Microsoft's September 2 transactional incoming-file protections. GitHub Actions builds, tests, verifies the isolated source, checks the one-file package, computes a SHA-256 checksum, and creates test releases only after validation succeeds. Physical two-PC testing remains the final authority for input, clipboard, file transfer, sleep/wake, firewall, install, and uninstall behavior before the temporary PowerToys comparison tree is removed.
 13. **Simplified the everyday interface.** The portable build's tray menu intentionally exposes only Settings, About, and Exit; installed copies additionally expose Start with Windows and Uninstall. Legacy screen-capture, broadcast-control, machine-switching, diagnostic, and dead help entries were removed from the visible menu without removing the underlying connection engine.
 14. **Polished the portable presentation and build retention.** The portable About window overrides the legacy form's 90% opacity and renders fully opaque. Temporary CI executables and source archives are retained for one day—long enough for release publication and diagnosis—while durable downloadable builds remain attached to GitHub Releases.
+15. **Fixed key application and made diagnostics inspectable.** Applying a typed security key now updates both the live encryption state and the adjacent preferences JSON, forces that save to finish before sockets reconnect, and compares keys with case-sensitive semantics. The **Mini Log** link now opens an About-sized window with scrollable, selectable text and an explicit **Copy all** button instead of silently replacing the clipboard. New preference files start with **Wrap mouse** off so an outer matrix edge does not unexpectedly jump to the opposite side; existing saved choices are not migrated or overwritten.

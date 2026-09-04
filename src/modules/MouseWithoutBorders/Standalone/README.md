@@ -11,7 +11,7 @@ This branch is producing a portable Windows build of Mouse Without Borders from 
 - PowerToys-runner lifetime coupling: **neutralized for portable operation**.
 - Classic MWB tray/settings UI: **forced on** without requiring the separate PowerToys Settings process.
 - Focused Windows x64 build/test workflow: **added** at `.github/workflows/mwb-standalone-build.yml`.
-- Human-friendly shared-key policy: **added**. User-chosen keys of 4+ characters are accepted; generated keys are 10 cryptographically random easy-to-type characters.
+- Human-friendly shared-key policy: **added**. User-chosen keys of 4+ characters are accepted; generated keys are 12 cryptographically random easy-to-type characters.
 - Classic visual branding: **added**. The original orange 32×32 MWB pixel design is mechanically recolored green, with a matching multi-resolution ICO and exact pixel-grid SVG.
 - PowerToys-free app/helper/service comparison projects: **added**. The distributed portable build now combines the app and clipboard helper into one executable.
 - Shared PowerToys MSBuild/package infrastructure: **removed from the portable build path**.
@@ -21,6 +21,9 @@ This branch is producing a portable Windows build of Mouse Without Borders from 
 - Portable first launch and per-user self-install: **added**. Preferences stay beside the EXE; installation defaults to the current user's local Programs folder, a desktop shortcut is offered by default, and Start with Windows is optional.
 - Later installation from Settings: **added**. The Portable tab can install an already-configured copy, preserving and moving its key, matrix, and options before restarting from the installed directory.
 - Quiet long-term key behavior: **added**. Portable builds never expire a key and do not run the legacy timed check that demanded an auto-generated replacement.
+- Reliable key application: **added**. Apply writes an edited, case-sensitive key to both the live encryption state and adjacent preferences before reconnecting.
+- Inspectable Mini Log: **added**. The diagnostic snapshot opens in a scrollable/selectable window and changes the clipboard only through an explicit Copy all action.
+- Conservative edge behavior: **added**. New preference files default Wrap mouse to off; existing saved values remain unchanged.
 - First-launch startup ordering fix: **added and verified on one real Windows PC**. A brand-new folder no longer creates default preferences before the portable/install choice or leaves the initial process hidden; the two-computer test is still pending.
 - Streamlined machine setup: **added**. The portable first run opens the classic machine matrix directly, validates checked computer names, and shows plain-language connection state on every configured tile; the legacy blue wizard and its reconfigure link are no longer part of this product flow.
 - Essential tray menu: **added**. Portable copies show Settings, About, and Exit; installed copies also show Start with Windows and Uninstall. Rare legacy commands are no longer presented in the portable product's tray menu.
