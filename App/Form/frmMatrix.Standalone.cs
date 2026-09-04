@@ -8,6 +8,8 @@ using System;
 using System.Drawing;
 using System.Windows.Forms;
 
+using Microsoft.PowerToys.Settings.UI.Library;
+
 using MouseWithoutBorders.Core;
 
 namespace MouseWithoutBorders;
@@ -25,7 +27,58 @@ internal partial class FrmMatrix
         checkBoxDisableCAD.Text = checkBoxDisableCAD.Text.Replace(" [Unsupported!]", " [Not available in portable mode]", StringComparison.Ordinal);
         checkBoxHideLogo.Text = checkBoxHideLogo.Text.Replace(" [Unsupported!]", " [Not available in portable mode]", StringComparison.Ordinal);
 
+        ConfigurePortableShortcutControls();
         AddPortableSettingsTab();
+    }
+
+    private void ConfigurePortableShortcutControls()
+    {
+        // These legacy rows have no active backing behavior in the current MWB engine.
+        // Hiding them is clearer than showing disabled controls left over from PowerToys.
+        labelShowSettings.Visible = comboBoxShowSettings.Visible = false;
+        labelExitMM.Visible = comboBoxExitMM.Visible = false;
+        labelScreenCapture.Visible = comboBoxScreenCapture.Visible = false;
+
+        comboBoxSwitchToAllPC.Items.Remove("Ctrl*3");
+
+        labelLockMachine.Location = new Point(labelLockMachine.Left, 44);
+        comboBoxLockMachine.Location = new Point(comboBoxLockMachine.Left, 41);
+        labelSwitch2AllPCMode.Location = new Point(labelSwitch2AllPCMode.Left, 44);
+        comboBoxSwitchToAllPC.Location = new Point(comboBoxSwitchToAllPC.Left, 41);
+
+        labelReconnect.Location = new Point(labelReconnect.Left, 71);
+        comboBoxReconnect.Location = new Point(comboBoxReconnect.Left, 68);
+        labelEasyMouse.Location = new Point(labelEasyMouse.Left, 71);
+        comboBoxEasyMouseOption.Location = new Point(comboBoxEasyMouseOption.Left, 68);
+
+        LabelToggleEasyMouse.Location = new Point(LabelToggleEasyMouse.Left, 98);
+        comboBoxEasyMouse.Location = new Point(comboBoxEasyMouse.Left, 95);
+
+        comboBoxLockMachine.Text = PortableHotkeyText(Setting.Values.HotKeyLockMachine);
+        comboBoxReconnect.Text = PortableHotkeyText(Setting.Values.HotKeyReconnect);
+        comboBoxSwitchToAllPC.Text = PortableHotkeyText(Setting.Values.HotKeySwitch2AllPC);
+        comboBoxEasyMouseOption.Text = ((Class.EasyMouseOption)Setting.Values.EasyMouse).ToString();
+        comboBoxEasyMouse.Text = PortableHotkeyText(Setting.Values.HotKeyToggleEasyMouse);
+    }
+
+    private static string PortableHotkeyText(HotkeySettings hotkey)
+    {
+        return hotkey == null || hotkey.IsEmpty() || hotkey.Code < 'A' || hotkey.Code > 'Z'
+            ? "Disable"
+            : ((char)hotkey.Code).ToString();
+    }
+
+    private static HotkeySettings PortableCtrlAltHotkey(string selection)
+    {
+        if (string.IsNullOrWhiteSpace(selection) || selection.Contains("Disable", StringComparison.OrdinalIgnoreCase))
+        {
+            return new HotkeySettings();
+        }
+
+        char key = char.ToUpperInvariant(selection[0]);
+        return key is >= 'A' and <= 'Z'
+            ? new HotkeySettings(false, true, true, false, key)
+            : new HotkeySettings();
     }
 
     private void AddPortableSettingsTab()

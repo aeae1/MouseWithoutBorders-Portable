@@ -178,13 +178,13 @@ namespace Microsoft.PowerToys.Settings.UI.Library
         public static HotkeySettings DefaultHotKeySwitch2AllPC => new();
 
         [CmdConfigureIgnore]
-        public static HotkeySettings DefaultHotKeyLockMachine => new(true, true, true, false, 0x4C);
+        public static HotkeySettings DefaultHotKeyLockMachine => new();
 
         [CmdConfigureIgnore]
-        public static HotkeySettings DefaultHotKeyReconnect => new(true, true, true, false, 0x52);
+        public static HotkeySettings DefaultHotKeyReconnect => new();
 
         [CmdConfigureIgnore]
-        public static HotkeySettings DefaultHotKeyToggleEasyMouse => new(true, true, true, false, 0x45);
+        public static HotkeySettings DefaultHotKeyToggleEasyMouse => new();
 
         [CmdConfigureIgnore]
         public StringProperty SecurityKey { get; set; }
@@ -329,7 +329,7 @@ namespace Microsoft.PowerToys.Settings.UI.Library
             UseService = false;
             DisableEasyMouseWhenForegroundWindowIsFullscreen = true;
             EasyMouseFullscreenSwitchBlockExcludedApps = new GenericProperty<HashSet<string>>(new HashSet<string>(StringComparer.OrdinalIgnoreCase));
-            HotKeySwitchMachine = new IntProperty(0x70);
+            HotKeySwitchMachine = new IntProperty(0);
             ToggleEasyMouseShortcut = DefaultHotKeyToggleEasyMouse;
             LockMachineShortcut = DefaultHotKeyLockMachine;
             ReconnectShortcut = DefaultHotKeyReconnect;

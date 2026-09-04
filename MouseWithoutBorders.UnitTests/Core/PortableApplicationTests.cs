@@ -32,6 +32,11 @@ public sealed class PortableApplicationTests
             Assert.AreEqual(PortableApplication.AppModePortable, settings.AppMode);
             Assert.IsTrue(settings.Properties.FirstRun);
             Assert.IsFalse(settings.Properties.WrapMouse, "New preferences should not wrap the pointer across the outside edges of the matrix by default.");
+            Assert.AreEqual(0, settings.Properties.HotKeySwitchMachine.Value, "New preferences should disable direct machine-switch shortcuts by default.");
+            Assert.IsTrue(settings.Properties.ToggleEasyMouseShortcut.IsEmpty());
+            Assert.IsTrue(settings.Properties.LockMachineShortcut.IsEmpty());
+            Assert.IsTrue(settings.Properties.ReconnectShortcut.IsEmpty());
+            Assert.IsTrue(settings.Properties.Switch2AllPCShortcut.IsEmpty());
         });
     }
 
@@ -43,6 +48,8 @@ public sealed class PortableApplicationTests
             var existing = new MouseWithoutBordersSettings();
             existing.Properties.SecurityKey.Value = "keep-this-key";
             existing.Properties.FirstRun = false;
+            existing.Properties.HotKeySwitchMachine.Value = 0x70;
+            existing.Properties.LockMachineShortcut = new HotkeySettings(false, true, true, false, 'L');
             File.WriteAllText(settingsPath, JsonSerializer.Serialize(existing, SettingsUtils.SerializerOptions));
 
             PortableApplication.SaveInitialSettings(settingsPath, PortableApplication.AppModeInstalled);
@@ -51,6 +58,8 @@ public sealed class PortableApplicationTests
             Assert.AreEqual(PortableApplication.AppModeInstalled, settings.AppMode);
             Assert.AreEqual("keep-this-key", settings.Properties.SecurityKey.Value);
             Assert.IsFalse(settings.Properties.FirstRun);
+            Assert.AreEqual(0x70, settings.Properties.HotKeySwitchMachine.Value);
+            Assert.AreEqual('L', settings.Properties.LockMachineShortcut.Code);
         });
     }
 

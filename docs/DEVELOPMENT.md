@@ -111,6 +111,8 @@ The **Mini Log** link remains available in the Settings window as a support aid 
 
 `MouseWithoutBordersProperties` defaults `WrapMouse` to `false` for newly created preferences. This affects only new JSON files: loading or upgrading an existing preferences file must preserve its saved value.
 
+Keyboard shortcuts are also opt-in for new preferences: direct F-key/number switching and the lock, reconnect, all-PC, and Easy Mouse toggle hotkeys all default to disabled. Existing JSON values must remain unchanged during upgrades. The portable `FrmMatrix` owns these supported controls directly; do not restore the stale PowerToys Settings tooltip or blanket-disable loop. Letter selections represent `Ctrl+Alt+letter` and must save through the local settings model. The obsolete Show Settings, Exit, and custom screen-capture shortcut rows are hidden because their backing settings/actions are not active in this build.
+
 The portable build intentionally excludes the legacy one-minute security-key enforcement block. User-chosen keys are valid indefinitely; the app must not reopen Settings, close sockets, or display expiry/regeneration nags merely because a key is old or manually chosen.
 
 Startup must not access `Setting.Values` before `PortableApplication.PrepareFirstLaunch()` returns successfully. The settings singleton creates a default prefs file when none exists, so initializing it before the first-launch choice would bypass setup and could leave the first process hidden. `StandaloneBootstrap.InitializeAfterFirstLaunch()` deliberately runs immediately afterward.

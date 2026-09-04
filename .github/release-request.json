@@ -1,22 +1,23 @@
 {
-  "tag": "mwb-v1.0.0-rc.2",
-  "title": "Mouse Without Borders Portable 1.0.0 Release Candidate 2",
+  "tag": "mwb-v1.0.0-rc.3",
+  "title": "Mouse Without Borders Portable 1.0.0 Release Candidate 3",
   "prerelease": true,
-  "summary": "Version 1.0.0 Release Candidate 2 fixes the install-from-Settings dialog being trapped behind the always-on-top Settings window. It keeps the cleaned MWB-only repository and all portable behavior from RC1 while making the optional portable-to-installed path usable.",
+  "summary": "Version 1.0.0 Release Candidate 3 restores keyboard shortcuts as real locally managed portable settings. It removes the inherited PowerToys Settings lockout and makes shortcuts opt-in for new preference files.",
   "changes": [
-    "Centers the install-from-Settings dialog over its parent Settings window.",
-    "Keeps that modal installer above the always-on-top Settings window instead of leaving an unreachable disabled Settings window in front of it.",
-    "Removes the redundant taskbar button from the owned install dialog while retaining a normal taskbar entry for the true first-launch window.",
-    "Updates the program, About, diagnostics, release metadata, and documentation to version 1.0.0-rc.2.",
-    "Keeps the one-file portable and optional self-install behavior from RC1 unchanged apart from the dialog ordering repair."
+    "Removes the stale tooltip and blanket lockout claiming keyboard shortcuts are controlled by PowerToys Settings.",
+    "Reconnects supported lock, reconnect, all-PC, Easy Mouse toggle, and machine-switch controls to the adjacent portable preferences file.",
+    "Defaults every keyboard shortcut to disabled in newly created preferences while preserving shortcut choices already saved by existing users.",
+    "Hides obsolete Show Settings, Exit, and custom screen-capture shortcut rows that have no active backing command in this portable build.",
+    "Persists shortcut edits immediately and updates the program, About, diagnostics, release metadata, and documentation to version 1.0.0-rc.3."
   ],
   "testing": [
-    "Run RC2 portably, open Settings > Portable, and click Install this portable copy.",
-    "Confirm the installer appears centered in front of Settings and every field and button can be used without moving the Settings window.",
-    "Open Browse and confirm the folder picker also remains reachable in front of the installer.",
-    "Cancel the installer and confirm Settings becomes responsive again.",
-    "Repeat the flow and complete installation, confirming the existing key, layout, and options move to the installed copy.",
-    "Open About and confirm the displayed product version is 1.0.0-rc.2.",
-    "Run the same RC2 EXE on both computers and briefly recheck mouse, keyboard, clipboard, file transfer, and reconnect behavior."
+    "Start RC3 in a fresh folder and confirm every shortcut initially displays Disable, including the machine-switch radio choice.",
+    "Open Other Options and confirm the shortcut controls are usable and no PowerToys Settings tooltip appears.",
+    "Set one or more Ctrl+Alt letter shortcuts, close and restart MWB, and confirm the selections persist.",
+    "Exercise each enabled shortcut and confirm Disable stops it from firing.",
+    "Confirm Show Settings, Exit, and custom screen-capture shortcut rows are absent rather than greyed out.",
+    "Upgrade an existing RC2 preferences file and confirm its saved settings and shortcut choices remain intact.",
+    "Open About and confirm the displayed product version is 1.0.0-rc.3.",
+    "Run the same RC3 EXE on both computers and briefly recheck mouse, keyboard, clipboard, file transfer, and reconnect behavior."
   ]
 }

@@ -949,7 +949,7 @@ namespace MouseWithoutBorders
         {
             RadioButton r = sender as RadioButton;
 
-            if (r.Checked)
+            if (formShown && r.Checked)
             {
                 Setting.Values.HotKeySwitchMachine = sender.Equals(radioButtonF1) ? (int)VK.F1 : sender.Equals(radioButtonNum) ? '1' : 0;
 
@@ -969,35 +969,28 @@ namespace MouseWithoutBorders
 
         private void ComboBoxLockMachine_TextChanged(object sender, EventArgs e)
         {
-#if OBSOLETE_SHORTCUTS
-            if (comboBoxLockMachine.Text.Contains("Disable"))
+#if PORTABLE_SINGLE_FILE
+            if (!formShown)
             {
-                Setting.Values.HotKeyLockMachine = 0;
+                return;
             }
-            else if (comboBoxLockMachine.Text.Length > 0)
-            {
-                Setting.Values.HotKeyLockMachine = comboBoxLockMachine.Text[0];
-            }
+
+            Setting.Values.HotKeyLockMachine = PortableCtrlAltHotkey(comboBoxLockMachine.Text);
+            ShowUpdateMessage();
 #endif
         }
 
         private void ComboBoxSwitchToAllPC_TextChanged(object sender, EventArgs e)
         {
-#if OBSOLETE_SHORTCUTS
-            if (comboBoxSwitchToAllPC.Text.Contains("Disable"))
+#if PORTABLE_SINGLE_FILE
+            if (!formShown)
             {
-                Setting.Values.HotKeySwitch2AllPC = 0;
+                return;
             }
-            else if (comboBoxSwitchToAllPC.Text.Contains("Ctrl*3"))
-            {
-                Setting.Values.HotKeySwitch2AllPC = 1;
-            }
-            else if (comboBoxSwitchToAllPC.Text.Length > 0)
-            {
-                Setting.Values.HotKeySwitch2AllPC = comboBoxSwitchToAllPC.Text[0];
-            }
-#endif
+
+            Setting.Values.HotKeySwitch2AllPC = PortableCtrlAltHotkey(comboBoxSwitchToAllPC.Text);
             ShowUpdateMessage();
+#endif
         }
 
         private void CheckBoxHideLogo_CheckedChanged(object sender, EventArgs e)
@@ -1059,17 +1052,15 @@ namespace MouseWithoutBorders
 
         private void ComboBoxReconnect_TextChanged(object sender, EventArgs e)
         {
-#if OBSOLETE_SHORTCUTS
-            if (comboBoxReconnect.Text.Contains("Disable"))
+#if PORTABLE_SINGLE_FILE
+            if (!formShown)
             {
-                Setting.Values.HotKeyReconnect = 0;
+                return;
             }
-            else if (comboBoxReconnect.Text.Length > 0)
-            {
-                Setting.Values.HotKeyReconnect = comboBoxReconnect.Text[0];
-            }
-#endif
+
+            Setting.Values.HotKeyReconnect = PortableCtrlAltHotkey(comboBoxReconnect.Text);
             ShowUpdateMessage();
+#endif
         }
 
         private void CheckBoxCircle_CheckedChanged(object sender, EventArgs e)
@@ -1096,6 +1087,11 @@ namespace MouseWithoutBorders
 
         private void ComboBoxEasyMouseOption_TextChanged(object sender, EventArgs e)
         {
+            if (!formShown)
+            {
+                return;
+            }
+
             string selectedOption = comboBoxEasyMouseOption.Text;
             int oldEasyMouseOption = Setting.Values.EasyMouse;
 
@@ -1109,17 +1105,15 @@ namespace MouseWithoutBorders
 
         private void ComboBoxEasyMouse_TextChanged(object sender, EventArgs e)
         {
-#if OBSOLETE_SHORTCUTS
-            if (comboBoxEasyMouse.Text.Contains("Disable"))
+#if PORTABLE_SINGLE_FILE
+            if (!formShown)
             {
-                Setting.Values.HotKeyToggleEasyMouse = 0;
+                return;
             }
-            else if (comboBoxEasyMouse.Text.Length > 0)
-            {
-                Setting.Values.HotKeyToggleEasyMouse = comboBoxEasyMouse.Text[0];
-            }
-#endif
+
+            Setting.Values.HotKeyToggleEasyMouse = PortableCtrlAltHotkey(comboBoxEasyMouse.Text);
             ShowUpdateMessage();
+#endif
         }
 
         private void CheckBoxMouseMoveRelatively_CheckedChanged(object sender, EventArgs e)
