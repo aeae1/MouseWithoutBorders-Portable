@@ -16,7 +16,7 @@
 </p>
 
 > [!IMPORTANT]
-> This is an unofficial fork, not a Microsoft release. Version 1.0.0 Release Candidate 3 restores locally managed keyboard-shortcut controls, removes the misleading PowerToys Settings lockout, and defaults shortcuts to off for new preferences. Its core portable behavior was proven through Test 12, but installation, firewall, sleep/wake, and long-term behavior still deserve a final real-hardware validation pass before 1.0.0 stable.
+> This is an unofficial fork, not a Microsoft release. Version 1.0.0 Release Candidate 4 keeps the locally managed keyboard shortcuts introduced in RC3 and fixes their layout at different window sizes and Windows display scaling levels. Its core portable behavior was proven through Test 12, but installation, firewall, sleep/wake, and long-term behavior still deserve a final real-hardware validation pass before 1.0.0 stable.
 
 ## What this project is
 
@@ -54,6 +54,7 @@ The finished product is deliberately small from a user's perspective:
 - Keeps the modal install-from-Settings window centered above the always-on-top Settings window so its controls remain reachable.
 - Manages supported keyboard shortcuts directly in the portable Settings window, stores them in the adjacent preferences file, and defaults all shortcuts to disabled for newly created preferences while preserving existing saved choices.
 - Hides obsolete Show Settings, Exit, and screen-capture shortcut rows whose backing commands are not part of the current portable engine.
+- Keeps the four supported shortcut rows centered, evenly spaced, and aligned as the Settings window or Windows display scaling changes.
 
 ## Download and run
 
@@ -74,7 +75,7 @@ Current builds are unsigned and may trigger Windows SmartScreen. The automated r
 
 ## Current status
 
-The project is now at **1.0.0 Release Candidate 3**: feature-complete for the intended 1.0 scope and awaiting a final real-PC validation pass.
+The project is now at **1.0.0 Release Candidate 4**: feature-complete for the intended 1.0 scope and awaiting a final real-PC validation pass.
 
 Completed:
 
@@ -137,4 +138,5 @@ This section records how the PowerToys module became this portable product. It i
 15. **Fixed key application and made diagnostics inspectable.** Applying a typed security key now updates both the live encryption state and the adjacent preferences JSON, forces that save to finish before sockets reconnect, and compares keys with case-sensitive semantics. The **Mini Log** link opens a resizable/maximizable, modeless **Diagnostic Log** with selectable text and an explicit **Copy all** button. It combines the configuration/connection snapshot with version, mode, paths, environment, process, key-checksum, and a bounded recent-event tail; the actual key is redacted and the viewer warns that names, IPs, and paths may appear. It does not disable Settings, repeated clicks refresh the existing viewer, and the redundant modeless Close button was removed in favor of the normal window X. New preference files start with **Wrap mouse** off so an outer matrix edge does not unexpectedly jump to the opposite side; existing saved choices are not migrated or overwritten.
 16. **Completed the repository cutover.** After Test 12 worked on real PCs, the portable source was promoted to the repository root. More than 8,500 unrelated PowerToys files were removed, leaving roughly 260 tracked files and about 3 MB of project content. Legacy PowerToys projects, the native module interface, service executable source, comparison-only project files, installers, build tooling, unrelated documentation, and unused legacy icon/manifest files were removed. The app project was renamed to `App/MouseWithoutBorders.csproj`, documentation moved to `docs`, and CI gained a repository-layout check that rejects the retired PowerToys paths if they return.
 17. **Restored local shortcut ownership.** The inherited form still disabled its complete shortcut group with a stale tooltip claiming PowerToys Settings controlled it, while several letter-shortcut handlers were compiled out. RC3 removes that dependency assumption, reconnects the supported controls to the adjacent JSON settings, persists changes, hides three obsolete command rows, and makes every shortcut opt-in for newly created preferences.
-17. **Repaired the Settings-to-install window ordering.** RC1 exposed a Windows z-order conflict: the modal installer disabled its Settings owner but could appear behind that owner's always-on-top window. The configured-copy installer now centers on its parent, stays above that topmost owner, and omits a redundant taskbar button. The true first-launch window retains its normal centered, taskbar-visible behavior.
+18. **Repaired the Settings-to-install window ordering.** RC1 exposed a Windows z-order conflict: the modal installer disabled its Settings owner but could appear behind that owner's always-on-top window. The configured-copy installer now centers on its parent, stays above that topmost owner, and omits a redundant taskbar button. The true first-launch window retains its normal centered, taskbar-visible behavior.
+19. **Made the reduced shortcut panel responsive.** After RC3 hid three obsolete PowerToys-era shortcut rows, their remaining controls were initially pinned near the panel's top edge while the panel itself continued to expand with Settings. RC4 lays out the four supported rows from the panel's current scaled dimensions, distributes them evenly, and caps their separation so both normal and maximized windows stay readable.

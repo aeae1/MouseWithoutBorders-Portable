@@ -1,23 +1,22 @@
 {
-  "tag": "mwb-v1.0.0-rc.3",
-  "title": "Mouse Without Borders Portable 1.0.0 Release Candidate 3",
+  "tag": "mwb-v1.0.0-rc.4",
+  "title": "Mouse Without Borders Portable 1.0.0 Release Candidate 4",
   "prerelease": true,
-  "summary": "Version 1.0.0 Release Candidate 3 restores keyboard shortcuts as real locally managed portable settings. It removes the inherited PowerToys Settings lockout and makes shortcuts opt-in for new preference files.",
+  "summary": "Version 1.0.0 Release Candidate 4 fixes the Keyboard Shortcuts layout so the supported controls remain evenly spaced when the Settings window or Windows display scaling changes.",
   "changes": [
-    "Removes the stale tooltip and blanket lockout claiming keyboard shortcuts are controlled by PowerToys Settings.",
-    "Reconnects supported lock, reconnect, all-PC, Easy Mouse toggle, and machine-switch controls to the adjacent portable preferences file.",
-    "Defaults every keyboard shortcut to disabled in newly created preferences while preserving shortcut choices already saved by existing users.",
-    "Hides obsolete Show Settings, Exit, and custom screen-capture shortcut rows that have no active backing command in this portable build.",
-    "Persists shortcut edits immediately and updates the program, About, diagnostics, release metadata, and documentation to version 1.0.0-rc.3."
+    "Arranges the remaining supported shortcut controls as four clear, evenly spaced rows.",
+    "Reflows the rows when the shortcut panel changes height instead of leaving every control bunched at its top edge.",
+    "Centers the layout at large window sizes and caps row spacing so maximized windows remain readable.",
+    "Uses the controls' actual scaled sizes, keeping labels, choices, and dropdowns aligned at different Windows display scaling levels.",
+    "Preserves the RC3 shortcut behavior, saved selections, and disabled defaults for newly created preferences."
   ],
   "testing": [
-    "Start RC3 in a fresh folder and confirm every shortcut initially displays Disable, including the machine-switch radio choice.",
-    "Open Other Options and confirm the shortcut controls are usable and no PowerToys Settings tooltip appears.",
-    "Set one or more Ctrl+Alt letter shortcuts, close and restart MWB, and confirm the selections persist.",
-    "Exercise each enabled shortcut and confirm Disable stops it from firing.",
-    "Confirm Show Settings, Exit, and custom screen-capture shortcut rows are absent rather than greyed out.",
-    "Upgrade an existing RC2 preferences file and confirm its saved settings and shortcut choices remain intact.",
-    "Open About and confirm the displayed product version is 1.0.0-rc.3.",
-    "Run the same RC3 EXE on both computers and briefly recheck mouse, keyboard, clipboard, file transfer, and reconnect behavior."
+    "Open Other Options at the normal Settings size and confirm the four shortcut rows are evenly distributed through the Keyboard Shortcuts panel.",
+    "Resize and maximize Settings and confirm the shortcut controls remain centered, separated, and aligned.",
+    "Check the layout at the Windows display scaling levels available on the test computers.",
+    "Set shortcut choices, restart MWB, and confirm those selections still persist and work.",
+    "Start RC4 in a fresh folder and confirm every shortcut defaults to disabled.",
+    "Open About and confirm the displayed product version is 1.0.0-rc.4.",
+    "Run the same RC4 EXE on both computers and briefly recheck mouse, keyboard, clipboard, file transfer, and reconnect behavior."
   ]
 }

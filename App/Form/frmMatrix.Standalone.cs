@@ -42,24 +42,65 @@ internal partial class FrmMatrix
 
         comboBoxSwitchToAllPC.Items.Remove("Ctrl*3");
 
-        labelLockMachine.Location = new Point(labelLockMachine.Left, 44);
-        comboBoxLockMachine.Location = new Point(comboBoxLockMachine.Left, 41);
-        labelSwitch2AllPCMode.Location = new Point(labelSwitch2AllPCMode.Left, 44);
-        comboBoxSwitchToAllPC.Location = new Point(comboBoxSwitchToAllPC.Left, 41);
-
-        labelReconnect.Location = new Point(labelReconnect.Left, 71);
-        comboBoxReconnect.Location = new Point(comboBoxReconnect.Left, 68);
-        labelEasyMouse.Location = new Point(labelEasyMouse.Left, 71);
-        comboBoxEasyMouseOption.Location = new Point(comboBoxEasyMouseOption.Left, 68);
-
-        LabelToggleEasyMouse.Location = new Point(LabelToggleEasyMouse.Left, 98);
-        comboBoxEasyMouse.Location = new Point(comboBoxEasyMouse.Left, 95);
+        groupBoxShortcuts.SizeChanged += GroupBoxShortcuts_SizeChanged;
+        LayoutPortableShortcutControls();
 
         comboBoxLockMachine.Text = PortableHotkeyText(Setting.Values.HotKeyLockMachine);
         comboBoxReconnect.Text = PortableHotkeyText(Setting.Values.HotKeyReconnect);
         comboBoxSwitchToAllPC.Text = PortableHotkeyText(Setting.Values.HotKeySwitch2AllPC);
         comboBoxEasyMouseOption.Text = ((Class.EasyMouseOption)Setting.Values.EasyMouse).ToString();
         comboBoxEasyMouse.Text = PortableHotkeyText(Setting.Values.HotKeyToggleEasyMouse);
+    }
+
+    private void GroupBoxShortcuts_SizeChanged(object sender, EventArgs e)
+    {
+        LayoutPortableShortcutControls();
+    }
+
+    private void LayoutPortableShortcutControls()
+    {
+        // The shortcut group grows with the Settings window. Keep the four useful
+        // rows centered and evenly separated instead of pinning them to the top.
+        int groupHeight = groupBoxShortcuts.ClientSize.Height;
+        int rowGap = Math.Clamp((groupHeight - 48) / 3, 24, 58);
+        int contentHeight = rowGap * 3;
+        int firstRowCenter = Math.Max(14, (groupHeight - contentHeight) / 2);
+
+        if (firstRowCenter + contentHeight > groupHeight - 14)
+        {
+            firstRowCenter = Math.Max(14, groupHeight - 14 - contentHeight);
+        }
+
+        CenterControlsVertically(
+            firstRowCenter,
+            labelSwitchBetweenMachine,
+            radioButtonF1,
+            radioButtonNum,
+            radioButtonDisable);
+        CenterControlsVertically(
+            firstRowCenter + rowGap,
+            labelLockMachine,
+            comboBoxLockMachine,
+            labelSwitch2AllPCMode,
+            comboBoxSwitchToAllPC);
+        CenterControlsVertically(
+            firstRowCenter + (rowGap * 2),
+            labelReconnect,
+            comboBoxReconnect,
+            labelEasyMouse,
+            comboBoxEasyMouseOption);
+        CenterControlsVertically(
+            firstRowCenter + (rowGap * 3),
+            LabelToggleEasyMouse,
+            comboBoxEasyMouse);
+    }
+
+    private static void CenterControlsVertically(int centerY, params Control[] controls)
+    {
+        foreach (Control control in controls)
+        {
+            control.Top = centerY - (control.Height / 2);
+        }
     }
 
     private static string PortableHotkeyText(HotkeySettings hotkey)
