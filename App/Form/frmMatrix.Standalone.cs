@@ -10,6 +10,7 @@ using System.Windows.Forms;
 
 using Microsoft.PowerToys.Settings.UI.Library;
 
+using MouseWithoutBorders.Class;
 using MouseWithoutBorders.Core;
 
 namespace MouseWithoutBorders;
