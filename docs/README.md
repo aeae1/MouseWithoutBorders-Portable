@@ -20,6 +20,7 @@ This branch contains a portable Windows build of Mouse Without Borders derived f
 - Clean portable repository: **completed**. The PowerToys source tree, old solution, native module interface, service project, installers, unrelated tooling, and comparison project files are removed from the product branch.
 - Portable first launch and per-user self-install: **added**. Preferences stay beside the EXE; installation defaults to the current user's local Programs folder, a desktop shortcut is offered by default, and Start with Windows is optional.
 - Later installation from Settings: **added**. The Portable tab can install an already-configured copy, preserving and moving its key, matrix, and options before restarting from the installed directory.
+- Install-dialog ordering: **fixed in RC2**. The configured-copy installer is centered and kept above the always-on-top Settings owner, preventing the disabled Settings window from covering the modal installer.
 - Quiet long-term key behavior: **added**. Portable builds never expire a key and do not run the legacy timed check that demanded an auto-generated replacement.
 - Reliable key application: **added**. Apply writes an edited, case-sensitive key to both the live encryption state and adjacent preferences before reconnecting.
 - Inspectable Diagnostic Log: **added**. Mini Log opens a resizable/maximizable, modeless viewer containing the configuration/connection snapshot, environment details, and a bounded recent-event tail; it changes the clipboard only through an explicit Copy all action and redacts the security key.
@@ -32,7 +33,7 @@ This branch contains a portable Windows build of Mouse Without Borders derived f
 - Short-lived CI artifacts: **added**. Temporary workflow copies of the EXE expire after one day; published GitHub Release downloads remain available independently.
 - GitHub Releases publishing: **added and proven**. Tagged and requested releases are built, tested, and populated with the EXE and checksum automatically.
 - Upstream MWB audit through September 3, 2026: **completed**. Microsoft's September 2 receive-safety improvements are incorporated and documented in `UPSTREAM_SYNC.md`.
-- Real-Windows connection testing: **working through Test 12**. Version 1.0.0 Release Candidate 1 rebuilds that behavior from the cleaned MWB-only repository; a final portable/self-install, firewall, sleep/wake, and two-machine regression pass remains worthwhile before 1.0.0 stable.
+- Real-Windows connection testing: **working through Test 12**. Version 1.0.0 Release Candidate 2 rebuilds that behavior from the cleaned MWB-only repository and repairs the RC1 install-dialog ordering; a final portable/self-install, firewall, sleep/wake, and two-machine regression pass remains worthwhile before 1.0.0 stable.
 
 ## Goals
 

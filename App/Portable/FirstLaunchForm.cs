@@ -30,11 +30,12 @@ internal sealed class FirstLaunchForm : System.Windows.Forms.Form
         this.installingExistingPreferences = installingExistingPreferences;
 
         Text = installingExistingPreferences ? "Install Mouse Without Borders" : "Welcome to Mouse Without Borders";
-        StartPosition = FormStartPosition.CenterScreen;
+        StartPosition = installingExistingPreferences ? FormStartPosition.CenterParent : FormStartPosition.CenterScreen;
         FormBorderStyle = FormBorderStyle.FixedDialog;
         MaximizeBox = false;
         MinimizeBox = false;
-        ShowInTaskbar = true;
+        ShowInTaskbar = !installingExistingPreferences;
+        TopMost = installingExistingPreferences;
         ClientSize = new Size(640, 575);
         AutoScaleMode = AutoScaleMode.Dpi;
         BackColor = Color.White;

@@ -1,27 +1,22 @@
 {
-  "tag": "mwb-v1.0.0-rc.1",
-  "title": "Mouse Without Borders Portable 1.0.0 Release Candidate 1",
+  "tag": "mwb-v1.0.0-rc.2",
+  "title": "Mouse Without Borders Portable 1.0.0 Release Candidate 2",
   "prerelease": true,
-  "summary": "Version 1.0.0 Release Candidate 1 is the first versioned candidate built from the aggressively cleaned, MWB-only repository. The established Mouse Without Borders engine and the portable features proven through Test 12 remain intact; this release candidate is intended for the final real-PC validation pass before 1.0.0 stable.",
+  "summary": "Version 1.0.0 Release Candidate 2 fixes the install-from-Settings dialog being trapped behind the always-on-top Settings window. It keeps the cleaned MWB-only repository and all portable behavior from RC1 while making the optional portable-to-installed path usable.",
   "changes": [
-    "Promotes the product version from the 0.1 test series to 1.0.0-rc.1.",
-    "Builds directly from the cleaned repository containing only Mouse Without Borders, its unit tests, focused automation, documentation, and required legal notices.",
-    "Removes more than 8,500 unrelated PowerToys files and the retired PowerToys solution, modules, service project, native module interface, installers, and build machinery.",
-    "Keeps the one-file portable and optional self-install experience established in the Test 12 build.",
-    "Keeps the repaired, case-sensitive security-key Apply path and twelve-character generated keys.",
-    "Keeps the simplified tray menu, opaque portable About window, green classic icon, Wrap mouse default-off behavior, and resizable modeless Diagnostic Log.",
-    "Adds a repository-layout validation step so removed PowerToys trees cannot accidentally return.",
-    "Updates the user, development, maintenance, security, contribution, and extraction documentation for the MWB-only repository layout.",
-    "Preserves the complete upstream license and attribution record."
+    "Centers the install-from-Settings dialog over its parent Settings window.",
+    "Keeps that modal installer above the always-on-top Settings window instead of leaving an unreachable disabled Settings window in front of it.",
+    "Removes the redundant taskbar button from the owned install dialog while retaining a normal taskbar entry for the true first-launch window.",
+    "Updates the program, About, diagnostics, release metadata, and documentation to version 1.0.0-rc.2.",
+    "Keeps the one-file portable and optional self-install behavior from RC1 unchanged apart from the dialog ordering repair."
   ],
   "testing": [
-    "Open About and confirm the displayed product version is 1.0.0-rc.1.",
-    "Run the same RC1 EXE on both computers and confirm mouse, keyboard, clipboard, file transfer, reconnect, and key matching.",
-    "Confirm an existing adjacent MouseWithoutBorders.prefs.json is loaded without losing the saved key, layout, or options.",
-    "Test a clean first launch in portable mode and confirm the preferences file is created beside the EXE.",
-    "Test Install for me, desktop and Start Menu shortcuts, the Start with Windows toggle, portable-to-installed preferences migration, and Uninstall.",
-    "Open and resize Diagnostic Log while Settings remains responsive, and confirm the actual security key is not displayed.",
-    "Confirm the green icon at small and large sizes and the simplified tray menu in both portable and installed modes.",
-    "Retest firewall prompting and sleep/wake reconnection on real Windows computers before promoting RC1 to 1.0.0 stable."
+    "Run RC2 portably, open Settings > Portable, and click Install this portable copy.",
+    "Confirm the installer appears centered in front of Settings and every field and button can be used without moving the Settings window.",
+    "Open Browse and confirm the folder picker also remains reachable in front of the installer.",
+    "Cancel the installer and confirm Settings becomes responsive again.",
+    "Repeat the flow and complete installation, confirming the existing key, layout, and options move to the installed copy.",
+    "Open About and confirm the displayed product version is 1.0.0-rc.2.",
+    "Run the same RC2 EXE on both computers and briefly recheck mouse, keyboard, clipboard, file transfer, and reconnect behavior."
   ]
 }
