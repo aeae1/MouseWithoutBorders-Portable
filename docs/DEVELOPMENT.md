@@ -137,6 +137,8 @@ Public versions use semantic versioning. The `0.1.0-test.*` series recorded expl
 
 Temporary workflow copies of the portable EXE use a one-day retention period. They exist only to carry a tested binary into the release job and support immediate diagnosis; GitHub Release assets are the durable distribution channel.
 
+After publishing an RC, the release job retains the two newest tags matching `mwb-vX.Y.Z-rc.N` on the Releases page and deletes older matching release entries and their assets. It deliberately leaves the corresponding Git tags and commit history intact. Test-series and stable releases do not match this cleanup rule.
+
 The workflow validates that the downloadable package contains exactly one compiled program before publishing it.
 
 Before considering a behavior change finished:

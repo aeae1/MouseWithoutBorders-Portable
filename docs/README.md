@@ -32,6 +32,7 @@ This branch contains a portable Windows build of Mouse Without Borders derived f
 - Small-icon rollback: **completed in Test 7**. The rejected Test 5 tiny-frame redesign lost some of the classic black pixel structure, so the multi-resolution green ICO is restored byte-for-byte to its pre-Test-5 artwork.
 - Opaque About window: **added**. The portable About screen overrides the legacy 90% opacity so windows behind it do not show through.
 - Short-lived CI artifacts: **added**. Temporary workflow copies of the EXE expire after one day; published GitHub Release downloads remain available independently.
+- Release-candidate retention: **added**. Publishing an RC keeps its two newest RC download pages and prunes older RC release entries; Git tags and commit history remain intact.
 - GitHub Releases publishing: **added and proven**. Tagged and requested releases are built, tested, and populated with the EXE and checksum automatically.
 - Upstream MWB audit through September 3, 2026: **completed**. Microsoft's September 2 receive-safety improvements are incorporated and documented in `UPSTREAM_SYNC.md`.
 - Real-Windows connection testing: **working through Test 12**. Version 1.0.0 Release Candidate 4 keeps that behavior, repairs the RC1 install-dialog ordering, restores locally managed shortcuts, and fixes their responsive layout; a final portable/self-install, firewall, sleep/wake, shortcut, and two-machine regression pass remains worthwhile before 1.0.0 stable.
