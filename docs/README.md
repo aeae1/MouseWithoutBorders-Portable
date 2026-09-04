@@ -22,6 +22,7 @@ This branch contains a portable Windows build of Mouse Without Borders derived f
 - Later installation from Settings: **added**. The Portable tab can install an already-configured copy, preserving and moving its key, matrix, and options before restarting from the installed directory.
 - Install-dialog ordering: **fixed in RC2**. The configured-copy installer is centered and kept above the always-on-top Settings owner, preventing the disabled Settings window from covering the modal installer.
 - Portable shortcut ownership and layout: **fixed in RC3/RC4**. Supported keyboard shortcuts are editable in the classic Settings window and saved to the adjacent portable JSON; the stale PowerToys Settings lockout is removed, unsupported command rows are hidden, new preference files start with every shortcut disabled, and the remaining four rows now reflow evenly with the Settings window and Windows display scaling.
+- Disabled-option clarity: **fixed in RC5**. The deprecated and disconnected key-mapping checkbox is hidden; service-only sign-in options explain their requirement inline; and disabled file transfer names its Share Clipboard dependency instead of relying on a tooltip that cannot open.
 - Quiet long-term key behavior: **added**. Portable builds never expire a key and do not run the legacy timed check that demanded an auto-generated replacement.
 - Reliable key application: **added**. Apply writes an edited, case-sensitive key to both the live encryption state and adjacent preferences before reconnecting.
 - Inspectable Diagnostic Log: **added**. Mini Log opens a resizable/maximizable, modeless viewer containing the configuration/connection snapshot, environment details, and a bounded recent-event tail; it changes the clipboard only through an explicit Copy all action and redacts the security key.
@@ -35,7 +36,7 @@ This branch contains a portable Windows build of Mouse Without Borders derived f
 - Release-candidate retention: **added**. Publishing an RC keeps its two newest RC download pages and prunes older RC release entries; Git tags and commit history remain intact.
 - GitHub Releases publishing: **added and proven**. Tagged and requested releases are built, tested, and populated with the EXE and checksum automatically.
 - Upstream MWB audit through September 3, 2026: **completed**. Microsoft's September 2 receive-safety improvements are incorporated and documented in `UPSTREAM_SYNC.md`.
-- Real-Windows connection testing: **working through Test 12**. Version 1.0.0 Release Candidate 4 keeps that behavior, repairs the RC1 install-dialog ordering, restores locally managed shortcuts, and fixes their responsive layout; a final portable/self-install, firewall, sleep/wake, shortcut, and two-machine regression pass remains worthwhile before 1.0.0 stable.
+- Real-Windows connection testing: **working through Test 12**. Version 1.0.0 Release Candidate 5 keeps that behavior, repairs the RC1 install-dialog ordering, restores locally managed shortcuts, fixes their responsive layout, and removes unclear disabled-option tooltips; a final portable/self-install, firewall, sleep/wake, shortcut, and two-machine regression pass remains worthwhile before 1.0.0 stable.
 
 ## Goals
 

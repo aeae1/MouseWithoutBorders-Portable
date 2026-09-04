@@ -1,22 +1,22 @@
 {
-  "tag": "mwb-v1.0.0-rc.4",
-  "title": "Mouse Without Borders Portable 1.0.0 Release Candidate 4",
+  "tag": "mwb-v1.0.0-rc.5",
+  "title": "Mouse Without Borders Portable 1.0.0 Release Candidate 5",
   "prerelease": true,
-  "summary": "Version 1.0.0 Release Candidate 4 fixes the Keyboard Shortcuts layout so the supported controls remain evenly spaced when the Settings window or Windows display scaling changes.",
+  "summary": "Version 1.0.0 Release Candidate 5 removes a deprecated mystery option and explains unavailable or dependent settings directly in the interface instead of relying on tooltips that disabled WinForms controls cannot display.",
   "changes": [
-    "Arranges the remaining supported shortcut controls as four clear, evenly spaced rows.",
-    "Reflows the rows when the shortcut panel changes height instead of leaving every control bunched at its top edge.",
-    "Centers the layout at large window sizes and caps row spacing so maximized windows remain readable.",
-    "Uses the controls' actual scaled sizes, keeping labels, choices, and dropdowns aligned at different Windows display scaling levels.",
-    "Preserves the RC3 shortcut behavior, saved selections, and disabled defaults for newly created preferences."
+    "Hides Use Key Mappings because that inherited PowerToys-era checkbox is deprecated, permanently disabled, and disconnected from settings.",
+    "Relabels the two unavailable sign-in controls to state directly that they require the Windows service omitted from this portable edition.",
+    "Marks Transfer file as requiring Share Clipboard whenever clipboard sharing is switched off, then restores its normal label when available.",
+    "Closes the visual gap left by the removed key-mapping checkbox.",
+    "Keeps the responsive RC4 shortcut layout and all supported shortcut behavior unchanged."
   ],
   "testing": [
-    "Open Other Options at the normal Settings size and confirm the four shortcut rows are evenly distributed through the Keyboard Shortcuts panel.",
-    "Resize and maximize Settings and confirm the shortcut controls remain centered, separated, and aligned.",
-    "Check the layout at the Windows display scaling levels available on the test computers.",
-    "Set shortcut choices, restart MWB, and confirm those selections still persist and work.",
-    "Start RC4 in a fresh folder and confirm every shortcut defaults to disabled.",
-    "Open About and confirm the displayed product version is 1.0.0-rc.4.",
-    "Run the same RC4 EXE on both computers and briefly recheck mouse, keyboard, clipboard, file transfer, and reconnect behavior."
+    "Open Other Options and confirm Use Key Mappings is absent rather than greyed out.",
+    "Confirm the two grey sign-in controls say service required directly in their labels.",
+    "Turn off Share Clipboard and confirm Transfer file becomes unavailable and says it requires Share Clipboard; turn sharing back on and confirm both recover.",
+    "Confirm the RC4 keyboard-shortcut spacing remains correct at normal and maximized Settings sizes.",
+    "Start RC5 in a fresh folder and confirm every shortcut defaults to disabled.",
+    "Open About and confirm the displayed product version is 1.0.0-rc.5.",
+    "Run the same RC5 EXE on both computers and briefly recheck mouse, keyboard, clipboard, file transfer, and reconnect behavior."
   ]
 }

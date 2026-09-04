@@ -25,11 +25,37 @@ internal partial class FrmMatrix
             textBoxEnc,
             $"Use the same key on every machine. You can type your own key ({Core.Encryption.MinimumKeyLength}+ characters) or click New Key for an easy-to-type {Core.Encryption.GeneratedKeyLength}-character key. Short custom keys are less secure.");
 
-        checkBoxDisableCAD.Text = checkBoxDisableCAD.Text.Replace(" [Unsupported!]", " [Not available in portable mode]", StringComparison.Ordinal);
-        checkBoxHideLogo.Text = checkBoxHideLogo.Text.Replace(" [Unsupported!]", " [Not available in portable mode]", StringComparison.Ordinal);
-
+        ConfigurePortableUnavailableOptions();
         ConfigurePortableShortcutControls();
         AddPortableSettingsTab();
+    }
+
+    private void ConfigurePortableUnavailableOptions()
+    {
+        // Disabled WinForms controls cannot show their tooltips. Explain permanent
+        // limitations inline, and remove the deprecated mapping switch altogether.
+        checkBoxDisableCAD.Text = "Skip Ctrl+Alt+Del [service required]";
+        checkBoxHideLogo.Text = "Hide logon-screen logo [service required]";
+        checkBoxVKMap.Visible = false;
+        checkBoxClipNetStatus.Top = checkBoxVKMap.Top;
+
+        checkBoxShareClipboard.CheckedChanged += CheckBoxShareClipboard_PortableTextChanged;
+        UpdatePortableTransferFileText();
+    }
+
+    private void CheckBoxShareClipboard_PortableTextChanged(object sender, EventArgs e)
+    {
+        UpdatePortableTransferFileText();
+    }
+
+    private void UpdatePortableTransferFileText()
+    {
+        if (!Setting.Values.TransferFileIsGpoConfigured)
+        {
+            checkBoxTransferFile.Text = checkBoxShareClipboard.Checked
+                ? "Transfer file"
+                : "Transfer file [requires Share Clipboard]";
+        }
     }
 
     private void ConfigurePortableShortcutControls()
