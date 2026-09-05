@@ -30,6 +30,20 @@ The finished product is deliberately small from a user's perspective:
 - optional per-user self-install, Start with Windows, Start Menu, and desktop-shortcut support;
 - the classic MWB identity recolored green so this fork is easy to recognize.
 
+## Screenshots
+
+<p align="center">
+  <img src="docs/images/machine-setup.png" width="820" alt="Mouse Without Borders Portable Machine Setup showing three configured computers">
+  <br>
+  <sub><strong>Machine Setup.</strong> Arrange up to four PCs to match the physical desk layout, with each computer's connection state visible at a glance.</sub>
+</p>
+
+<p align="center">
+  <img src="docs/images/portable-install.png" width="620" alt="Mouse Without Borders Portable per-user installation window">
+  <br>
+  <sub><strong>Optional portable installation.</strong> Move the current security key, computer layout, and preferences into a per-user installation—without installing a Windows service.</sub>
+</p>
+
 ## Fork-specific changes
 
 - Runs independently of the PowerToys runner and Settings application.
