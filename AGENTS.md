@@ -1,18 +1,18 @@
 # AGENTS.md — Mouse Without Borders portable fork
 
-These instructions apply to this cleaned portable repository on the `mwb-standalone` branch.
+These instructions apply to this cleaned portable repository on the `main` branch.
 
 ## Product intent
 
-This branch turns Microsoft PowerToys Mouse Without Borders into a clean portable Windows application while staying close enough to upstream MWB that fixes can continue to be reviewed and ported.
+This repository turns Microsoft PowerToys Mouse Without Borders into a clean portable Windows application while staying close enough to upstream MWB that fixes can continue to be reviewed and ported.
 
 Do not treat this as a greenfield rewrite. Prefer small compatibility layers and focused changes over replacing mature input/network/file-transfer code.
 
 ## Branches
 
-- `main` is the historical/upstream-sync base. Keep it close to Microsoft PowerToys.
-- `mwb-standalone` is the cleaned portable product branch and default repository view.
-- Do not merge standalone-specific changes into `main` unless explicitly requested.
+- `main` is the cleaned portable product branch and default repository view.
+- Use short-lived branches from `main` for focused changes, then remove them after merging.
+- Review upstream changes directly from `microsoft/PowerToys`; do not merge the full PowerToys tree into this repository.
 
 ## Compatibility-sensitive behavior
 

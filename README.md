@@ -102,9 +102,9 @@ Ongoing real-hardware regression coverage:
 
 ## Clean repository layout
 
-The default `mwb-standalone` branch now contains only this product: `App`, unit tests, focused build/release automation, documentation, and required legal notices. The portable application project is simply `App/MouseWithoutBorders.csproj`; the old parallel `.Standalone.csproj`, helper/service comparison projects, native PowerToys module interface, and surrounding PowerToys source tree are gone from this branch.
+The default `main` branch contains only this product: `App`, unit tests, focused build/release automation, documentation, and required legal notices. The portable application project is simply `App/MouseWithoutBorders.csproj`; the old parallel `.Standalone.csproj`, helper/service comparison projects, native PowerToys module interface, and surrounding PowerToys source tree are gone.
 
-The historical `main` branch and the Test 12 tag remain available as recovery and upstream-comparison points. Release Candidate 1 is the first versioned build produced directly from the cleaned repository. Future Microsoft MWB updates should be reviewed from upstream and ported deliberately rather than merging the full PowerToys tree back into the product branch.
+The stable `mwb-v1.0.0` tag and earlier Test/Release Candidate tags preserve recovery points. Future Microsoft MWB updates should be reviewed directly from `microsoft/PowerToys` and ported deliberately rather than merging the full PowerToys tree back into this product repository.
 
 ## Documentation
 
@@ -126,7 +126,7 @@ The portable extraction and fork-specific changes are developed for repository o
 
 This section records how the PowerToys module became this portable product. It is intentionally more detailed than the user guide so future maintainers can tell which pieces are essential and which are temporary scaffolding.
 
-1. **Established a recoverable upstream baseline.** The work began from Microsoft PowerToys commit `becc96f59cf18f3128fedbd6856a5248104216dd`. The fork keeps a clean `main` for reviewing upstream changes and develops the product on `mwb-standalone`; that branch name and the internal `STANDALONE` build symbol remain technical identifiers even though the product is presented as **Portable**.
+1. **Established a recoverable upstream baseline.** The work began from Microsoft PowerToys commit `becc96f59cf18f3128fedbd6856a5248104216dd`. Audited upstream commit identifiers remain recorded in the repository, while the portable product lives directly on `main`; the internal `STANDALONE` build symbol remains a technical identifier even though the product is presented as **Portable**.
 2. **Mapped the behavior that had to survive.** Input capture/injection, the machine matrix, networking, encryption, clipboard sharing, file transfer, drag/drop, reconnect, and the clipboard-helper IPC path were treated as compatibility-sensitive. Service-only control of protected UAC and sign-in desktops was deliberately excluded because it conflicts with a one-EXE, no-admin product.
 3. **Removed PowerToys project dependencies.** Direct dependencies on `PowerToys.Interop`, the native `PowerToys.GPOWrapper`, the full `Settings.UI.Library`, `ManagedCommon`, and PowerToys telemetry were replaced with small MWB-local compatibility implementations. The API shapes needed by imported MWB code were retained where that reduced risky churn; telemetry calls compile to a local no-op.
 4. **Made the MWB directory build on its own.** During extraction, the portable app, tests, package versions, target framework settings, and output paths were first made self-contained under the MWB module directory. CI built an archive of only that directory, proving the product no longer needed the surrounding PowerToys source tree before the final cleanup occurred.

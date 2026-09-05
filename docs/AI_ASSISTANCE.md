@@ -10,8 +10,8 @@ The GitHub connector authenticates as aeae1, so GitHub will record the authentic
 
 ## Working rules
 
-- Keep `main` suitable for syncing with `microsoft/PowerToys`.
-- Do custom work on `mwb-standalone` or descendant feature branches.
+- Keep `main` product-only and review `microsoft/PowerToys` updates for selective ports.
+- Do custom work on `main` or short-lived descendant feature branches.
 - Prefer small, reviewable commits.
 - Preserve Mouse Without Borders protocol behavior unless an intentional compatibility break is documented.
 - Preserve clipboard and file-transfer functionality.

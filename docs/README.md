@@ -1,6 +1,6 @@
 # Mouse Without Borders portable extraction record
 
-This branch contains a portable Windows build of Mouse Without Borders derived from the actively maintained PowerToys-era source. The `mwb-standalone` branch and `STANDALONE` build symbol remain internal compatibility identifiers; the user-facing product name is **Mouse Without Borders — Portable**.
+The `main` branch contains a portable Windows build of Mouse Without Borders derived from the actively maintained PowerToys-era source. The `STANDALONE` build symbol remains an internal compatibility identifier; the user-facing product name is **Mouse Without Borders — Portable**.
 
 ## Current status
 
@@ -76,7 +76,7 @@ This fork deliberately keeps the recognizable **classic MWB tray/title-bar icon 
 
 PowerToys-only dependencies were removed incrementally, with compile/test checkpoints after meaningful changes so useful MWB behavior stayed intact. The portable product deliberately omits installed-service UAC/sign-in-screen support, but retains normal-desktop clipboard and file-transfer behavior.
 
-The portable source is now promoted to the root of `aeae1/MouseWithoutBorders-Portable`. The historical branch and Test 12 tag remain available for recovery and upstream comparison; Version 1.0.0 Release Candidate 1 is the first versioned release built from the cleaned layout. Unrelated PowerToys files no longer appear in the default product branch.
+The portable source is promoted to both the repository root and its `main` branch. Stable, Release Candidate, and Test tags preserve recovery points, while upstream comparisons use the recorded Microsoft PowerToys commit identifiers directly. Unrelated PowerToys files no longer appear in the product branch.
 
 ## Upstream synchronization
 

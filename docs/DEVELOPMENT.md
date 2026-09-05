@@ -1,14 +1,13 @@
 # Mouse Without Borders portable development guide
 
-This file is the working map for modification of the `mwb-standalone` branch. The branch, a few imported source filenames, and the `STANDALONE` build symbol remain internal compatibility identifiers; public documentation and release titles call the product **Portable**.
+This file is the working map for modification of the `main` product branch. A few imported source filenames and the `STANDALONE` build symbol remain internal compatibility identifiers; public documentation and release titles call the product **Portable**.
 
 ## Branch convention
 
-- `main`: keep close to the upstream Microsoft PowerToys fork.
-- `mwb-standalone`: portable extraction plus intentional MWB behavior changes.
-- New experiments can use short-lived branches from `mwb-standalone` when a change is invasive.
+- `main`: portable extraction plus intentional MWB behavior changes.
+- New experiments can use short-lived branches from `main` when a change is invasive.
 
-Do not casually merge `mwb-standalone` back into `main`; the point of `main` is to remain a clean upstream-sync base.
+Review Microsoft changes directly from `microsoft/PowerToys` and port applicable MWB updates deliberately. Do not merge the full upstream PowerToys tree into `main`.
 
 ## AI-assisted commit attribution
 
@@ -133,7 +132,7 @@ The focused workflow is:
 
 `.github/workflows/build.yml`
 
-It is triggered by relevant pushes to `mwb-standalone` and is intended to build/test only MWB rather than all of PowerToys.
+It is triggered by relevant pushes to `main` and is intended to build/test only MWB rather than all of PowerToys.
 
 ### GitHub release publishing
 
