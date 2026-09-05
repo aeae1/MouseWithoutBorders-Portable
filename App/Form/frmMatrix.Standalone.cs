@@ -32,14 +32,10 @@ internal partial class FrmMatrix
         ConfigurePortableOtherOptions();
         ConfigurePortableShortcutControls();
         AddPortableSettingsTab();
+        Shown += FrmMatrixPortable_Shown;
     }
 
-    protected override void OnShown(EventArgs e)
-    {
-        base.OnShown(e);
-
-        ConfigurePortableMachineTiles();
-    }
+    private void FrmMatrixPortable_Shown(object sender, EventArgs e) => ConfigurePortableMachineTiles();
 
     private void ConfigurePortableMachineTiles()
     {
