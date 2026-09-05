@@ -38,8 +38,8 @@ This branch contains a portable Windows build of Mouse Without Borders derived f
 - Release-candidate retention: **added**. Publishing an RC keeps its two newest RC download pages and prunes older RC release entries; Git tags and commit history remain intact.
 - GitHub Releases publishing: **added and proven**. Tagged and requested releases are built, tested, and populated with the EXE and checksum automatically.
 - Upstream MWB audit through September 3, 2026: **completed**. Microsoft's September 2 receive-safety improvements are incorporated and documented in `UPSTREAM_SYNC.md`.
-- Real-Windows connection testing: **working through Test 12**. Version 1.0.0 Release Candidate 8 keeps that behavior and the RC1–RC6 fixes while correcting the RC7 machine-tile presentation; a final portable/self-install, firewall, sleep/wake, shortcut, visual-scaling, and two-machine regression pass remains worthwhile before 1.0.0 stable.
-- Machine-tile artwork validation: **revised for RC8**. The replacement assets and responsive layout do not touch network, input, preferences, or connection-state logic; verify true transparency, undistorted proportions, and complete one-row/two-row rendering at 100%, 125%, 150%, and 200% scaling on real Windows.
+- Real-Windows connection testing: **validated through the Test and Release Candidate series**. Version 1.0.0 keeps that behavior and completes the portable setup, shortcut, diagnostics, branding, responsive machine-tile, and flicker-free row-transition work; continued firewall, sleep/wake, display-scaling, and two-machine regression checks remain worthwhile as the stable release receives broader use.
+- Machine-tile artwork validation: **completed for 1.0.0**. The replacement assets and responsive layout do not touch network, input, preferences, or connection-state logic; the stable build also makes row changes repaint atomically instead of exposing intermediate control bounds.
 
 ## Goals
 

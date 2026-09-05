@@ -17,6 +17,8 @@ namespace MouseWithoutBorders;
 
 internal partial class FrmMatrix
 {
+    private const int WmSetRedraw = 0x000B;
+
     private CheckBox checkBoxEnableKeyboardShortcuts;
     private CheckBox checkBoxMouseEdgeSwitching;
     private bool portableMachineTilesConfigured;
@@ -50,10 +52,40 @@ internal partial class FrmMatrix
         }
 
         portableMachineTilesConfigured = true;
+        DoubleBuffered = true;
         groupBoxMachineMatrix.SizeChanged += PortableMachineMatrix_SizeChanged;
-        checkBoxTwoRow.CheckedChanged += PortableMachineMatrix_SizeChanged;
+        checkBoxTwoRow.CheckedChanged -= CheckBoxTwoRow_CheckedChanged;
+        checkBoxTwoRow.CheckedChanged += CheckBoxTwoRow_PortableCheckedChanged;
         checkBoxTwoRow.LocationChanged += PortableMachineMatrix_SizeChanged;
         LayoutPortableMachineTiles();
+    }
+
+    private void CheckBoxTwoRow_PortableCheckedChanged(object sender, EventArgs e)
+    {
+        // Changing row modes resizes the form and every machine tile. Prevent
+        // WinForms from painting those intermediate bounds one control at a time.
+        _ = NativeMethods.SendMessage(Handle, WmSetRedraw, IntPtr.Zero, IntPtr.Zero);
+
+        SuspendLayout();
+        tabPageMain.SuspendLayout();
+        groupBoxMachineMatrix.SuspendLayout();
+
+        try
+        {
+            matrixOneRow = !checkBoxTwoRow.Checked;
+            Height = matrixOneRow ? formOrgHeight : formOrgHeight + 60;
+            LayoutPortableMachineTiles();
+        }
+        finally
+        {
+            groupBoxMachineMatrix.ResumeLayout(performLayout: true);
+            tabPageMain.ResumeLayout(performLayout: true);
+            ResumeLayout(performLayout: true);
+
+            _ = NativeMethods.SendMessage(Handle, WmSetRedraw, new IntPtr(1), IntPtr.Zero);
+            Invalidate(invalidateChildren: true);
+            Update();
+        }
     }
 
     private void PortableMachineMatrix_SizeChanged(object sender, EventArgs e)

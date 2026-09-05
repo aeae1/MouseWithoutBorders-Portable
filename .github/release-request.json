@@ -1,24 +1,21 @@
 {
-  "tag": "mwb-v1.0.0-rc.8",
-  "title": "Mouse Without Borders Portable 1.0.0 Release Candidate 8",
-  "prerelease": true,
-  "summary": "Version 1.0.0 Release Candidate 8 corrects machine-tile transparency, proportions, and one-row/two-row layout at scaled Windows display settings.",
+  "tag": "mwb-v1.0.0",
+  "title": "Mouse Without Borders Portable 1.0.0",
+  "prerelease": false,
+  "summary": "The first stable Mouse Without Borders Portable release: modern MWB separated from PowerToys and packaged as one self-contained Windows executable.",
   "changes": [
-    "Replaces RC7's accidentally flattened white image backgrounds with geometrically aligned 360x288 true-alpha PNG artwork.",
-    "Preserves each monitor's intended proportions with aspect-preserving zoom instead of stretching it into the legacy short image area.",
-    "Uses available vertical space in one-row mode and calculates actual tile heights and spacing in two-row mode so the lower monitors are not clipped.",
-    "Condenses the legacy two-label status footer into one visible line so two-row tiles can devote more of their limited height to the monitor artwork.",
-    "Keeps the accepted classic green application, title-bar, and tray icon unchanged.",
-    "Preserves all machine-matrix interaction, naming, drag-and-drop, checkbox, connection-status, and networking behavior."
+    "Ships as one portable MouseWithoutBorders.exe with adjacent preferences and an optional per-user self-install path.",
+    "Preserves modern MWB mouse, keyboard, clipboard, file-transfer, drag-and-drop, reconnect, encryption, and machine-matrix behavior without requiring PowerToys.",
+    "Includes the accepted classic green application and tray icon plus crisp transparent configured and empty machine artwork.",
+    "Keeps machine tiles proportional and fully visible in responsive one-row and two-row layouts at scaled Windows display settings.",
+    "Makes one-row/two-row changes repaint atomically so intermediate tile positions no longer flash on screen.",
+    "Includes portable settings, first-launch choice, startup controls, focused diagnostics, shortcut controls, and current incoming-file safety improvements."
   ],
   "testing": [
-    "Open Machine Setup at 100%, 125%, 150%, and 200% Windows display scaling and confirm the monitor backgrounds are genuinely transparent and their proportions are not flattened.",
-    "Check one-row mode and confirm the monitors use the available vertical room without crowding the name and status text.",
-    "Check Two Row and confirm all four monitors, including the complete top bezel of the lower row, remain inside the matrix without overlap or clipping.",
-    "Enable and disable an empty machine tile and confirm its artwork changes without affecting the name field or checkbox.",
-    "Drag configured machine tiles into a different order and confirm the new artwork moves with the tile normally.",
-    "Confirm local, connected, connecting, key-mismatch, timeout, and not-configured status text remains readable and unchanged.",
-    "Open About and confirm the displayed product version is 1.0.0-rc.8.",
-    "Run the same RC8 EXE on both computers and briefly recheck mouse, keyboard, clipboard, file transfer, and reconnect behavior."
+    "Install this same 1.0.0 EXE on every connected computer.",
+    "Toggle Two Row repeatedly and confirm the matrix moves directly between its finished layouts without displaying partial controls or stale tile fragments.",
+    "Confirm all four monitors remain proportional, transparent, and completely visible in both arrangements.",
+    "Open About and confirm the displayed product version is 1.0.0.",
+    "Briefly recheck mouse, keyboard, clipboard, file transfer, reconnect, and sleep/wake behavior between the real computers."
   ]
 }

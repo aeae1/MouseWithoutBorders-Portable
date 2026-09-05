@@ -10,13 +10,13 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/aeae1/MouseWithoutBorders-Portable/releases">Download the latest release</a>
+  <a href="https://github.com/aeae1/MouseWithoutBorders-Portable/releases/latest">Download the latest stable release</a>
   ·
   <a href="https://github.com/aeae1/MouseWithoutBorders-Portable/actions/workflows/build.yml">Windows build status</a>
 </p>
 
 > [!IMPORTANT]
-> This is an unofficial fork, not a Microsoft release. Version 1.0.0 Release Candidate 8 corrects the new machine-tile artwork's transparency and proportions and makes both one-row and two-row layouts fit their available space. Its core portable behavior was proven through Test 12, but installation, firewall, sleep/wake, and long-term behavior still deserve a final real-hardware validation pass before 1.0.0 stable.
+> This is an unofficial fork, not a Microsoft release. Version 1.0.0 is the first stable portable release after the Test and Release Candidate series. It packages the maintained MWB engine as one standalone EXE and includes the completed portable setup, settings, diagnostics, shortcuts, branding, and responsive machine-matrix work.
 
 ## What this project is
 
@@ -80,7 +80,7 @@ Current builds are unsigned and may trigger Windows SmartScreen. The automated r
 
 ## Current status
 
-The project is now at **1.0.0 Release Candidate 8**: feature-complete for the intended 1.0 scope and awaiting a final real-PC validation pass.
+The project is now at **1.0.0 stable**. The intended portable 1.0 scope is complete and the automated Windows build, unit-test, packaging, and release pipeline validates every downloadable EXE.
 
 Completed:
 
@@ -93,7 +93,7 @@ Completed:
 - Windows builds, unit tests, and a cleaned MWB-only source repository;
 - removal of the legacy PowerToys solution, unrelated modules, native module interface, service project, comparison projects, packaging machinery, and thousands of unrelated assets.
 
-Still being validated:
+Ongoing real-hardware regression coverage:
 
 - clean first launch, portable mode, self-install, startup, and self-uninstall;
 - Windows firewall prompting;

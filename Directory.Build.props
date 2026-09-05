@@ -1,8 +1,8 @@
 <Project>
   <PropertyGroup>
     <!-- Portable fork version and repository metadata. -->
-    <Version>1.0.0-rc.8</Version>
-    <VersionChannel>rc</VersionChannel>
+    <Version>1.0.0</Version>
+    <VersionChannel>stable</VersionChannel>
     <ChecksumAlgorithm>SHA256</ChecksumAlgorithm>
 
     <!-- Upstream source copyright headers remain untouched. -->
