@@ -123,6 +123,8 @@ Startup must not access `Setting.Values` before `PortableApplication.PrepareFirs
 
 `App/Icon/notify_default.bmp` is the canonical 32×32 legacy-shape reference. `App/ClassicGreen.svg` expresses that exact pixel grid after a mechanical orange-to-green recolor; transparent pixels, black edging, and pale highlights stay unchanged. `App/ClassicGreen.ico` contains nearest-neighbor 16/20/24/32/40/48/64/128/256 pixel images with 32-bit transparency. MSBuild embeds the ICO in `MouseWithoutBorders.exe`, and title bars and the tray read the embedded product icon at runtime. When the green mapping changes, update the SVG and ICO together and verify the small tray sizes as well as the 256-pixel Explorer view. Do not repeat the rejected Test 5 experiment of replacing the smallest frames with a simplified silhouette; it removed black pixels that are part of the classic design. The accepted ICO was restored from the pre-Test-5 asset.
 
+The large monitor illustrations in the machine matrix are separate from that product icon. `App/Icon/MachineEnabled.png` and `App/Icon/MachineDisabled.png` are 424×216 sources matched to the 106×54 logical `PictureBox` ratio so WinForms can downscale rather than enlarge them at ordinary DPI settings. Keep the two files geometrically aligned, preserve a clearly colorful configured state and grayscale inactive state, and verify them at 100%, 125%, 150%, and 200% display scaling. Replacing these tile illustrations must not alter `ClassicGreen.svg`, `ClassicGreen.ico`, tray behavior, or machine connection-state logic.
+
 No Windows service is registered, so protected UAC and Windows sign-in-screen input are intentionally unsupported in the portable product.
 
 ## Build validation

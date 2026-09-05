@@ -1,7 +1,7 @@
 <Project>
   <PropertyGroup>
     <!-- Portable fork version and repository metadata. -->
-    <Version>1.0.0-rc.6</Version>
+    <Version>1.0.0-rc.7</Version>
     <VersionChannel>rc</VersionChannel>
     <ChecksumAlgorithm>SHA256</ChecksumAlgorithm>
 

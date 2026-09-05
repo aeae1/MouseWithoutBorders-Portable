@@ -1,22 +1,20 @@
 {
-  "tag": "mwb-v1.0.0-rc.6",
-  "title": "Mouse Without Borders Portable 1.0.0 Release Candidate 6",
+  "tag": "mwb-v1.0.0-rc.7",
+  "title": "Mouse Without Borders Portable 1.0.0 Release Candidate 7",
   "prerelease": true,
-  "summary": "Version 1.0.0 Release Candidate 6 separates mouse-edge switching from keyboard shortcuts and adds one master switch that keeps every assigned hotkey inactive by default without erasing saved assignments.",
+  "summary": "Version 1.0.0 Release Candidate 7 replaces the stretched 43x27 machine-tile bitmaps with crisp high-resolution active and inactive monitor artwork.",
   "changes": [
-    "Moves Easy Mouse out of Keyboard Shortcuts and presents it as a clear Switch computers at screen edge checkbox in Other Options.",
-    "Preserves the Always, Hold Ctrl, and Hold Shift mouse-edge activation modes in a separate selector.",
-    "Adds an Enable keyboard shortcuts master checkbox that defaults off for new and existing preference files that do not already contain the new setting.",
-    "Gates local and remotely injected configured hotkeys at runtime while preserving every individual assignment for later reuse.",
-    "Renames the per-shortcut Disable choices to None and reorganizes the shortcut panel into one master row plus three assignment rows."
+    "Replaces the original 43x27 enabled and disabled computer bitmaps with 424x216 PNG artwork matched to the machine-tile display ratio.",
+    "Uses a graphite-and-silver monitor with an emerald, blue, cyan, and violet active screen; the inactive state uses the same composition in neutral grayscale.",
+    "Keeps the accepted classic green application, title-bar, and tray icon unchanged.",
+    "Preserves all machine-matrix interaction, naming, drag-and-drop, checkbox, and connection-status behavior."
   ],
   "testing": [
-    "Upgrade an existing preferences file and confirm Enable keyboard shortcuts starts unchecked while the old individual assignments remain visible but inactive.",
-    "Enable the master switch and confirm each configured shortcut works; turn it off and confirm none of them fire.",
-    "Confirm the machine-switch row says None rather than Disable and that selecting it affects only that row.",
-    "In Other Options, turn screen-edge switching off and on and test Always, Hold Ctrl, and Hold Shift activation.",
-    "Resize and maximize Settings and confirm the new four-row shortcut layout stays evenly spaced and aligned.",
-    "Open About and confirm the displayed product version is 1.0.0-rc.6.",
-    "Run the same RC6 EXE on both computers and briefly recheck mouse, keyboard, clipboard, file transfer, and reconnect behavior."
+    "Open Machine Setup at 100%, 125%, 150%, and 200% Windows display scaling and confirm both tile states remain crisp and correctly proportioned.",
+    "Enable and disable an empty machine tile and confirm its artwork changes without affecting the name field or checkbox.",
+    "Drag configured machine tiles into a different order and confirm the new artwork moves with the tile normally.",
+    "Confirm local, connected, connecting, key-mismatch, timeout, and not-configured status text remains readable and unchanged.",
+    "Open About and confirm the displayed product version is 1.0.0-rc.7.",
+    "Run the same RC7 EXE on both computers and briefly recheck mouse, keyboard, clipboard, file transfer, and reconnect behavior."
   ]
 }
