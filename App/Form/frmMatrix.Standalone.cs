@@ -19,6 +19,7 @@ internal partial class FrmMatrix
 {
     private CheckBox checkBoxEnableKeyboardShortcuts;
     private CheckBox checkBoxMouseEdgeSwitching;
+    private bool portableMachineTilesConfigured;
 
     protected override void OnLoad(EventArgs e)
     {
@@ -31,6 +32,80 @@ internal partial class FrmMatrix
         ConfigurePortableOtherOptions();
         ConfigurePortableShortcutControls();
         AddPortableSettingsTab();
+    }
+
+    protected override void OnShown(EventArgs e)
+    {
+        base.OnShown(e);
+
+        ConfigurePortableMachineTiles();
+    }
+
+    private void ConfigurePortableMachineTiles()
+    {
+        if (portableMachineTilesConfigured)
+        {
+            return;
+        }
+
+        foreach (Machine machine in machines)
+        {
+            machine.ConfigurePortableArtwork();
+        }
+
+        portableMachineTilesConfigured = true;
+        groupBoxMachineMatrix.SizeChanged += PortableMachineMatrix_SizeChanged;
+        checkBoxTwoRow.CheckedChanged += PortableMachineMatrix_SizeChanged;
+        checkBoxTwoRow.LocationChanged += PortableMachineMatrix_SizeChanged;
+        LayoutPortableMachineTiles();
+    }
+
+    private void PortableMachineMatrix_SizeChanged(object sender, EventArgs e)
+    {
+        LayoutPortableMachineTiles();
+    }
+
+    private void LayoutPortableMachineTiles()
+    {
+        if (!portableMachineTilesConfigured || machines[0] == null)
+        {
+            return;
+        }
+
+        int rows = matrixOneRow ? 1 : 2;
+        int columns = matrixOneRow ? 4 : 2;
+        int sidePadding = Math.Max(12, groupBoxMachineMatrix.Font.Height);
+        int rowGap = Math.Max(8, groupBoxMachineMatrix.Font.Height / 2);
+        int titleWidth = Math.Max(1, groupBoxMachineMatrix.ClientSize.Width - (sidePadding * 2));
+        int titleHeight = TextRenderer.MeasureText(
+            groupBoxMachineMatrix.Text,
+            groupBoxMachineMatrix.Font,
+            new Size(titleWidth, int.MaxValue),
+            TextFormatFlags.WordBreak | TextFormatFlags.NoPadding).Height;
+        int contentTop = titleHeight + rowGap;
+        int contentBottom = checkBoxTwoRow.Top - rowGap;
+        int availableHeight = Math.Max(1, contentBottom - contentTop);
+        int maximumTileHeight = rows == 1
+            ? availableHeight
+            : Math.Max(1, (availableHeight - rowGap) / 2);
+        int tileHeight = Math.Min(machines[0].PreferredPortableHeight, maximumTileHeight);
+        int usedHeight = (tileHeight * rows) + (rowGap * (rows - 1));
+        int startTop = contentTop + Math.Max(0, (availableHeight - usedHeight) / 2);
+
+        int tileWidth = machines[0].Width;
+        int availableWidth = Math.Max(1, groupBoxMachineMatrix.ClientSize.Width - (sidePadding * 2));
+        int slotWidth = availableWidth / columns;
+
+        for (int i = 0; i < machines.Length; i++)
+        {
+            int column = matrixOneRow ? i : i % 2;
+            int row = matrixOneRow ? 0 : i / 2;
+
+            machines[i].Height = tileHeight;
+            machines[i].Left = sidePadding + (column * slotWidth) + Math.Max(0, (slotWidth - tileWidth) / 2);
+            machines[i].Top = startTop + (row * (tileHeight + rowGap));
+            machines[i].Visible = true;
+        }
     }
 
     private void ConfigurePortableOtherOptions()

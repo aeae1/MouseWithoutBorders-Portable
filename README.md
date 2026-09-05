@@ -16,7 +16,7 @@
 </p>
 
 > [!IMPORTANT]
-> This is an unofficial fork, not a Microsoft release. Version 1.0.0 Release Candidate 7 replaces the tiny stretched machine-tile bitmaps with crisp high-resolution active and inactive monitor artwork. Its core portable behavior was proven through Test 12, but installation, firewall, sleep/wake, and long-term behavior still deserve a final real-hardware validation pass before 1.0.0 stable.
+> This is an unofficial fork, not a Microsoft release. Version 1.0.0 Release Candidate 8 corrects the new machine-tile artwork's transparency and proportions and makes both one-row and two-row layouts fit their available space. Its core portable behavior was proven through Test 12, but installation, firewall, sleep/wake, and long-term behavior still deserve a final real-hardware validation pass before 1.0.0 stable.
 
 ## What this project is
 
@@ -59,7 +59,7 @@ The finished product is deliberately small from a user's perspective:
 - Hides the deprecated, disconnected **Use Key Mappings** checkbox and gives disabled sign-in/clipboard-dependent options self-explanatory labels.
 - Presents mouse-edge switching as an ordinary Other Options checkbox with Always, Hold Ctrl, and Hold Shift activation choices instead of mixing that behavior into the shortcut panel.
 - Provides one **Enable keyboard shortcuts** master switch, defaulting off, that suppresses every configured hotkey while preserving its individual assignment.
-- Replaces the original stretched 43×27 computer-tile bitmaps with crisp 424×216 artwork: a colorful configured state and a matching grayscale empty state, without changing the classic green app/tray icon.
+- Replaces the original stretched 43×27 computer-tile bitmaps with crisp transparent artwork: a colorful configured state and a matching grayscale empty state, rendered without distortion in responsive one-row and two-row layouts and without changing the classic green app/tray icon.
 
 ## Download and run
 
@@ -80,7 +80,7 @@ Current builds are unsigned and may trigger Windows SmartScreen. The automated r
 
 ## Current status
 
-The project is now at **1.0.0 Release Candidate 7**: feature-complete for the intended 1.0 scope and awaiting a final real-PC validation pass.
+The project is now at **1.0.0 Release Candidate 8**: feature-complete for the intended 1.0 scope and awaiting a final real-PC validation pass.
 
 Completed:
 
@@ -148,3 +148,4 @@ This section records how the PowerToys module became this portable product. It i
 20. **Removed inaccessible grey-control explanations.** WinForms does not normally deliver hover events to disabled controls, so their tooltips could not explain why they were unavailable. RC5 hides the fully deprecated and disconnected **Use Key Mappings** switch, labels the two service-only sign-in options inline, and makes the disabled file-transfer label state its Share Clipboard dependency.
 21. **Separated mouse-edge behavior from optional hotkeys.** RC6 moves Easy Mouse into Other Options as a plain screen-edge-switching checkbox while retaining Always, Hold Ctrl, and Hold Shift activation. Keyboard Shortcuts gains a persisted master switch that defaults off, gates both local and remotely processed assigned hotkeys, and preserves individual choices while inactive. The ambiguous per-row Disable wording becomes None, and the responsive panel is reorganized as a master row plus three assignment rows.
 22. **Rebuilt the machine-tile artwork for modern displays.** RC7 replaces the 43×27 enabled/disabled monitor bitmaps that WinForms had to enlarge with 424×216 PNGs designed for the tile's native aspect ratio. The configured state combines a graphite-and-silver monitor with a restrained emerald, blue, cyan, and violet screen; the matching inactive state is grayscale. Machine naming, layout dragging, checkboxes, and status reporting are unchanged, and the accepted classic green EXE/tray icon remains untouched.
+23. **Corrected machine-tile transparency and responsive layout.** RC8 replaces RC7's accidentally flattened white image backgrounds with true-alpha 360×288 PNGs, changes the image control from distortion-prone stretching to aspect-preserving zoom, and sizes each tile from the matrix's actual scaled bounds. One-row mode uses the otherwise available height, while two-row mode calculates both row heights and spacing so the lower monitors remain fully visible. The portable tile condenses its two rare split status phrases onto one line to leave more room for the art; machine order, state reporting, naming, connection behavior, and the classic green product icon are otherwise unchanged.

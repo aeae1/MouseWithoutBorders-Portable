@@ -1,20 +1,24 @@
 {
-  "tag": "mwb-v1.0.0-rc.7",
-  "title": "Mouse Without Borders Portable 1.0.0 Release Candidate 7",
+  "tag": "mwb-v1.0.0-rc.8",
+  "title": "Mouse Without Borders Portable 1.0.0 Release Candidate 8",
   "prerelease": true,
-  "summary": "Version 1.0.0 Release Candidate 7 replaces the stretched 43x27 machine-tile bitmaps with crisp high-resolution active and inactive monitor artwork.",
+  "summary": "Version 1.0.0 Release Candidate 8 corrects machine-tile transparency, proportions, and one-row/two-row layout at scaled Windows display settings.",
   "changes": [
-    "Replaces the original 43x27 enabled and disabled computer bitmaps with 424x216 PNG artwork matched to the machine-tile display ratio.",
-    "Uses a graphite-and-silver monitor with an emerald, blue, cyan, and violet active screen; the inactive state uses the same composition in neutral grayscale.",
+    "Replaces RC7's accidentally flattened white image backgrounds with geometrically aligned 360x288 true-alpha PNG artwork.",
+    "Preserves each monitor's intended proportions with aspect-preserving zoom instead of stretching it into the legacy short image area.",
+    "Uses available vertical space in one-row mode and calculates actual tile heights and spacing in two-row mode so the lower monitors are not clipped.",
+    "Condenses the legacy two-label status footer into one visible line so two-row tiles can devote more of their limited height to the monitor artwork.",
     "Keeps the accepted classic green application, title-bar, and tray icon unchanged.",
-    "Preserves all machine-matrix interaction, naming, drag-and-drop, checkbox, and connection-status behavior."
+    "Preserves all machine-matrix interaction, naming, drag-and-drop, checkbox, connection-status, and networking behavior."
   ],
   "testing": [
-    "Open Machine Setup at 100%, 125%, 150%, and 200% Windows display scaling and confirm both tile states remain crisp and correctly proportioned.",
+    "Open Machine Setup at 100%, 125%, 150%, and 200% Windows display scaling and confirm the monitor backgrounds are genuinely transparent and their proportions are not flattened.",
+    "Check one-row mode and confirm the monitors use the available vertical room without crowding the name and status text.",
+    "Check Two Row and confirm all four monitors, including the complete top bezel of the lower row, remain inside the matrix without overlap or clipping.",
     "Enable and disable an empty machine tile and confirm its artwork changes without affecting the name field or checkbox.",
     "Drag configured machine tiles into a different order and confirm the new artwork moves with the tile normally.",
     "Confirm local, connected, connecting, key-mismatch, timeout, and not-configured status text remains readable and unchanged.",
-    "Open About and confirm the displayed product version is 1.0.0-rc.7.",
-    "Run the same RC7 EXE on both computers and briefly recheck mouse, keyboard, clipboard, file transfer, and reconnect behavior."
+    "Open About and confirm the displayed product version is 1.0.0-rc.8.",
+    "Run the same RC8 EXE on both computers and briefly recheck mouse, keyboard, clipboard, file transfer, and reconnect behavior."
   ]
 }
