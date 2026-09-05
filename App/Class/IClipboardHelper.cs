@@ -168,17 +168,30 @@ namespace MouseWithoutBorders
     internal sealed class IpcChannel<T>
         where T : new()
     {
+        internal static NamedPipeServerStream CreateServer(string pipeName)
+        {
+            using var identity = WindowsIdentity.GetCurrent();
+            var user = identity.User ?? throw new UnauthorizedAccessException("Current Windows user is unavailable.");
+            // .NET 10 CurrentUserOnly uses token Owner, which can be the Administrators
+            // group for elevated processes. Bind permissions to the actual user instead.
+            var security = new PipeSecurity();
+            security.SetAccessRuleProtection(isProtected: true, preserveInheritance: false);
+            security.SetOwner(user);
+            security.AddAccessRule(new PipeAccessRule(user, PipeAccessRights.FullControl, AccessControlType.Allow));
+            return NamedPipeServerStreamAcl.Create(
+                pipeName, PipeDirection.InOut, NamedPipeServerStream.MaxAllowedServerInstances,
+                PipeTransmissionMode.Byte, PipeOptions.Asynchronous, 0, 0, security);
+        }
+
+        internal static void VerifyServerOwner(NamedPipeClientStream stream)
+        {
+            using var identity = WindowsIdentity.GetCurrent();
+            if (!Equals(stream.GetAccessControl().GetOwner(typeof(SecurityIdentifier)), identity.User))
+                throw new UnauthorizedAccessException("The clipboard pipe belongs to a different Windows user.");
+        }
+
         public static T StartIpcServer(string pipeName, CancellationToken cancellationToken)
         {
-            SecurityIdentifier securityIdentifier = new SecurityIdentifier(
-WellKnownSidType.AuthenticatedUserSid, null);
-
-            PipeSecurity pipeSecurity = new PipeSecurity();
-            pipeSecurity.AddAccessRule(new PipeAccessRule(
-                securityIdentifier,
-                PipeAccessRights.ReadWrite | PipeAccessRights.CreateNewInstance,
-                AccessControlType.Allow));
-
             _ = Task.Factory.StartNew(
                 async () =>
                 {
@@ -186,7 +199,7 @@ WellKnownSidType.AuthenticatedUserSid, null);
                     {
                         while (!cancellationToken.IsCancellationRequested)
                         {
-                            using (var serverChannel = NamedPipeServerStreamAcl.Create(pipeName, PipeDirection.InOut, NamedPipeServerStream.MaxAllowedServerInstances, PipeTransmissionMode.Byte, PipeOptions.Asynchronous, 0, 0, pipeSecurity))
+                            using (var serverChannel = CreateServer(pipeName))
                             {
                                 await serverChannel.WaitForConnectionAsync();
                                 var taskRpc = JsonRpc.Attach(serverChannel, new T());
@@ -263,10 +276,17 @@ WellKnownSidType.AuthenticatedUserSid, null);
             try
             {
                 var stream = new NamedPipeClientStream(".", ChannelName + "/" + RemoteObjectName, PipeDirection.InOut, PipeOptions.Asynchronous);
-
-                stream.Connect();
-
-                return JsonRpc.Attach<IClipboardHelper>(stream);
+                try
+                {
+                    stream.Connect();
+                    IpcChannel<object>.VerifyServerOwner(stream);
+                    return JsonRpc.Attach<IClipboardHelper>(stream);
+                }
+                catch
+                {
+                    stream.Dispose();
+                    throw;
+                }
             }
             catch (Exception e)
             {

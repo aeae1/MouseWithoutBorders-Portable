@@ -112,7 +112,7 @@ namespace Microsoft.PowerToys.Settings.UI.Library
                 return value.GetBoolean();
             }
 
-            return false;
+            throw new JsonException("Expected a boolean or an object containing a boolean value.");
         }
 
         public override void Write(Utf8JsonWriter writer, bool value, JsonSerializerOptions options)
@@ -351,7 +351,8 @@ namespace Microsoft.PowerToys.Settings.UI.Library
             FirstCtrlShiftS = false;
         }
 
-        public object Clone() => MemberwiseClone();
+        public object Clone() => JsonSerializer.Deserialize<MouseWithoutBordersProperties>(
+            JsonSerializer.Serialize(this, SettingsUtils.SerializerOptions), SettingsUtils.SerializerOptions)!;
     }
 
     internal sealed class MouseWithoutBordersSettings
@@ -390,35 +391,29 @@ namespace Microsoft.PowerToys.Settings.UI.Library
 
         internal static SettingsUtils Default => DefaultInstance.Value;
 
-        public bool SettingsExists(string moduleName) => File.Exists(GetSettingsPath(moduleName));
+        private readonly string _pathOverride;
+        internal SettingsUtils(string pathOverride = null) => _pathOverride = pathOverride;
+        private string PathForModule(string moduleName) => _pathOverride ?? GetSettingsPath(moduleName);
+
+        public bool SettingsExists(string moduleName) => File.Exists(PathForModule(moduleName));
 
         public T GetSettingsOrDefault<T>(string moduleName)
             where T : new()
         {
-            var path = GetSettingsPath(moduleName);
-            if (!File.Exists(path))
+            var path = PathForModule(moduleName);
+            string json = File.ReadAllText(path);
+            if (typeof(T) == typeof(MouseWithoutBordersSettings))
             {
-                return new T();
+                return (T)(object)MouseWithoutBorders.Core.PortableSettingsStore.Parse(json);
             }
 
-            try
-            {
-                return JsonSerializer.Deserialize<T>(File.ReadAllText(path), SerializerOptions) ?? new T();
-            }
-            catch (JsonException)
-            {
-                return new T();
-            }
+            return JsonSerializer.Deserialize<T>(json, SerializerOptions)
+                ?? throw new InvalidDataException("The settings document is empty.");
         }
 
         public void SaveSettings(string json, string moduleName)
         {
-            var path = GetSettingsPath(moduleName);
-            Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-
-            var temporaryPath = path + ".tmp";
-            File.WriteAllText(temporaryPath, json);
-            File.Move(temporaryPath, path, overwrite: true);
+            MouseWithoutBorders.Core.PortableSettingsStore.Write(PathForModule(moduleName), json);
         }
 
         internal static string GetSettingsPath(string moduleName)

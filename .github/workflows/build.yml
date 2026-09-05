@@ -35,6 +35,9 @@ jobs:
         shell: pwsh
         run: .\validate-repository.ps1
 
+      - name: Test release metadata validation
+        run: python .github/scripts/test-release.py
+
       - name: Build and test
         shell: pwsh
         run: .\build.ps1 -Configuration Release -Platform x64 -RunTests
@@ -70,6 +73,13 @@ jobs:
             -Destination $portableRoot `
             -NoRestore
 
+          [xml]$versionProps = Get-Content Directory.Build.props
+          $expectedVersion = $versionProps.Project.PropertyGroup.Version | Where-Object { $_ } | Select-Object -First 1
+          $exeVersion = (Get-Item (Join-Path $portableRoot 'MouseWithoutBorders.exe')).VersionInfo.ProductVersion
+          if ($exeVersion -ne $expectedVersion) {
+            throw "Published executable version '$exeVersion' differs from source '$expectedVersion'."
+          }
+
       - name: Upload single-file portable x64 build
         uses: actions/upload-artifact@v4
         with:
@@ -87,10 +97,15 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+    concurrency:
+      group: mwb-release-publishing
+      cancel-in-progress: false
 
     steps:
       - name: Checkout release metadata
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Resolve release metadata
         id: release
@@ -106,9 +121,10 @@ jobs:
           if [[ "$REF_TYPE" == "tag" ]]; then
             tag="$REF_NAME"
             title="Mouse Without Borders ${tag#mwb-v}"
-            prerelease=true
+            prerelease=false
+            if [[ "${tag#mwb-v}" == *-* ]]; then prerelease=true; fi
             printf '%s\n' \
-              'Unsigned prerelease build of the portable green Mouse Without Borders fork.' \
+              'Unsigned build of the portable green Mouse Without Borders fork.' \
               '' \
               'Download `MouseWithoutBorders.exe` from Assets and use the same release on every computer.' \
               > "$notes_file"
@@ -133,6 +149,16 @@ jobs:
           if [[ "$prerelease" != "true" && "$prerelease" != "false" ]]; then
             echo "prerelease must be true or false"
             exit 1
+          fi
+
+          python .github/scripts/verify-release.py "$tag" "$prerelease"
+          built_commit=$(git rev-parse HEAD)
+          if git show-ref --verify --quiet "refs/tags/$tag"; then
+            tagged_commit=$(git rev-parse "refs/tags/$tag^{commit}")
+            if [[ "$tagged_commit" != "$built_commit" ]]; then
+              echo "Release tag points to a different source commit. Refusing publication."
+              exit 1
+            fi
           fi
 
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
@@ -171,10 +197,8 @@ jobs:
         run: |
           set -euo pipefail
           if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
-            gh release upload "$RELEASE_TAG" \
-              release/MouseWithoutBorders.exe \
-              release/MouseWithoutBorders.exe.sha256 \
-              --clobber
+            echo "Release already exists. Published assets are never replaced; use a new version."
+            exit 1
           else
             release_args=(
               "$RELEASE_TAG"

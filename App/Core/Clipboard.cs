@@ -82,6 +82,9 @@ internal static class Clipboard
 
     internal static bool HasSwitchedMachineSinceLastCopy { get; set; }
 
+    internal static bool IsSameClipboardText(string previous, string current) =>
+        string.Equals(previous, current, StringComparison.Ordinal);
+
     internal static bool CheckClipboardEx(ByteArrayOrString data, bool isFilePath)
     {
         Logger.LogDebug($"{nameof(CheckClipboardEx)}: ShareClipboard = {Setting.Values.ShareClipboard}, TransferFile = {Setting.Values.TransferFile}, data = {data}.");
@@ -129,7 +132,7 @@ internal static class Clipboard
             {
                 if (!HasSwitchedMachineSinceLastCopy)
                 {
-                    if (lastClipboardObject is string lastStringData && lastStringData.Equals(stringData, StringComparison.OrdinalIgnoreCase))
+                    if (lastClipboardObject is string lastStringData && IsSameClipboardText(lastStringData, stringData))
                     {
                         Logger.LogDebug("CheckClipboardEx: Same string data.");
                         return false;
