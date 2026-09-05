@@ -7,8 +7,10 @@ input scheduling or add new transfer features.
 ## Changes
 
 - Both local RPC pipe endpoints and the clipboard client restrict access to the
-  current Windows user (and the same elevation level). The existing endpoint
-  names and external integration remain available to that identity.
+  current Windows user with an explicit user SID ACL and server-owner check. The existing endpoint
+  names and external integration remain available to that identity. This avoids
+  .NET 10 CurrentUserOnly using an Administrators group owner when elevated
+  (dotnet/runtime#123903).
 - Preferences are validated before adoption. Invalid JSON and explicit nulls in
   required properties are rejected; missing properties retain upgrade defaults.
 - Atomic preference replacement keeps a `.bak` containing the previous valid

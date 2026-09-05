@@ -211,6 +211,17 @@ public sealed class EssentialHardeningTests
     }
 
     [TestMethod]
+    public async Task IpcClientAcceptsServerOwnedByCurrentUser()
+    {
+        string name = "MWB-Test-" + Guid.NewGuid().ToString("N");
+        using var server = IpcChannel<object>.CreateServer(name);
+        using var client = new NamedPipeClientStream(".", name, PipeDirection.InOut, PipeOptions.Asynchronous);
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+        await Task.WhenAll(server.WaitForConnectionAsync(timeout.Token), client.ConnectAsync(timeout.Token));
+        IpcChannel<object>.VerifyServerOwner(client);
+    }
+
+    [TestMethod]
     public void IpcPipeAllowsOnlyCurrentUser()
     {
         using var server = IpcChannel<object>.CreateServer("MWB-Test-" + Guid.NewGuid().ToString("N"));
