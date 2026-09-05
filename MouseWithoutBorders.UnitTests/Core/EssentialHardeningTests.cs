@@ -114,7 +114,7 @@ public sealed class EssentialHardeningTests
     public void OwnWriteNotificationDoesNotUndoAnUnsavedEdit()
     {
         PortableSettingsStore.Write(path, Document("same-key"));
-        var settings = new Settings(new SettingsUtils(path), watchChanges: false);
+        var settings = new MouseWithoutBorders.Class.Settings(new SettingsUtils(path), watchChanges: false);
         settings.SaveSettingsSynchronously();
         settings.DrawMouse = false;
         settings.UpdateSettingsFromJson();
@@ -125,7 +125,7 @@ public sealed class EssentialHardeningTests
     public void InvalidReloadRetainsWorkingSettings()
     {
         PortableSettingsStore.Write(path, Document("working-key"));
-        var settings = new Settings(new SettingsUtils(path), watchChanges: false);
+        var settings = new MouseWithoutBorders.Class.Settings(new SettingsUtils(path), watchChanges: false);
         File.WriteAllText(path, "invalid");
         Assert.ThrowsException<InvalidDataException>(() => settings.UpdateSettingsFromJson());
         Assert.AreEqual("working-key", settings.MyKey);
@@ -135,7 +135,7 @@ public sealed class EssentialHardeningTests
     public async Task FinalSynchronousSaveWinsOverQueuedWrites()
     {
         PortableSettingsStore.Write(path, Document("start-key"));
-        var settings = new Settings(new SettingsUtils(path), watchChanges: false);
+        var settings = new MouseWithoutBorders.Class.Settings(new SettingsUtils(path), watchChanges: false);
         await Task.WhenAll(Enumerable.Range(0, 20).Select(i => Task.Run(() => settings.MyKey = "key-" + i)));
         settings.SaveKeySynchronously("final-key");
         // Let any previously queued worker run; it must not resurrect an older snapshot.
@@ -148,7 +148,7 @@ public sealed class EssentialHardeningTests
     public void FailedKeySaveRetainsPreviousKey()
     {
         PortableSettingsStore.Write(path, Document("old-key"));
-        var settings = new Settings(new SettingsUtils(path), watchChanges: false);
+        var settings = new MouseWithoutBorders.Class.Settings(new SettingsUtils(path), watchChanges: false);
         using (var locked = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.None))
         {
             Assert.ThrowsException<IOException>(() => settings.SaveKeySynchronously("new-key"));
