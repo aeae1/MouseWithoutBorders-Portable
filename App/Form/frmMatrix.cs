@@ -547,13 +547,19 @@ namespace MouseWithoutBorders
 
             if (!newKey.Equals(Encryption.MyKey, StringComparison.Ordinal))
             {
-                Setting.Values.MyKey = Encryption.MyKey = newKey;
+                try
+                {
+                    Setting.Values.SaveKeySynchronously(newKey);
+                }
+                catch (Exception ex) when (ex is System.IO.IOException or UnauthorizedAccessException)
+                {
+                    _ = MessageBox.Show(this,
+                        "The new key could not be saved. The previous key remains active.\r\n\r\n" + ex.Message,
+                        "Preferences could not be saved", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return false;
+                }
+                Encryption.MyKey = newKey;
                 Encryption.GeneratedKey = false;
-
-                // Applying a key is a deliberate, security-sensitive action. Persist it
-                // before reopening the sockets so an immediate exit/restart cannot restore
-                // the previous key from the adjacent preferences file.
-                Setting.Values.SaveSettingsSynchronously();
             }
 
             Encryption.MagicNumber = Encryption.Get24BitHash(Encryption.MyKey);

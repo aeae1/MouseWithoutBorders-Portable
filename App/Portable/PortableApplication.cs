@@ -48,10 +48,37 @@ internal static class PortableApplication
 
     internal static bool PrepareFirstLaunch()
     {
-        if (File.Exists(CurrentSettingsPath))
+        if (File.Exists(CurrentSettingsPath) || File.Exists(CurrentSettingsPath + ".bak"))
         {
-            IsInstalledCopy = ReadAppMode(CurrentSettingsPath).Equals(AppModeInstalled, StringComparison.OrdinalIgnoreCase);
-            return true;
+            try
+            {
+                var settings = PortableSettingsStore.Read(CurrentSettingsPath);
+                IsInstalledCopy = settings.AppMode.Equals(AppModeInstalled, StringComparison.OrdinalIgnoreCase);
+                return true;
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                try
+                {
+                    _ = PortableSettingsStore.Read(CurrentSettingsPath + ".bak");
+                    if (MessageBox.Show(
+                        "Your preferences could not be loaded. Restore the last valid backup? The current file will be preserved.\r\n\r\n" + ex.Message,
+                        "Recover Mouse Without Borders preferences", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.Yes)
+                    {
+                        PortableSettingsStore.RestoreBackup(CurrentSettingsPath);
+                        return PrepareFirstLaunch();
+                    }
+                }
+                catch (Exception recoveryError) when (recoveryError is IOException or UnauthorizedAccessException)
+                {
+                    _ = MessageBox.Show(
+                        "Mouse Without Borders could not load your preferences or recover a backup. Your files have not been reset.\r\n\r\n" +
+                        CurrentSettingsPath + "\r\n\r\n" + recoveryError.Message,
+                        "Preferences could not be loaded", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+
+                return false;
+            }
         }
 
         while (true)
@@ -178,12 +205,14 @@ internal static class PortableApplication
 
         var script = new StringBuilder();
         script.Append("$ErrorActionPreference='SilentlyContinue';");
-        script.Append("Wait-Process -Id ").Append(processId).Append(" -Timeout 30;");
+        script.Append("Get-Process -Id ").Append(processId).Append(" -ErrorAction SilentlyContinue | Wait-Process -Timeout 30;");
+        script.Append("if (Get-Process -Id ").Append(processId).Append(" -ErrorAction SilentlyContinue) { exit 1 };");
         script.Append("Start-Sleep -Milliseconds 300;");
-        script.Append("Remove-Item -LiteralPath '").Append(EscapePowerShellLiteral(executablePath)).Append("' -Force;");
+        script.Append("Remove-Item -LiteralPath '").Append(EscapePowerShellLiteral(executablePath)).Append("' -Force -ErrorAction Stop;");
         if (deletePreferences)
         {
             script.Append("Remove-Item -LiteralPath '").Append(EscapePowerShellLiteral(settingsPath)).Append("' -Force;");
+            script.Append("Remove-Item -LiteralPath '").Append(EscapePowerShellLiteral(settingsPath + ".bak")).Append("' -Force;");
         }
 
         script.Append("if ((Test-Path -LiteralPath '").Append(EscapePowerShellLiteral(installDirectory)).Append("') -and -not (Get-ChildItem -LiteralPath '")
@@ -227,9 +256,37 @@ internal static class PortableApplication
         var installedSettingsPath = Path.Combine(installDirectory, SettingsFileName);
         var isCurrentLocation = installedExecutablePath.Equals(CurrentExecutablePath, StringComparison.OrdinalIgnoreCase);
 
+        // Validate both documents before touching the destination executable.
+        if (preserveCurrentPreferences) _ = PortableSettingsStore.Read(CurrentSettingsPath);
+        if (File.Exists(installedSettingsPath)) _ = PortableSettingsStore.Read(installedSettingsPath);
+
+        using var transaction = new PortableInstallTransaction();
+        if (!isCurrentLocation) transaction.TrackFile(installedExecutablePath);
+        transaction.TrackFile(installedSettingsPath);
+        transaction.TrackFile(installedSettingsPath + ".bak");
+        transaction.TrackFile(GetStartMenuShortcutPath());
+        transaction.TrackFile(GetDesktopShortcutPath());
+        using (var startupKey = Registry.CurrentUser.OpenSubKey(StartupRegistryPath))
+        {
+            object previous = startupKey?.GetValue(StartupValueName, null, RegistryValueOptions.DoNotExpandEnvironmentNames);
+            var kind = previous == null ? RegistryValueKind.String : startupKey.GetValueKind(StartupValueName);
+            transaction.OnRollback(() =>
+            {
+                using var key = Registry.CurrentUser.CreateSubKey(StartupRegistryPath, writable: true);
+                if (previous == null) key.DeleteValue(StartupValueName, throwOnMissingValue: false);
+                else key.SetValue(StartupValueName, previous, kind);
+            });
+        }
+
         if (!isCurrentLocation)
         {
-            File.Copy(CurrentExecutablePath, installedExecutablePath, overwrite: true);
+            string stagedExecutable = installedExecutablePath + "." + Guid.NewGuid().ToString("N") + ".tmp";
+            try
+            {
+                File.Copy(CurrentExecutablePath, stagedExecutable);
+                File.Move(stagedExecutable, installedExecutablePath, overwrite: true);
+            }
+            finally { if (File.Exists(stagedExecutable)) File.Delete(stagedExecutable); }
         }
 
         if (preserveCurrentPreferences)
@@ -248,30 +305,23 @@ internal static class PortableApplication
         if (isCurrentLocation && !restartCurrentProcess)
         {
             IsInstalledCopy = true;
+            transaction.Complete();
             return true;
         }
 
-        ScheduleInstalledLaunchAfterExit(
-            installedExecutablePath,
-            installDirectory,
-            installedSettingsPath.Equals(CurrentSettingsPath, StringComparison.OrdinalIgnoreCase) ? null : CurrentSettingsPath);
-
+        if (isCurrentLocation && preserveCurrentPreferences)
+        {
+            transaction.OnRollback(() => Setting.Values.UpdateAppMode(AppModePortable));
+            Setting.Values.UpdateAppMode(AppModeInstalled);
+        }
+        ScheduleInstalledLaunchAfterExit(installedExecutablePath, installDirectory);
+        transaction.Complete();
         return false;
     }
 
     internal static void SavePreferencesForInstall(string sourceSettingsPath, string installedSettingsPath)
     {
-        MouseWithoutBordersSettings settings;
-        try
-        {
-            settings = JsonSerializer.Deserialize<MouseWithoutBordersSettings>(
-                File.ReadAllText(sourceSettingsPath),
-                SettingsUtils.SerializerOptions) ?? throw new InvalidDataException("The current preferences file is empty or invalid.");
-        }
-        catch (JsonException ex)
-        {
-            throw new InvalidDataException("The current preferences file is not valid JSON, so it was not moved.", ex);
-        }
+        var settings = PortableSettingsStore.Read(sourceSettingsPath);
 
         settings.AppMode = AppModeInstalled;
         settings.Properties ??= new MouseWithoutBordersProperties();
@@ -281,24 +331,9 @@ internal static class PortableApplication
     internal static void SaveInitialSettings(string settingsPath, string appMode)
     {
         var isNewSettingsFile = !File.Exists(settingsPath);
-        MouseWithoutBordersSettings settings;
-        if (!isNewSettingsFile)
-        {
-            try
-            {
-                settings = JsonSerializer.Deserialize<MouseWithoutBordersSettings>(
-                    File.ReadAllText(settingsPath),
-                    SettingsUtils.SerializerOptions) ?? new MouseWithoutBordersSettings();
-            }
-            catch (JsonException)
-            {
-                settings = new MouseWithoutBordersSettings();
-            }
-        }
-        else
-        {
-            settings = new MouseWithoutBordersSettings();
-        }
+        var settings = isNewSettingsFile
+            ? new MouseWithoutBordersSettings()
+            : PortableSettingsStore.Read(settingsPath);
 
         settings.AppMode = appMode;
         settings.Properties ??= new MouseWithoutBordersProperties();
@@ -310,29 +345,6 @@ internal static class PortableApplication
         }
 
         SaveSettingsDocument(settingsPath, settings);
-    }
-
-    private static string ReadAppMode(string settingsPath)
-    {
-        try
-        {
-            var settings = JsonSerializer.Deserialize<MouseWithoutBordersSettings>(
-                File.ReadAllText(settingsPath),
-                SettingsUtils.SerializerOptions);
-            return settings?.AppMode ?? AppModePortable;
-        }
-        catch (IOException)
-        {
-            return AppModePortable;
-        }
-        catch (JsonException)
-        {
-            return AppModePortable;
-        }
-        catch (UnauthorizedAccessException)
-        {
-            return AppModePortable;
-        }
     }
 
     private static void AssertDirectoryIsWritable(string directory)
@@ -403,11 +415,11 @@ internal static class PortableApplication
         }
         else
         {
-            RemoveDesktopShortcut();
+            RemoveShortcutIfOwnedBy(GetDesktopShortcutPath(), executablePath);
         }
     }
 
-    private static void CreateShortcut(string shortcutPath, string executablePath)
+    internal static void CreateShortcut(string shortcutPath, string executablePath)
     {
         Directory.CreateDirectory(Path.GetDirectoryName(shortcutPath)!);
 
@@ -445,45 +457,46 @@ internal static class PortableApplication
         }
     }
 
-    private static void RemoveStartMenuShortcut()
-    {
-        var shortcutPath = GetStartMenuShortcutPath();
-        if (File.Exists(shortcutPath))
-        {
-            File.Delete(shortcutPath);
-        }
-    }
+    private static void RemoveStartMenuShortcut() => RemoveShortcutIfOwnedBy(GetStartMenuShortcutPath(), CurrentExecutablePath);
+    private static void RemoveDesktopShortcut() => RemoveShortcutIfOwnedBy(GetDesktopShortcutPath(), CurrentExecutablePath);
 
-    private static void RemoveDesktopShortcut()
+    internal static void RemoveShortcutIfOwnedBy(string shortcutPath, string executablePath)
     {
-        var shortcutPath = GetDesktopShortcutPath();
-        if (File.Exists(shortcutPath))
+        if (!File.Exists(shortcutPath)) return;
+        var shellType = Type.GetTypeFromProgID("WScript.Shell") ?? throw new NotSupportedException("Windows shortcut support is unavailable.");
+        object shell = null;
+        object shortcut = null;
+        try
         {
-            File.Delete(shortcutPath);
+            shell = Activator.CreateInstance(shellType)!;
+            shortcut = shellType.InvokeMember("CreateShortcut", BindingFlags.InvokeMethod, null, shell, new object[] { shortcutPath });
+            string target = shortcut.GetType().InvokeMember("TargetPath", BindingFlags.GetProperty, null, shortcut, null) as string;
+            if (!string.IsNullOrWhiteSpace(target)
+                && Path.GetFullPath(target).Equals(Path.GetFullPath(executablePath), StringComparison.OrdinalIgnoreCase))
+            {
+                File.Delete(shortcutPath);
+            }
+        }
+        finally
+        {
+            if (shortcut != null && Marshal.IsComObject(shortcut)) _ = Marshal.FinalReleaseComObject(shortcut);
+            if (shell != null && Marshal.IsComObject(shell)) _ = Marshal.FinalReleaseComObject(shell);
         }
     }
 
     private static void SaveSettingsDocument(string settingsPath, MouseWithoutBordersSettings settings)
     {
-        var directory = Path.GetDirectoryName(settingsPath)!;
-        Directory.CreateDirectory(directory);
-
-        var temporaryPath = settingsPath + ".tmp";
-        File.WriteAllText(temporaryPath, JsonSerializer.Serialize(settings, SettingsUtils.SerializerOptions));
-        File.Move(temporaryPath, settingsPath, overwrite: true);
+        PortableSettingsStore.Write(settingsPath, JsonSerializer.Serialize(settings, SettingsUtils.SerializerOptions));
     }
 
-    private static void ScheduleInstalledLaunchAfterExit(string executablePath, string workingDirectory, string settingsPathToRemove)
+    private static void ScheduleInstalledLaunchAfterExit(string executablePath, string workingDirectory)
     {
         var script = new StringBuilder();
         script.Append("$ErrorActionPreference='SilentlyContinue';");
         script.Append("Wait-Process -Id ").Append(Environment.ProcessId).Append(';');
         script.Append("Start-Sleep -Milliseconds 300;");
-        if (!string.IsNullOrWhiteSpace(settingsPathToRemove))
-        {
-            script.Append("Remove-Item -LiteralPath '").Append(EscapePowerShellLiteral(settingsPathToRemove)).Append("' -Force;");
-        }
-
+        // Keep the original portable preferences as recovery material. Starting a
+        // process is not proof that its initialization or helper startup succeeded.
         script.Append("Start-Process -FilePath '").Append(EscapePowerShellLiteral(executablePath))
             .Append("' -WorkingDirectory '").Append(EscapePowerShellLiteral(workingDirectory)).Append("';");
 

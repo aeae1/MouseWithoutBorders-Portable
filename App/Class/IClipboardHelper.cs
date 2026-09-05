@@ -168,17 +168,12 @@ namespace MouseWithoutBorders
     internal sealed class IpcChannel<T>
         where T : new()
     {
+        internal static NamedPipeServerStream CreateServer(string pipeName) => new(
+            pipeName, PipeDirection.InOut, NamedPipeServerStream.MaxAllowedServerInstances,
+            PipeTransmissionMode.Byte, PipeOptions.Asynchronous | PipeOptions.CurrentUserOnly);
+
         public static T StartIpcServer(string pipeName, CancellationToken cancellationToken)
         {
-            SecurityIdentifier securityIdentifier = new SecurityIdentifier(
-WellKnownSidType.AuthenticatedUserSid, null);
-
-            PipeSecurity pipeSecurity = new PipeSecurity();
-            pipeSecurity.AddAccessRule(new PipeAccessRule(
-                securityIdentifier,
-                PipeAccessRights.ReadWrite | PipeAccessRights.CreateNewInstance,
-                AccessControlType.Allow));
-
             _ = Task.Factory.StartNew(
                 async () =>
                 {
@@ -186,7 +181,7 @@ WellKnownSidType.AuthenticatedUserSid, null);
                     {
                         while (!cancellationToken.IsCancellationRequested)
                         {
-                            using (var serverChannel = NamedPipeServerStreamAcl.Create(pipeName, PipeDirection.InOut, NamedPipeServerStream.MaxAllowedServerInstances, PipeTransmissionMode.Byte, PipeOptions.Asynchronous, 0, 0, pipeSecurity))
+                            using (var serverChannel = CreateServer(pipeName))
                             {
                                 await serverChannel.WaitForConnectionAsync();
                                 var taskRpc = JsonRpc.Attach(serverChannel, new T());
@@ -262,7 +257,7 @@ WellKnownSidType.AuthenticatedUserSid, null);
         {
             try
             {
-                var stream = new NamedPipeClientStream(".", ChannelName + "/" + RemoteObjectName, PipeDirection.InOut, PipeOptions.Asynchronous);
+                var stream = new NamedPipeClientStream(".", ChannelName + "/" + RemoteObjectName, PipeDirection.InOut, PipeOptions.Asynchronous | PipeOptions.CurrentUserOnly);
 
                 stream.Connect();
 

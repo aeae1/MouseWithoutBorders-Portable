@@ -12,6 +12,7 @@ using System.IO;
 using System.IO.Abstractions;
 using System.Linq;
 using System.Security.Cryptography;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -53,174 +54,174 @@ namespace MouseWithoutBorders.Class
         private MouseWithoutBordersProperties _properties;
         private MouseWithoutBordersSettings _settings;
 
-        // Avoid instantly saving every change to the file when updating properties.
-        public bool PauseInstantSaving { get; set; }
+        private string _lastDocument;
+        private string _pendingDocument;
+        private bool _writerRunning;
+        private bool _pauseInstantSaving;
 
-        private void UpdateSettingsFromJson()
+        // Compound imported UI operations pause saves until their final commit.
+        public bool PauseInstantSaving
         {
-            try
-            {
-                if (!_settingsUtils.SettingsExists("MouseWithoutBorders"))
-                {
-                    var defaultSettings = new MouseWithoutBordersSettings();
-                    if (!Common.RunOnLogonDesktop)
-                    {
-                        defaultSettings.Save(_settingsUtils);
-                    }
-                }
+            get { lock (_loadingSettingsLock) { return _pauseInstantSaving; } }
+            set { lock (_loadingSettingsLock) { _pauseInstantSaving = value; } }
+        }
 
+        internal void UpdateSettingsFromJson()
+        {
+            bool sendMatrix = false;
+            bool hideCursor = false;
+            bool reopen = false;
+            lock (_loadingSettingsLock)
+            {
+                // A watcher notification for our own write must never roll back a
+                // later in-memory edit or overwrite a pending save.
+                if (_properties != null && (_pendingDocument != null || _pauseInstantSaving)) return;
+                if (_properties == null && !_settingsUtils.SettingsExists("MouseWithoutBorders"))
+                    new MouseWithoutBordersSettings().Save(_settingsUtils);
                 var settings = _settingsUtils.GetSettingsOrDefault<MouseWithoutBordersSettings>("MouseWithoutBorders");
-                if (settings != null)
+                string document = JsonSerializer.Serialize(settings, SettingsUtils.SerializerOptions);
+                if (_properties != null && document == _lastDocument) return;
+
+                var previous = _properties;
+                _settings = settings;
+                _properties = settings.Properties;
+                _lastDocument = document;
+                if (previous != null)
                 {
-                    PauseInstantSaving = true;
-
-                    var last_properties = _properties;
-
-                    _settings = settings;
-
-                    _properties = settings.Properties;
-
-                    // Keep track of the need to resend the machine matrix.
-                    bool shouldSendMachineMatrix = false;
-
-                    // Keep track of the need to save into the settings file.
-                    bool shouldSaveNewSettingsValues = false;
-
-                    if (last_properties != null)
-                    {
-                        // Same as in CheckBoxCircle_CheckedChanged
-                        if (last_properties.WrapMouse != _settings.Properties.WrapMouse)
-                        {
-                            shouldSendMachineMatrix = true;
-                        }
-
-                        // Same as CheckBoxDrawMouse_CheckedChanged
-                        if (last_properties.DrawMouseCursor != _settings.Properties.DrawMouseCursor && !_settings.Properties.DrawMouseCursor)
-                        {
-                            CustomCursor.ShowFakeMouseCursor(int.MinValue, int.MinValue);
-                        }
-
-                        if (!Enumerable.SequenceEqual(last_properties.MachineMatrixString, _settings.Properties.MachineMatrixString))
-                        {
-                            _properties.MachineMatrixString = _settings.Properties.MachineMatrixString;
-                            MachineStuff.MachineMatrix = null; // Forces read next time it's needed.
-                            shouldSendMachineMatrix = true;
-                        }
-
-                        var shouldReopenSockets = false;
-
-                        if (Encryption.MyKey != _properties.SecurityKey.Value)
-                        {
-                            Encryption.MyKey = _properties.SecurityKey.Value;
-                            shouldReopenSockets = true;
-                        }
-
-                        if (shouldReopenSockets)
-                        {
-                            SocketStuff.InvalidKeyFound = false;
-                            InitAndCleanup.ReopenSocketDueToReadError = true;
-                            Common.ReopenSockets(true);
-                        }
-
-                        if (shouldSendMachineMatrix)
-                        {
-                            MachineStuff.SendMachineMatrix();
-                            shouldSaveNewSettingsValues = true;
-                        }
-
-                        if (shouldSaveNewSettingsValues)
-                        {
-                            SaveSettings();
-                        }
-                    }
+                    sendMatrix = previous.WrapMouse != _properties.WrapMouse
+                        || !Enumerable.SequenceEqual(previous.MachineMatrixString, _properties.MachineMatrixString);
+                    hideCursor = previous.DrawMouseCursor && !_properties.DrawMouseCursor;
+                    reopen = previous.SecurityKey.Value != _properties.SecurityKey.Value;
                 }
             }
-            catch (IOException ex)
-            {
-                EventLogger.LogEvent($"Failed to read settings: {ex.Message}", System.Diagnostics.EventLogEntryType.Error);
-            }
 
-            PauseInstantSaving = false;
+            // Network/UI callbacks must run outside the settings lock to avoid lock inversion.
+            if (hideCursor) CustomCursor.ShowFakeMouseCursor(int.MinValue, int.MinValue);
+            if (reopen)
+            {
+                Encryption.MyKey = MyKey;
+                SocketStuff.InvalidKeyFound = false;
+                InitAndCleanup.ReopenSocketDueToReadError = true;
+                Common.ReopenSockets(true);
+            }
+            if (sendMatrix)
+            {
+                MachineStuff.MachineMatrix = null;
+                MachineStuff.SendMachineMatrix();
+            }
+        }
+
+        internal void SaveKeySynchronously(string key)
+        {
+            lock (_loadingSettingsLock)
+            {
+                string previous = _properties.SecurityKey.Value;
+                _properties.SecurityKey.Value = key;
+                try { SaveSettingsSynchronously(); }
+                catch
+                {
+                    _properties.SecurityKey.Value = previous;
+                    throw;
+                }
+            }
+        }
+
+        internal void UpdateAppMode(string appMode)
+        {
+            lock (_loadingSettingsLock)
+            {
+                _settings.AppMode = appMode;
+                SaveSettingsSynchronously();
+            }
+        }
+
+        private string SnapshotDocument()
+        {
+            return JsonSerializer.Serialize(new MouseWithoutBordersSettings
+            {
+                Name = _settings.Name,
+                Version = _settings.Version,
+                AppMode = _settings.AppMode,
+                Properties = _properties,
+            }, SettingsUtils.SerializerOptions);
         }
 
         public void SaveSettings()
         {
-            if (!Common.RunOnLogonDesktop)
+            if (Common.RunOnLogonDesktop) return;
+            lock (_loadingSettingsLock)
             {
-                SaveSettingsToJson((MouseWithoutBordersProperties)_properties.Clone());
+                // Serialize while holding the owner lock: no mutable object crosses
+                // to the worker, and one worker coalesces pending writes in order.
+                _pendingDocument = SnapshotDocument();
+                if (_writerRunning) return;
+                _writerRunning = true;
+                _ = Task.Run(WritePendingSettings);
             }
         }
 
         internal void SaveSettingsSynchronously()
         {
-            if (Common.RunOnLogonDesktop)
-            {
-                return;
-            }
-
+            if (Common.RunOnLogonDesktop) return;
             lock (_loadingSettingsLock)
             {
-                _settings.Properties = (MouseWithoutBordersProperties)_properties.Clone();
-                _settings.Save(_settingsUtils);
+                string document = SnapshotDocument();
+                _settingsUtils.SaveSettings(document, "MouseWithoutBorders");
+                _lastDocument = document;
+                _pendingDocument = null;
             }
         }
 
-        private void SaveSettingsToJson(MouseWithoutBordersProperties properties_to_save)
+        private void WritePendingSettings()
         {
-            _settings.Properties = properties_to_save;
-            _ = Task.Factory.StartNew(
-                () =>
-            {
-                bool saved = false;
-
-                for (int i = 0; i < 5; ++i)
-                {
-                    try
-                    {
-                        lock (_loadingSettingsLock)
-                        {
-                            _settings.Save(_settingsUtils);
-                        }
-
-                        saved = true;
-                    }
-                    catch (IOException ex)
-                    {
-                        EventLogger.LogEvent($"Failed to write settings: {ex.Message}", System.Diagnostics.EventLogEntryType.Error);
-                    }
-
-                    if (saved)
-                    {
-                        break;
-                    }
-                    else
-                    {
-                        Thread.Sleep(500);
-                    }
-                }
-            },
-                System.Threading.CancellationToken.None,
-                TaskCreationOptions.None,
-                TaskScheduler.Default);
-        }
-
-        internal Settings()
-        {
-            _settingsUtils = SettingsUtils.Default;
-
-            _watcher = SettingsHelper.GetFileWatcher("MouseWithoutBorders", "settings.json", () =>
+            for (int attempt = 0; attempt < 5; attempt++)
             {
                 try
                 {
-                    UpdateSettingsFromJson();
+                    lock (_loadingSettingsLock)
+                    {
+                        if (_pendingDocument != null)
+                        {
+                            _settingsUtils.SaveSettings(_pendingDocument, "MouseWithoutBorders");
+                            _lastDocument = _pendingDocument;
+                            _pendingDocument = null;
+                        }
+                        _writerRunning = false;
+                        return;
+                    }
                 }
                 catch (Exception ex)
                 {
-                    EventLogger.LogEvent($"Failed to update settings: {ex.Message}", System.Diagnostics.EventLogEntryType.Error);
+                    Logger.Log("Could not save preferences: " + ex.Message);
                 }
-            });
+                Thread.Sleep(500);
+            }
+            lock (_loadingSettingsLock) { _writerRunning = false; }
+            if (Common.MainForm != null)
+            {
+                Common.DoSomethingInUIThread(() => Common.ShowToolTip(
+                    "Preferences could not be saved. Check that the preferences file and folder are writable, then apply your changes again.",
+                    10000, ToolTipIcon.Error, forceEvenIfHidingOldUI: true));
+            }
+        }
 
+        internal Settings() : this(SettingsUtils.Default, watchChanges: true) { }
+
+        internal Settings(SettingsUtils settingsUtils, bool watchChanges)
+        {
+            _settingsUtils = settingsUtils;
             UpdateSettingsFromJson();
+            if (watchChanges)
+            {
+                _watcher = SettingsHelper.GetFileWatcher("MouseWithoutBorders", "settings.json", () =>
+                {
+                    try { UpdateSettingsFromJson(); }
+                    catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+                    {
+                        Logger.Log("Preferences reload rejected; keeping current settings: " + ex.Message);
+                    }
+                });
+            }
         }
 
         internal string Username { get; set; }
@@ -331,7 +332,7 @@ namespace MouseWithoutBorders.Class
                     return;
                 }
 
-                _properties.TransferFile = value;
+                lock (_loadingSettingsLock) { _properties.TransferFile = value; }
             }
         }
 
