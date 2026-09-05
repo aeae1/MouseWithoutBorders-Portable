@@ -114,6 +114,8 @@ The older PowerToys-shaped project files, native module interface, helper/servic
 
 The app starts a hidden second copy of `MouseWithoutBorders.exe` in clipboard-helper mode. This preserves the existing helper IPC and clipboard design without shipping a second executable. The self-install mode copies only the EXE and adjacent prefs file, creates a Start Menu shortcut, offers a desktop shortcut by default, and optionally adds a per-user startup entry. A portable copy can invoke the same install flow later from Settings; current preferences are synchronously saved and copied first, the source prefs are removed only after the old process exits, and the installed EXE is then launched.
 
+The x64 EXE is roughly 88 MB (about 84 MiB) because it is published as a self-contained .NET 10 application. It includes the .NET runtime, Windows Forms desktop assemblies, and required native runtime components inside the single-file bundle, avoiding a separate .NET installation on the destination computer. The majority of the download size is this bundled platform rather than MWB application code.
+
 The portable product does not contain, install, or launch a Windows service. Protected UAC prompts and the Windows sign-in screen are intentionally outside the portable edition's supported behavior.
 
 ## Work order

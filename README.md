@@ -68,6 +68,9 @@ The finished product is deliberately small from a user's perspective:
 3. Put it in a folder where you want to keep it, then run it.
 4. Choose **Run portable here**, or choose **Install for me** and select an install folder. Installation can create a desktop shortcut (on by default) and optionally enable Start with Windows.
 
+> [!NOTE]
+> **Why is the EXE roughly 88 MB (about 84 MiB)?** This is a self-contained .NET 10 Windows build. The single EXE bundles the .NET runtime, Windows Forms desktop assemblies, and required native runtime components so the destination computer does not need a separate .NET installation. Most of that file size is the bundled platform, not the Mouse Without Borders application code itself.
+
 If you start portably and decide to install later, open Settings and select the **Portable** tab. MWB moves the existing prefs after the running copy closes, then restarts from the installed folder with the same key, layout, and options.
 
 Use the same release on every connected computer.
