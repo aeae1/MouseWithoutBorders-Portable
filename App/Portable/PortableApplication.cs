@@ -56,7 +56,7 @@ internal static class PortableApplication
                 IsInstalledCopy = settings.AppMode.Equals(AppModeInstalled, StringComparison.OrdinalIgnoreCase);
                 return true;
             }
-            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            catch (Exception ex) when (ex is IOException or InvalidDataException or UnauthorizedAccessException)
             {
                 try
                 {
@@ -69,7 +69,7 @@ internal static class PortableApplication
                         return PrepareFirstLaunch();
                     }
                 }
-                catch (Exception recoveryError) when (recoveryError is IOException or UnauthorizedAccessException)
+                catch (Exception recoveryError) when (recoveryError is IOException or InvalidDataException or UnauthorizedAccessException)
                 {
                     _ = MessageBox.Show(
                         "Mouse Without Borders could not load your preferences or recover a backup. Your files have not been reset.\r\n\r\n" +

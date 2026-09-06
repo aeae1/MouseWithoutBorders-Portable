@@ -551,7 +551,7 @@ namespace MouseWithoutBorders
                 {
                     Setting.Values.SaveKeySynchronously(newKey);
                 }
-                catch (Exception ex) when (ex is System.IO.IOException or UnauthorizedAccessException)
+                catch (Exception ex) when (ex is System.IO.IOException or System.IO.InvalidDataException or UnauthorizedAccessException)
                 {
                     _ = MessageBox.Show(this,
                         "The new key could not be saved. The previous key remains active.\r\n\r\n" + ex.Message,
@@ -1015,6 +1015,8 @@ namespace MouseWithoutBorders
                 return;
             }
 
+            Setting.Values.SaveSettings();
+
             foreach (Control c in tabPageOther.Controls)
             {
                 if (c != groupBoxShortcuts)
@@ -1159,7 +1161,7 @@ namespace MouseWithoutBorders
 
             if (MessageBox.Show(message, Application.ProductName, MessageBoxButtons.YesNo, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button2) == DialogResult.Yes)
             {
-                Setting.Values.MyKey = Encryption.MyKey = Encryption.CreateRandomKey();
+                if (!UpdateKey(Encryption.CreateRandomKey())) return;
                 textBoxEnc.Text = Encryption.MyKey;
                 checkBoxShowKey.Checked = true;
                 Encryption.GeneratedKey = true;

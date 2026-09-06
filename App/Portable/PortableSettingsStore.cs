@@ -14,12 +14,42 @@ internal static class PortableSettingsStore
 {
     private static readonly object FileLock = new();
 
+    private static bool TryGetProperty(JsonElement element, string name, out JsonElement value)
+    {
+        // Match the case-insensitive deserializer, including its last-value behavior.
+        bool found = false;
+        value = default;
+        foreach (var property in element.EnumerateObject())
+        {
+            if (string.Equals(property.Name, name, StringComparison.OrdinalIgnoreCase))
+            {
+                value = property.Value;
+                found = true;
+            }
+        }
+        return found;
+    }
+
     internal static MouseWithoutBordersSettings Read(string path) => Parse(File.ReadAllText(path));
 
     internal static MouseWithoutBordersSettings Parse(string json)
     {
         try
         {
+            using var document = JsonDocument.Parse(json);
+            if (document.RootElement.ValueKind != JsonValueKind.Object
+                || !TryGetProperty(document.RootElement, "properties", out var rootProperties)
+                || rootProperties.ValueKind != JsonValueKind.Object
+                || !TryGetProperty(rootProperties, "SecurityKey", out var key)
+                || key.ValueKind != JsonValueKind.Object
+                || !TryGetProperty(key, "value", out var keyValue)
+                || keyValue.ValueKind != JsonValueKind.String
+                || !TryGetProperty(rootProperties, "MachineMatrixString", out var matrix)
+                || matrix.ValueKind != JsonValueKind.Array)
+            {
+                throw new InvalidDataException("Preferences are missing their security key or machine layout. They have not been reset.");
+            }
+
             var settings = JsonSerializer.Deserialize<MouseWithoutBordersSettings>(json, SettingsUtils.SerializerOptions);
             if (settings?.Properties == null)
             {
@@ -27,7 +57,7 @@ internal static class PortableSettingsStore
             }
 
             var properties = settings.Properties;
-            // Missing fields use constructor defaults for older preferences. Explicit nulls
+            // Missing optional fields use constructor defaults for older preferences. Explicit nulls
             // cannot be used by the imported settings accessors; reject them before adoption.
             foreach (var property in typeof(MouseWithoutBordersProperties).GetProperties())
             {

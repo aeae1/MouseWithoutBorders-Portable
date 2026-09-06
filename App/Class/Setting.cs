@@ -216,7 +216,7 @@ namespace MouseWithoutBorders.Class
                 _watcher = SettingsHelper.GetFileWatcher("MouseWithoutBorders", "settings.json", () =>
                 {
                     try { UpdateSettingsFromJson(); }
-                    catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+                    catch (Exception ex) when (ex is IOException or InvalidDataException or UnauthorizedAccessException)
                     {
                         Logger.Log("Preferences reload rejected; keeping current settings: " + ex.Message);
                     }

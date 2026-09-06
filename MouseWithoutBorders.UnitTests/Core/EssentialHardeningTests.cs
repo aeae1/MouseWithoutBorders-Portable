@@ -48,7 +48,7 @@ public sealed class EssentialHardeningTests
     public void InvalidNestedValuesAreRejected()
     {
         foreach (string json in new[] {
-            "null", "{\"properties\":null}",
+            "null", "{}", "{\"properties\":{}}", "{\"properties\":null}",
             "{\"properties\":{\"SecurityKey\":null}}",
             "{\"properties\":{\"SecurityKey\":{\"value\":null}}}",
             "{\"properties\":{\"MachineMatrixString\":[null]}}",
@@ -60,9 +60,27 @@ public sealed class EssentialHardeningTests
     }
 
     [TestMethod]
+    public void MissingIdentityFieldsDoNotGenerateReplacementDefaults()
+    {
+        foreach (string field in new[] { "SecurityKey", "MachineMatrixString" })
+        {
+            var document = System.Text.Json.Nodes.JsonNode.Parse(Document("abcd"))!;
+            document["properties"]!.AsObject().Remove(field);
+            Assert.ThrowsException<InvalidDataException>(() => PortableSettingsStore.Parse(document.ToJsonString()), field);
+        }
+    }
+
+    [TestMethod]
+    public void PreferenceFieldNamesRetainCaseInsensitiveCompatibility()
+    {
+        var settings = PortableSettingsStore.Parse(Document("abcd").Replace("SecurityKey", "securitykey").Replace("MachineMatrixString", "machinematrixstring"));
+        Assert.AreEqual("abcd", settings.Properties.SecurityKey.Value);
+    }
+
+    [TestMethod]
     public void OlderPreferencesUseDefaultsForMissingFields()
     {
-        var settings = PortableSettingsStore.Parse("{\"properties\":{\"WrapMouse\":true}}");
+        var settings = PortableSettingsStore.Parse("{\"properties\":{\"SecurityKey\":{\"value\":\"abcd\"},\"MachineMatrixString\":[],\"WrapMouse\":true}}");
         Assert.IsTrue(settings.Properties.WrapMouse);
         Assert.IsFalse(settings.Properties.KeyboardShortcutsEnabled);
     }

@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - main
+      - 'release/**'
     tags:
       - 'mwb-v*'
   pull_request:
@@ -92,7 +93,8 @@ jobs:
     name: Attach build to GitHub release
     if: >-
       startsWith(github.ref, 'refs/tags/mwb-v') ||
-      (github.ref == 'refs/heads/main' && contains(github.event.head_commit.message, '[release]'))
+      (github.ref == 'refs/heads/main' && contains(github.event.head_commit.message, '[release]')) ||
+      (startsWith(github.ref, 'refs/heads/release/') && contains(github.event.head_commit.message, '[prerelease]'))
     needs: build-x64
     runs-on: ubuntu-latest
     permissions:
@@ -138,6 +140,8 @@ jobs:
               jq -er '.changes[] | "- " + .' "$request"
               printf '\nTesting requested\n\n'
               jq -er '.testing[] | "- " + .' "$request"
+              printf '\nKnown limitations\n\n'
+              jq -r '.known_limitations[]? | "- " + .' "$request"
             } > "$notes_file"
           fi
 
@@ -149,6 +153,13 @@ jobs:
           if [[ "$prerelease" != "true" && "$prerelease" != "false" ]]; then
             echo "prerelease must be true or false"
             exit 1
+          fi
+
+          if [[ "$REF_TYPE" == "branch" && "$REF_NAME" == release/* ]]; then
+            if [[ "$prerelease" != "true" || ! "$tag" =~ -rc\.[0-9]+$ || "$REF_NAME" != "release/${tag#mwb-v}" ]]; then
+              echo "Release branches can publish only their matching release candidate."
+              exit 1
+            fi
           fi
 
           python .github/scripts/verify-release.py "$tag" "$prerelease"

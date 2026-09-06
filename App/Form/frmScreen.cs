@@ -137,6 +137,23 @@ namespace MouseWithoutBorders
             Tag = "Quitting...";
 
             Setting.Values.SwitchCount += Common.SwitchCount;
+            try
+            {
+                var flush = System.Threading.Tasks.Task.Run(() => Setting.Values.SaveSettingsSynchronously());
+                if (!flush.Wait(TimeSpan.FromSeconds(2)))
+                    throw new TimeoutException("Saving preferences took too long.");
+            }
+            catch (Exception ex)
+            {
+                Logger.Log("Final preferences save failed: " + ex.Message);
+                if (!isFormClosing)
+                {
+                    Tag = null;
+                    MessageBox.Show("Preferences could not be saved. The app will stay open so you can fix the preferences file or folder and try Exit again.",
+                        Application.ProductName, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+            }
             Process me = Process.GetCurrentProcess();
             Helper.WndProcCounter++;
 

@@ -173,15 +173,18 @@ internal static class InitAndCleanup
         Helper.signalWatchDogToExit = true;
         _ = Common.EvSwitch.Set();
 
-        int c = 0;
-        if (Common.helper != null && c < waitTime)
+        var deadline = System.Diagnostics.Stopwatch.StartNew();
+        if (Common.helper != null)
         {
-            while (Helper.signalHelperToExit)
+            while (System.Threading.Volatile.Read(ref Helper.signalHelperToExit) && deadline.ElapsedMilliseconds < waitTime)
             {
                 Thread.Sleep(1);
             }
 
-            Common.helper = null;
+            if (!System.Threading.Volatile.Read(ref Helper.signalHelperToExit))
+                Common.helper = null;
+            else
+                Logger.Log("Helper shutdown timed out; continuing application exit.");
         }
     }
 
