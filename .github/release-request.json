@@ -1,31 +1,32 @@
 {
-  "tag": "mwb-v1.0.1-rc.3",
-  "title": "Mouse Without Borders Portable 1.0.1-rc.3",
+  "tag": "mwb-v1.0.1-rc.4",
+  "title": "Mouse Without Borders Portable 1.0.1-rc.4",
   "prerelease": true,
-  "summary": "Review fixes for the RC2 transfer experience, plus encrypted clipboard framing and cleanup regressions. Includes prior hardening and progress/cancel/pacing. Install the same RC on both PCs; real-PC validation remains required.",
+  "summary": "Queued multi-file drag/drop, one progress window, maximum transfer speed, and receiver-confirmed completion. Update BOTH PCs to RC4 before testing: file batches use a new versioned protocol over the existing encrypted clipboard connection. Real-PC testing is still required.",
   "changes": [
-    "Correct encrypted payload padding for clipboard text/images; share framing helpers with file transfers and test awkward byte lengths.",
-    "Stop new file transfers during controlled exit, cancel active copies, and wait for their cleanup. Transfer windows no longer veto application shutdown.",
-    "Preserve both files even when adding a duplicate number to a maximum-length filename. Validate incoming headers, reserved filenames, lengths, and clipboard allocation limits.",
-    "Detach incoming image data from its stream before queuing clipboard delivery. Decode only actual text characters and bound decompression rather than append unused buffer contents.",
-    "Recheck clipboard/file sharing when delivering queued data. Discard disabled inline clipboard payloads while still draining their packets to preserve the mouse/keyboard connection.",
-    "Dispose failed clipboard connections, bound connection attempts to 10 seconds and handshake writes to 30 seconds, and guarantee session cleanup on receive failures.",
-    "Keep speed selections synchronized between transfer windows on the same PC; disable completed-window controls, keep progress below 100% until success, and retain full error details in a tooltip."
+    "Drag several files together, or add another drag during a copy: each drag keeps an immutable source list and joins the transfer queue. The receiver waits instead of rejecting another transfer after three seconds.",
+    "Use one transfer window per PC with file/status rows, current-file progress, and Cancel all. Successful queues close automatically after cleanup; errors remain visible.",
+    "Remove speed selections and deliberate rate limiting. Progress painting avoids repeated tooltip updates and layout changes. New transfers restore and bring the window forward without stealing focus on progress ticks.",
+    "Acknowledge each new-protocol file only after the receiver saves it; retain completed files when a later file fails, keep duplicate names, and clean up incomplete files.",
+    "Show the drag cursor as soon as the drag announcement arrives, ignore stale show messages after drop/cancel, and stop unrelated clipboard connections from clearing an in-progress drag.",
+    "Include all RC3 hardening and add encrypted multi-file, queue-order, cancellation, malformed-manifest, and overlapping-connection regression coverage."
   ],
   "testing": [
-    "Exit MWB on both PCs, back up the EXE and preferences, then replace only the EXE. Confirm About says 1.0.1-rc.3 on both.",
-    "Transfer small, empty, and large disposable files both ways. While a large copy runs, move the remote mouse and type; compare Protect mouse with Faster if desired.",
-    "Cancel once from each PC. Then start another copy and choose MWB Exit while it runs. Confirm MWB exits and restarts normally; no incomplete file should be presented as a completed destination.",
-    "Send a second different file with the same name. Confirm the original survives and the new file gets a numbered name. Long filenames should also work.",
-    "Copy short Unicode text, formatted text, and screenshots in both directions. Confirm exact text and complete images. Toggle Share Clipboard off and confirm subsequent incoming clipboard content is not applied.",
-    "Disconnect Wi-Fi mid-copy; restore it and retry by sending the file again. Confirm the receiver reports interruption rather than completion.",
-    "Recheck settings persistence, reconnect, lock/unlock, and sleep/wake."
+    "Exit MWB on BOTH PCs. Back up your EXE/preferences, replace only the EXE, and confirm About says 1.0.1-rc.4 on each.",
+    "Drag three disposable files together, including an empty file and a large file. Confirm every file appears in one window on each PC and arrives intact.",
+    "While a large copy runs, drag two more files. Both windows should show them queued; they should copy without the RC3 disconnect error.",
+    "Type in a text editor during a transfer. Check that the cursor stays hidden while typing and that progress does not steal focus. Full-speed transfers may still cause mouse lag.",
+    "Minimize the transfer window, then add another drag. It should restore. Once all files finish successfully, both windows should close automatically.",
+    "Cancel from each PC in separate attempts, including while files are queued. Confirm no incomplete destination files appear and a new transfer works afterward.",
+    "Send a duplicate filename; confirm both files survive. Disconnect Wi-Fi during a large copy, reconnect, and drag again; errors should stay visible.",
+    "Check the drag icon when crossing screens slowly and quickly. Recheck single-file clipboard copy/paste, Unicode text, screenshots, reconnect, lock/unlock, and sleep/wake."
   ],
   "known_limitations": [
-    "Fixed-rate pacing remains a configurable starting point, not adaptive Wi-Fi QoS or a guarantee of lag-free input.",
-    "No pause/resume, one-click retry, end-to-end checksum receipt, folders, transfer queue, or Explorer-window drop targeting yet.",
-    "Sender completion means bytes were written to the connection; only the receiver confirms its destination was committed.",
-    "Clipboard payloads above 256 MiB and decompressed text above 32 million UTF-16 characters are rejected; ordinary disk-file transfers have no such size cap.",
-    "Hard process termination or power loss can leave a .partial file. Controlled exit attempts cleanup and keeps the app open if normal cleanup needs more time. Broader IPC listener and protocol-authentication audit follow-ups remain."
+    "Use RC4 on both PCs. New queued drag/drop batches are not compatible with older MWB file-transfer implementations. Mouse/keyboard packets and underlying AES encryption are unchanged.",
+    "No folders, pause/resume, automatic retry, content-hash receipt, or direct Explorer-window targeting yet. Dragged files still save under Desktop\\MouseWithoutBorders.",
+    "A drag may contain up to 256 files. Cancel all stops active and waiting items; a file already being committed may finish. Earlier completed files remain.",
+    "Maximum speed may increase Wi-Fi mouse lag. Hardware validation of focus, cursor hiding, drag feedback, and two-PC transfer behavior remains necessary.",
+    "Legacy clipboard copy/paste still uses the existing single-file transport and receive guard. Receiver-confirmed completion and multi-file queues apply to the new drag/drop path.",
+    "Hard termination or power loss may leave a .partial file. No Windows service or protected UAC/sign-in support is included."
   ]
 }

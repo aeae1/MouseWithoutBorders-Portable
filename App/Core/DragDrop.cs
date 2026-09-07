@@ -133,7 +133,7 @@ internal static class DragDrop
         if (!IsDropping)
         {
             IntPtr h = (IntPtr)NativeMethods.FindWindow(null, Helper.HELPER_FORM_TEXT);
-            if (h.ToInt32() > 0)
+            if (h != IntPtr.Zero)
             {
                 _ = Interlocked.Exchange(ref dragDropStep05ExCalledByIpc, 0);
 
@@ -174,6 +174,29 @@ internal static class DragDrop
         }
 
         Logger.LogDebug("DragDropStep04: Got WM_CHECK_EXPLORER_DRAG_DROP, done with processing jump to DragDropStep05...");
+    }
+
+    private static int offeredFiles;
+    private static int incomingFiles;
+    private static ID incomingFileSource;
+
+    internal static void OfferAccepted(int id)
+    {
+        if (offeredFiles == id) IsDragging = false;
+    }
+
+    internal static void DragDropFiles(string[] paths)
+    {
+        try
+        {
+            offeredFiles = QueuedFileTransfer.Offer(paths);
+            DragDropStep05Ex(paths[0]);
+        }
+        catch (Exception error)
+        {
+            Logger.Log(error);
+            Common.ShowToolTip(error.Message, 5000, ToolTipIcon.Warning);
+        }
     }
 
     internal static void DragDropStep05Ex(string dragFileName)
@@ -244,7 +267,13 @@ internal static class DragDrop
     {
         if (package.Des == Common.MachineID && !Common.RunOnLogonDesktop && !Common.RunOnScrSaverDesktop)
         {
+            incomingFiles = package.Machine3 == (ID)QueuedFileTransfer.Marker ? (int)package.Machine2 : 0;
+            incomingFileSource = package.Src;
             IsDropping = true;
+            Common.DoSomethingInUIThread(() =>
+            {
+                if (IsDropping) _ = NativeMethods.PostMessage(Common.MainForm.Handle, NativeMethods.WM_SHOW_DRAG_DROP, IntPtr.Zero, IntPtr.Zero);
+            });
             MachineStuff.dropMachineID = Common.MachineID;
             Logger.LogDebug("DragDropStep08_2: ClipboardDragDropOperation Received. IsDropping set");
         }
@@ -288,7 +317,14 @@ internal static class DragDrop
         });
 
         PowerToysTelemetry.Log.WriteEvent(new MouseWithoutBorders.Telemetry.MouseWithoutBordersDragAndDropEvent());
-        Clipboard.GetRemoteClipboard("desktop");
+        if (incomingFiles != 0)
+        {
+            Common.SkSend(new DATA { Type = PackageType.ClipboardAsk, Des = incomingFileSource,
+                MachineName = Common.MachineName, PostAction = ClipboardPostAction.QueuedFiles,
+                Machine2 = (ID)incomingFiles }, null, false);
+            incomingFiles = 0;
+        }
+        else Clipboard.GetRemoteClipboard("desktop");
     }
 
     internal static void DragDropStep11()
@@ -374,7 +410,11 @@ internal static class DragDrop
     private static void SendDropBegin()
     {
         Logger.LogDebug("SendDropBegin...");
-        Common.SendPackage(MachineStuff.dropMachineID, PackageType.ClipboardDragDropOperation);
+        Common.SkSend(new DATA { Type = PackageType.ClipboardDragDropOperation,
+            Des = MachineStuff.dropMachineID, Src = IsDragging ? Common.MachineID : incomingFileSource,
+            MachineName = Common.MachineName,
+            Machine2 = (ID)(IsDragging ? offeredFiles : incomingFiles),
+            Machine3 = (ID)QueuedFileTransfer.Marker }, null, false);
     }
 
     private static void SendClipboardBeatDragDropEnd()

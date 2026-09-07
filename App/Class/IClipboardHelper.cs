@@ -124,6 +124,8 @@ namespace MouseWithoutBorders
 
         void SendDragFile(string fileName);
 
+        void SendDragFiles(string[] fileNames);
+
         void SendClipboardData(ByteArrayOrString data, bool isFilePath);
     }
 
@@ -153,9 +155,14 @@ namespace MouseWithoutBorders
             }
         }
 
+        public void SendDragFiles(string[] fileNames)
+        {
+            DragDrop.DragDropFiles(fileNames);
+        }
+
         public void SendDragFile(string fileName)
         {
-            DragDrop.DragDropStep05Ex(fileName);
+            DragDrop.DragDropFiles(new[] { fileName });
         }
 
         public void SendClipboardData(ByteArrayOrString data, bool isFilePath)

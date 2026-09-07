@@ -1636,9 +1636,6 @@ namespace MouseWithoutBorders.Class
             {
                 string remoteEndPoint = s.RemoteEndPoint.ToString();
                 Logger.LogDebug("SendClipboardData: Request accepted: " + s.LocalEndPoint.ToString() + "/" + remoteEndPoint);
-                DragDrop.IsDropping = false;
-                DragDrop.IsDragging = false;
-                DragDrop.DragMachine = (ID)1;
 
                 bool clientPushData = true;
                 ClipboardPostAction postAction = ClipboardPostAction.Other;
@@ -1655,7 +1652,11 @@ namespace MouseWithoutBorders.Class
                     Common.SetToggleIcon(new int[Common.TOGGLE_ICONS_SIZE] { Common.ICON_SMALL_CLIPBOARD, -1, -1, -1 });
                 }
 
-                if (clientPushData)
+                if (clientPushData && postAction == ClipboardPostAction.QueuedFiles)
+                {
+                    QueuedFileTransfer.Receive(s, enStream, deStream);
+                }
+                else if (clientPushData)
                 {
                     Clipboard.ReceiveAndProcessClipboardData(remoteEndPoint, s, enStream, deStream, $"{postAction}");
                 }
@@ -1777,7 +1778,7 @@ namespace MouseWithoutBorders.Class
                     {
                         if (!Setting.Values.ShareClipboard || !Setting.Values.TransferFile)
                             throw new OperationCanceledException("File sharing was turned off.");
-                        FileTransferBandwidth.Pace(bytes, token);
+                        token.ThrowIfCancellationRequested();
                     });
                 // Preserve MWB's framing, using a 64-bit file length rather than an overflowing int.
                 FileTransferEngine.WritePadding(ecStream, source.Length);

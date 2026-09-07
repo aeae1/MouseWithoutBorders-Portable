@@ -1,4 +1,6 @@
 <p align="center">
+
+> **Testing 1.0.1-rc.4:** queued multi-file drag/drop, one progress window, Cancel all, and automatic close on success. Use RC4 on both PCs. Transfers run at full speed. [Design and testing scope](docs/RC4_FILE_QUEUE.md).
   <img src="App/ClassicGreen.svg" width="180" alt="Green Mouse Without Borders portable icon">
 </p>
 
