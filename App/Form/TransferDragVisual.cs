@@ -80,6 +80,7 @@ internal static class TransferDropDestination
         IntPtr target = GetAncestor(WindowFromPoint(Cursor.Position), 2);
         string fallback = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory), "MouseWithoutBorders");
         object shell = null, windows = null;
+        bool matchedTarget = false;
         try
         {
             shell = Activator.CreateInstance(Type.GetTypeFromProgID("Shell.Application"));
@@ -93,7 +94,12 @@ internal static class TransferDropDestination
                     if (!Uri.TryCreate(url, UriKind.Absolute, out var uri) || !uri.IsFile) continue;
                     string path = Path.GetFullPath(uri.LocalPath);
                     IntPtr hwnd = new IntPtr((long)window.HWND);
-                    if (hwnd == target && Directory.Exists(path)) return path;
+                    if (hwnd == target)
+                    {
+                        matchedTarget = true;
+                        if (!Directory.Exists(path)) throw new IOException("The destination folder is unavailable.");
+                        return path;
+                    }
                     if (string.Equals(path.TrimEnd('\\'), fallback.TrimEnd('\\'), StringComparison.OrdinalIgnoreCase)) existingDefault = hwnd;
                 }
                 finally { if (Marshal.IsComObject(window)) Marshal.ReleaseComObject(window); }
@@ -101,7 +107,7 @@ internal static class TransferDropDestination
             Directory.CreateDirectory(fallback);
             if (existingDefault != IntPtr.Zero) { SetForegroundWindow(existingDefault); return fallback; }
         }
-        catch (Exception error) { Logger.LogDebug("Explorer drop target lookup: " + error.Message); }
+        catch (Exception error) { if (matchedTarget) throw; Logger.LogDebug("Explorer drop target lookup: " + error.Message); }
         finally
         {
             if (windows != null && Marshal.IsComObject(windows)) Marshal.ReleaseComObject(windows);

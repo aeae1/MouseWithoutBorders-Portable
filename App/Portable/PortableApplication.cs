@@ -260,7 +260,15 @@ internal static class PortableApplication
         if (preserveCurrentPreferences) _ = PortableSettingsStore.Read(CurrentSettingsPath);
         if (File.Exists(installedSettingsPath)) _ = PortableSettingsStore.Read(installedSettingsPath);
 
+        if (preserveCurrentPreferences && !isCurrentLocation) DurableTransfers.PrepareInstall();
         using var transaction = new PortableInstallTransaction();
+        if (preserveCurrentPreferences && !isCurrentLocation)
+        {
+            transaction.OnRollback(DurableTransfers.ResumeService);
+            transaction.TrackFile(Path.Combine(installDirectory, "MouseWithoutBorders.transfers.json"));
+            transaction.TrackFile(Path.Combine(installDirectory, "MouseWithoutBorders.transfers.json.bak"));
+            DurableTransfers.CopyRecoveryTo(installDirectory);
+        }
         if (!isCurrentLocation) transaction.TrackFile(installedExecutablePath);
         transaction.TrackFile(installedSettingsPath);
         transaction.TrackFile(installedSettingsPath + ".bak");

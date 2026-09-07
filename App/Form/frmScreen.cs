@@ -162,7 +162,7 @@ namespace MouseWithoutBorders
             catch (Exception error)
             {
                 Logger.Log(error);
-                if (!isFormClosing) { Tag = null; MessageBox.Show("Transfer recovery information could not be saved. Please check available disk space and try Exit again."); return; }
+                if (!isFormClosing) { DurableTransfers.ResumeService(); Tag = null; MessageBox.Show("Transfer recovery information could not be saved. Please check available disk space and try Exit again."); return; }
             }
             if (!FileTransferRegistry.StopAndWait(TimeSpan.FromSeconds(2)) && !isFormClosing)
             {

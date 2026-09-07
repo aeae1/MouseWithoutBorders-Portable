@@ -20,7 +20,7 @@ internal sealed class TransferCenter : System.Windows.Forms.Form
     private readonly Stopwatch shown = new();
     private readonly Stopwatch finished = new();
 
-    private TransferCenter()
+    internal TransferCenter()
     {
         Text = "File transfers — Mouse Without Borders";
         AutoScaleDimensions = new SizeF(96, 96); AutoScaleMode = AutoScaleMode.Dpi;

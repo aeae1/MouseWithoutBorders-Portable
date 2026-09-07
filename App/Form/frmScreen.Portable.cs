@@ -19,6 +19,9 @@ internal partial class FrmScreen
     {
         MainMenu.Items.Clear();
         MainMenu.Items.Add(menuMachineMatrix);
+        var transfers = new ToolStripMenuItem("File transfers");
+        transfers.Click += (_, _) => TransferCenter.ShowCenter();
+        MainMenu.Items.Add(transfers);
 
         if (PortableApplication.IsInstalledCopy)
         {

@@ -72,6 +72,7 @@ internal sealed class TransferJournal
                 || (!job.Sending && (!Path.IsPathFullyQualified(job.Folder ?? "") || (job.Destination != null
                     && !string.Equals(Path.GetDirectoryName(job.Destination), job.Folder, StringComparison.OrdinalIgnoreCase)))))
                 throw new InvalidDataException("Invalid transfer recovery entry.");
+            job.Error ??= "";
             if (!job.Terminal) { job.State = "Paused"; job.PendingAction = null; job.Detail = "Recovered — resume when ready"; }
         }
         foreach (var drop in journal.Drops)
@@ -84,6 +85,7 @@ internal sealed class TransferJournal
     {
         string temp = path + ".tmp";
         byte[] json = System.Text.Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(this));
+        if (json.Length > 16 * 1024 * 1024) throw new IOException("Transfer recovery history has reached its storage limit.");
         using (var file = new FileStream(temp, FileMode.Create, FileAccess.Write, FileShare.None))
         { file.Write(json); file.Flush(true); }
         if (File.Exists(path)) File.Replace(temp, path, path + ".bak");
