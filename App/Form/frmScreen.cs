@@ -801,7 +801,7 @@ namespace MouseWithoutBorders
                 */
 
                 case NativeMethods.WM_SHOW_DRAG_DROP:
-                    if (!DragDrop.IsDropping) break; // Ignore a move posted before drop/cancel.
+                    if (!MouseWithoutBorders.Core.DragDrop.IsDropping) break; // Ignore a move posted before drop/cancel.
                     Point p = default;
                     _ = NativeMethods.GetCursorPos(ref p);
                     Width = 70;

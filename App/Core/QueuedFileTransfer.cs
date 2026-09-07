@@ -84,7 +84,10 @@ internal static class QueuedFileTransfer
     {
         if (!Common.IsConnectedTo(peer) || MachineStuff.MachinePool.ResolveID(peerName) != peer) return;
         OfferData offer;
-        lock (Sync) { if (!Offers.Remove(id, out offer)) return; }
+        lock (Sync)
+        {
+            if (!Offers.Remove(id, out offer) || DateTime.UtcNow - offer.Created > TimeSpan.FromMinutes(10)) return;
+        }
         DragDrop.OfferAccepted(id);
         var ticket = Sends.Reserve();
         _ = Task.Run(() =>
@@ -155,7 +158,7 @@ internal static class QueuedFileTransfer
 
     internal static void Receive(Socket socket, Stream output, Stream input) => ReceiveInto(socket, output, input,
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory), "MouseWithoutBorders"),
-        CheckPolicy, FileTransferForm.ShowTransfers);
+        CheckReceivePolicy, FileTransferForm.ShowTransfers);
 
     internal static void ReceiveInto(Socket socket, Stream output, Stream input, string folder,
         Action checkPolicy, Action<FileTransferSession[]> showTransfers)
@@ -283,10 +286,16 @@ internal static class QueuedFileTransfer
         if (code != 1) throw new InvalidDataException("Unexpected file transfer acknowledgement.");
     }
 
+    private static void CheckReceivePolicy()
+    {
+        if (!Setting.Values.ShareClipboard || !Setting.Values.TransferFile || Common.RunOnLogonDesktop || Common.RunOnScrSaverDesktop)
+            throw new OperationCanceledException("File sharing is unavailable or was turned off.");
+    }
+
     private static void CheckPolicy()
     {
-        if (!Setting.Values.ShareClipboard || !Setting.Values.TransferFile || Common.RunOnLogonDesktop || Common.RunOnScrSaverDesktop
-            || (Common.RunWithNoAdminRight && Setting.Values.OneWayClipboardMode))
-            throw new OperationCanceledException("File sharing is unavailable or was turned off.");
+        CheckReceivePolicy();
+        if (Common.RunWithNoAdminRight && Setting.Values.OneWayClipboardMode)
+            throw new OperationCanceledException("Sending files is disabled by one-way clipboard mode.");
     }
 }

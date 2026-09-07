@@ -136,6 +136,8 @@ internal sealed class FileTransferForm : System.Windows.Forms.Form
         completedTime.Reset();
         RefreshProgress();
         timer.Start();
+        // OnShown handles the initial batch; avoid activating a not-yet-shown form.
+        if (!Visible) return;
         // Only an explicit new transfer brings the window forward, never progress updates.
         WindowState = FormWindowState.Normal;
         TopMost = true;
