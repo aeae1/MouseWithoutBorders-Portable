@@ -1,32 +1,35 @@
 {
-  "tag": "mwb-v1.0.1-rc.4",
-  "title": "Mouse Without Borders Portable 1.0.1-rc.4",
+  "tag": "mwb-v1.0.1-rc.5",
+  "title": "Mouse Without Borders Portable 1.0.1-rc.5",
   "prerelease": true,
-  "summary": "Queued multi-file drag/drop, one progress window, maximum transfer speed, and receiver-confirmed completion. Update BOTH PCs to RC4 before testing: file batches use a new versioned protocol over the existing encrypted clipboard connection. Real-PC testing is still required.",
+  "summary": "Independent, resumable drag/drop transfers with per-file controls, restart recovery, and Explorer folder targeting. Install RC5 on BOTH PCs. This is a release candidate: automated Windows tests do not replace the two-PC checks below.",
   "changes": [
-    "Drag several files together, or add another drag during a copy: each drag keeps an immutable source list and joins the transfer queue. The receiver waits instead of rejecting another transfer after three seconds.",
-    "Use one transfer window per PC with file/status rows, current-file progress, and Cancel all. Successful queues close automatically after cleanup; errors remain visible.",
-    "Remove speed selections and deliberate rate limiting. Progress painting avoids repeated tooltip updates and layout changes. New transfers restore and bring the window forward without stealing focus on progress ticks.",
-    "Acknowledge each new-protocol file only after the receiver saves it; retain completed files when a later file fails, keep duplicate names, and clean up incomplete files.",
-    "Show the drag cursor as soon as the drag announcement arrives, ignore stale show messages after drop/cancel, and stop unrelated clipboard connections from clearing an in-progress drag.",
-    "Include all RC3 hardening and add encrypted multi-file, queue-order, cancellation, malformed-manifest, and overlapping-connection regression coverage."
+    "One transfer window per PC, with a progress bar and Pause/Resume, Move to end, Cancel, and Retry for each file. Up to four outgoing files run concurrently; additional files wait. Each PC also accepts up to four incoming files.",
+    "Move to end defers that file until the other runnable work finishes; explicitly deferred files then run in order. Paused files stay paused. New drags join the same list.",
+    "Keep checked partial data when paused or interrupted. Verify each chunk, the resume prefix, and the complete file with SHA-256. Require a saved acknowledgement and retain completion receipts to avoid duplicate copies after a lost acknowledgement.",
+    "Retry transient connection interruptions twice automatically, then leave an actionable error. Pending peer commands no longer block the transfer scheduler.",
+    "Save transfer recovery beside the EXE. After app or PC restart, unfinished transfers are paused and a popup offers to open the list; nothing resumes automatically. Reopen the list from the File transfers tray item.",
+    "Drop over an Explorer folder window to target that folder. Otherwise create/open Desktop\\MouseWithoutBorders immediately when dropped. Preserve existing files by choosing an unused destination name.",
+    "Replace the small drag indicator with a larger Windows file-type image and filename/file-count preview on the receiving screen. This is a custom preview using Windows icons, not Explorer thumbnail rendering.",
+    "Use full transfer speed without speed choices. Bring the transfer list forward for newly added files, avoid focus changes on progress ticks, and close it after all visible entries complete successfully."
   ],
   "testing": [
-    "Exit MWB on BOTH PCs. Back up your EXE/preferences, replace only the EXE, and confirm About says 1.0.1-rc.4 on each.",
-    "Drag three disposable files together, including an empty file and a large file. Confirm every file appears in one window on each PC and arrives intact.",
-    "While a large copy runs, drag two more files. Both windows should show them queued; they should copy without the RC3 disconnect error.",
-    "Type in a text editor during a transfer. Check that the cursor stays hidden while typing and that progress does not steal focus. Full-speed transfers may still cause mouse lag.",
-    "Minimize the transfer window, then add another drag. It should restore. Once all files finish successfully, both windows should close automatically.",
-    "Cancel from each PC in separate attempts, including while files are queued. Confirm no incomplete destination files appear and a new transfer works afterward.",
-    "Send a duplicate filename; confirm both files survive. Disconnect Wi-Fi during a large copy, reconnect, and drag again; errors should stay visible.",
-    "Check the drag icon when crossing screens slowly and quickly. Recheck single-file clipboard copy/paste, Unicode text, screenshots, reconnect, lock/unlock, and sleep/wake."
+    "Exit MWB on both PCs. Back up your EXE/preferences, replace only the EXE, and confirm About shows 1.0.1-rc.5 on both. Keep the EXE in its existing folder so recovery files stay beside it.",
+    "Drag six disposable files, including large files, an empty file, and a duplicate filename. Confirm one list on each PC, four active outgoing files at most, individual progress bars, preserved duplicates, and intact received contents.",
+    "Pause one large file from each PC in separate attempts. Other files should continue. Resume should reuse its partial data. Move one to end and confirm it waits for the other runnable work. Cancel one and confirm the others complete.",
+    "Disconnect Wi-Fi during a large copy, then reconnect. Check the automatic retries and manual Retry if needed. Confirm completion does not create a second copy after reconnect.",
+    "Exit and restart MWB during a transfer. Expect the recovery popup and paused entries; no copying should start until you explicitly resume. Repeat after restarting both PCs.",
+    "Drop over an Explorer folder window and verify the destination. Drop elsewhere and confirm Desktop\\MouseWithoutBorders opens immediately. Check drag feedback when crossing screens quickly and slowly.",
+    "Add another drag while copying and while the transfer list is minimized. Check both lists restore for new files, typing does not cause cursor flashing or repeated focus stealing, and successful lists close automatically. Check that paused/error entries remain visible.",
+    "Recheck mouse/keyboard switching, text/image clipboard, single-file clipboard copy/paste, reconnect, lock/unlock, and sleep/wake."
   ],
   "known_limitations": [
-    "Use RC4 on both PCs. New queued drag/drop batches are not compatible with older MWB file-transfer implementations. Mouse/keyboard packets and underlying AES encryption are unchanged.",
-    "No folders, pause/resume, automatic retry, content-hash receipt, or direct Explorer-window targeting yet. Dragged files still save under Desktop\\MouseWithoutBorders.",
-    "A drag may contain up to 256 files. Cancel all stops active and waiting items; a file already being committed may finish. Earlier completed files remain.",
-    "Maximum speed may increase Wi-Fi mouse lag. Hardware validation of focus, cursor hiding, drag feedback, and two-PC transfer behavior remains necessary.",
-    "Legacy clipboard copy/paste still uses the existing single-file transport and receive guard. Receiver-confirmed completion and multi-file queues apply to the new drag/drop path.",
-    "Hard termination or power loss may leave a .partial file. No Windows service or protected UAC/sign-in support is included."
+    "RC5 drag/drop uses a fork-specific protocol; use RC5 on both PCs. Mouse/keyboard packets and the existing underlying encryption are unchanged.",
+    "Full-speed transfers can still cause Wi-Fi mouse lag. Initial source hashing, resume-prefix checks, and final verification can take time on large files.",
+    "No folder transfers, Explorer virtual-folder support, or native cross-PC OLE drag session. Explorer window targeting, Windows 11 tabs, focus, and cursor behavior require real-PC validation.",
+    "Legacy clipboard file copy/paste retains its existing single-file transport; the new list, resume, and checksums apply to drag/drop.",
+    "Recovery uses MouseWithoutBorders.transfers.json and its backup beside the EXE, plus hidden partial files in the destination. Do not delete these while you want to resume. Inactive partials older than 30 days are discarded during recovery; those jobs restart from zero if resumed.",
+    "Limits: 256 files per drag, 4096 retained job/receipt entries, and a 16 MiB recovery journal. Clear finished hides completed rows but retains receipts for duplicate protection.",
+    "Closing the transfer window lets copying continue; exiting MWB pauses unfinished jobs. A file already being committed may complete while cancellation is requested. No installed service or protected UAC/sign-in support."
   ]
 }

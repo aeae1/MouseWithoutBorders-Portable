@@ -226,6 +226,27 @@ public sealed class DurableTransferTests
     }
 
     [TestMethod]
+    public void DeferredFileDoesNotImmediatelyRefillTheSlotItJustReleased()
+    {
+        var active = new TransferJob { Sending = true, Running = true };
+        var deferred = new TransferJob { Sending = true };
+        DurableTransfers.ApplyAction(deferred, "queue");
+        Assert.AreEqual(0, DurableTransfers.ReadyJobs(new[] { active, deferred }).Length);
+        active.Running = false; active.State = "Completed";
+        Assert.AreSame(deferred, DurableTransfers.ReadyJobs(new[] { active, deferred }).Single());
+    }
+
+    [TestMethod]
+    public void DotFilenameCanBeCommitted()
+    {
+        var job = NewJob(Array.Empty<byte>()); job.Name = ".gitignore";
+        using var input = new MemoryStream(); Finish(input, job);
+        using var output = new MemoryStream(); Receive(job, input, output);
+        Assert.AreEqual(".gitignore", Path.GetFileName(job.Destination));
+        Assert.IsFalse(File.GetAttributes(job.Destination).HasFlag(FileAttributes.Hidden));
+    }
+
+    [TestMethod]
     public void InvalidFrameSizesAreRejectedBeforePayloadAllocation()
     {
         foreach (int size in new[] { -1, int.MaxValue, 0 })

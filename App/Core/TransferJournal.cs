@@ -28,6 +28,11 @@ internal sealed class TransferJob
     public long Order { get; set; } = DateTime.UtcNow.Ticks;
     public string PendingAction { get; set; }
     public bool Hidden { get; set; }
+    public bool Deferred { get; set; }
+    [JsonIgnore] internal DateTime RetryAfter;
+    [JsonIgnore] internal bool CommandRunning;
+    [JsonIgnore] internal DateTime CommandRetryAfter;
+    [JsonIgnore] internal CancellationTokenSource CommandCancellation;
     public DateTime Updated { get; set; } = DateTime.UtcNow;
     [JsonIgnore] internal bool Running;
     [JsonIgnore] internal readonly object Gate = new();
@@ -67,7 +72,7 @@ internal sealed class TransferJournal
         var ids = new HashSet<string>();
         foreach (var job in journal.Jobs)
         {
-            if (!Guid.TryParseExact(job.Id, "N", out _) || !ids.Add(job.Id) || job.Length < 0 || job.Bytes < 0 || job.Bytes > job.Length
+            if ((!Guid.TryParseExact(job.Id, "N", out var parsedId) || parsedId.ToString("N") != job.Id) || !ids.Add(job.Id) || job.Length < 0 || job.Bytes < 0 || job.Bytes > job.Length
                 || string.IsNullOrWhiteSpace(job.Peer) || !ValidName(job.Name)
                 || (!job.Sending && (!Path.IsPathFullyQualified(job.Folder ?? "") || (job.Destination != null
                     && !string.Equals(Path.GetDirectoryName(job.Destination), job.Folder, StringComparison.OrdinalIgnoreCase)))))

@@ -89,10 +89,10 @@ internal static class DurableTransfers
         });
     }
 
-    private static void Declare(string peer, int offer, TransferJob[] jobs)
+    private static void Declare(string peer, int offer, TransferJob[] jobs, CancellationToken token = default)
     {
         var files = jobs.Select(j => new TransferJob { Id = j.Id, Name = j.Name, Length = j.Length }).ToArray();
-        var reply = Request(peer, new TransferMessage { Op = "Declare", Offer = offer, Files = files });
+        var reply = Request(peer, new TransferMessage { Op = "Declare", Offer = offer, Files = files }, token);
         RequireOk(reply);
     }
 
@@ -114,7 +114,7 @@ internal static class DurableTransfers
         {
             case "pause": job.State = "Paused"; break;
             case "resume": case "queue":
-                job.State = "Waiting"; job.Order = DateTime.UtcNow.Ticks; job.Error = ""; break;
+                job.State = "Waiting"; job.Deferred = action == "queue"; job.Order = DateTime.UtcNow.Ticks; job.Error = ""; job.RetryAfter = default; break;
             case "cancel": job.State = "Cancelled"; break;
             case "fail": job.State = "Error"; break;
             default: throw new InvalidDataException("Unknown file action.");
@@ -124,7 +124,7 @@ internal static class DurableTransfers
 
     internal static void ClearFinished()
     {
-        lock (Sync) { foreach (var job in journal.Jobs.Where(j => j.Terminal && !j.Running && j.PendingAction == null)) job.Hidden = true; Save(); }
+        lock (Sync) { foreach (var job in journal.Jobs.Where(j => j.Terminal && !j.Running && !j.CommandRunning && j.PendingAction == null)) job.Hidden = true; Save(); }
         // Hide rows but retain durable receipts so a lost acknowledgement cannot create a duplicate.
     }
 
@@ -134,6 +134,7 @@ internal static class DurableTransfers
         {
             if (journal == null) return;
             stopping = true;
+            foreach (var item in journal.Jobs) item.CommandCancellation?.Cancel();
             foreach (var job in journal.Jobs.Where(j => !j.Terminal)) { job.State = "Paused"; job.PendingAction = null; job.Updated = DateTime.UtcNow; job.Attempt?.Cancel(); }
             Save();
         }
@@ -145,23 +146,21 @@ internal static class DurableTransfers
         lock (Sync) { if (ticking || stopping || journal == null) return; ticking = true; }
         try
         {
-            // Commands are persisted until acknowledged, including after a temporary disconnect.
-            foreach (var job in Jobs.Where(j => j.PendingAction != null && !j.Running))
+            // Separate bounded command workers keep an offline peer from blocking the scheduler.
+            lock (Sync)
             {
-                string command = job.PendingAction;
-                try
+                if (stopping) return;
+                int free = Math.Max(0, 4 - journal.Jobs.Count(j => j.CommandRunning));
+                foreach (var job in journal.Jobs.Where(j => j.PendingAction != null && !j.Running && !j.CommandRunning && j.CommandRetryAfter <= DateTime.UtcNow).Take(free))
                 {
-                    if (job.Sending) Declare(job.Peer, job.Offer, new[] { job });
-                    var reply = Request(job.Peer, new TransferMessage { Op = "Action", Id = job.Id, Action = command, Error = job.Error });
-                    RequireOk(reply);
-                    if (reply.State == "Completed") lock (Sync) { job.State = "Completed"; job.Bytes = job.Length; job.Error = ""; }
-                    if (command == "cancel" && !job.Sending) DeletePartial(job);
-                    lock (Sync) { if (job.PendingAction == command) job.PendingAction = null; Save(); }
+                    job.CommandRunning = true;
+                    job.CommandCancellation = new CancellationTokenSource();
+                    _ = Task.Run(() => SendCommand(job));
                 }
-                catch (Exception error) { job.Detail = "Waiting for the other PC: " + error.Message; }
             }
             lock (Sync)
             {
+                if (stopping) return;
                 foreach (var job in ReadyJobs(journal.Jobs))
                 {
                     job.Running = true;
@@ -174,18 +173,47 @@ internal static class DurableTransfers
         finally { lock (Sync) ticking = false; }
     }
 
+    private static void SendCommand(TransferJob job)
+    {
+        string command = job.PendingAction;
+        var token = job.CommandCancellation.Token;
+        try
+        {
+            if (command == null) return;
+            if (!Common.IsConnectedTo(MachineStuff.MachinePool.ResolveID(job.Peer))) throw new IOException("The other PC is disconnected.");
+            if (job.Sending) Declare(job.Peer, job.Offer, new[] { job }, token);
+            var reply = Request(job.Peer, new TransferMessage { Op = "Action", Id = job.Id, Action = command, Error = job.Error }, token);
+            RequireOk(reply);
+            if (reply.State == "Completed") lock (Sync) { job.State = "Completed"; job.Bytes = job.Length; job.Error = ""; }
+            if (command == "cancel" && !job.Sending) DeletePartial(job);
+            lock (Sync) { if (job.PendingAction == command) job.PendingAction = null; Save(); }
+        }
+        catch (Exception error) { job.Detail = "Waiting for the other PC: " + error.Message; }
+        finally
+        {
+            lock (Sync)
+            {
+                job.CommandRetryAfter = DateTime.UtcNow.AddSeconds(2);
+                job.CommandRunning = false; job.CommandCancellation?.Dispose(); job.CommandCancellation = null;
+            }
+        }
+    }
+
     internal static TransferJob[] ReadyJobs(IEnumerable<TransferJob> jobs)
     {
         var all = jobs.ToArray();
         int slots = Math.Max(0, 4 - all.Count(j => j.Sending && j.Running));
-        return all.Where(j => j.Sending && !j.Running && j.State == "Waiting" && j.PendingAction == null)
-            .OrderBy(j => j.Order).Take(slots).ToArray();
+        var ready = all.Where(j => j.Sending && !j.Running && !j.CommandRunning && j.State == "Waiting" && j.PendingAction == null && j.RetryAfter <= DateTime.UtcNow);
+        var normal = ready.Where(j => !j.Deferred).OrderBy(j => j.Order).Take(slots).ToArray();
+        if (normal.Length > 0 || all.Any(j => j.Sending && (j.Running || (!j.Deferred && j.State == "Waiting")))) return normal;
+        // Explicitly deferred files wait for the other work, then run one at a time.
+        return ready.Where(j => j.Deferred).OrderBy(j => j.Order).Take(Math.Min(1, slots)).ToArray();
     }
 
     internal static void PrepareInstall()
     {
         Stop();
-        if (!SpinWait.SpinUntil(() => { lock (Sync) return !ticking && (journal == null || journal.Jobs.All(j => !j.Running)); }, TimeSpan.FromSeconds(5)))
+        if (!SpinWait.SpinUntil(() => { lock (Sync) return !ticking && (journal == null || journal.Jobs.All(j => !j.Running && !j.CommandRunning)); }, TimeSpan.FromSeconds(5)))
         { ResumeService(); throw new IOException("A transfer is still pausing. Try Install again in a moment."); }
     }
 
@@ -235,7 +263,8 @@ internal static class DurableTransfers
         if (source.Length != job.Length) throw new InvalidDataException("The source file size changed. Cancel this entry and drag the new version again.");
         string hash = TransferJournal.HashStream(source, source.Length, token);
         lock (Sync) { job.Hash = hash; Save(); }
-        Declare(job.Peer, job.Offer, new[] { job });
+        CheckPolicy(true);
+        Declare(job.Peer, job.Offer, new[] { job }, token);
         token.ThrowIfCancellationRequested();
         using var connection = new Connection(job.Peer, token);
         TransferWire.Write(connection.Output, new TransferMessage { Op = "Begin", Id = job.Id, Hash = hash });
@@ -270,6 +299,7 @@ internal static class DurableTransfers
             lock (Sync) { job.Bytes = offset; job.Updated = DateTime.UtcNow; Save(); }
             job.Speed = (offset - startedAt) / Math.Max(0.001, clock.Elapsed.TotalSeconds);
         }
+        CheckPolicy(true); token.ThrowIfCancellationRequested();
         SetState(job, "Verifying"); job.Detail = "Receiver is verifying and saving";
         TransferWire.Write(connection.Output, new TransferMessage { Op = "Finish", Id = job.Id });
         reply = ReadReply(connection.Input);
@@ -281,7 +311,7 @@ internal static class DurableTransfers
         if (reply.State == "Completed") { lock (Sync) { job.State = "Completed"; job.Bytes = job.Length; job.Error = ""; job.Updated = DateTime.UtcNow; Save(); } return true; }
         if (reply.State is "Paused" or "Cancelled" or "Error")
         { lock (Sync) { job.State = reply.State; job.Error = reply.Error ?? ""; Save(); } return true; }
-        if (reply.Op == "Busy") { SetState(job, "Waiting"); return true; }
+        if (reply.Op == "Busy") { job.RetryAfter = DateTime.UtcNow.AddSeconds(2); job.Detail = "Waiting for other transfers"; SetState(job, "Waiting"); return true; }
         return false;
     }
     private static void SetState(TransferJob job, string state)
@@ -295,9 +325,9 @@ internal static class DurableTransfers
             job.State = "Error"; job.Error = error.Message; job.PendingAction = "fail"; job.Updated = DateTime.UtcNow; Save(); }
     }
 
-    private static TransferMessage Request(string peer, TransferMessage message)
+    private static TransferMessage Request(string peer, TransferMessage message, CancellationToken token = default)
     {
-        using var connection = new Connection(peer, CancellationToken.None);
+        using var connection = new Connection(peer, token);
         TransferWire.Write(connection.Output, message);
         return ReadReply(connection.Input);
     }
@@ -360,7 +390,7 @@ internal static class DurableTransfers
                     var drop = journal.Drops.LastOrDefault(d => d.Offer == message.Offer && SamePeer(d.Peer, peer));
                     foreach (var file in message.Files)
                     {
-                        if (file == null || !Guid.TryParseExact(file.Id, "N", out _) || !ids.Add(file.Id) || !TransferJournal.ValidName(file.Name) || file.Length < 0) throw new InvalidDataException("Invalid file entry.");
+                        if (file == null || (!Guid.TryParseExact(file.Id, "N", out var parsedId) || parsedId.ToString("N") != file.Id) || !ids.Add(file.Id) || !TransferJournal.ValidName(file.Name) || file.Length < 0) throw new InvalidDataException("Invalid file entry.");
                         var existing = journal.Jobs.FirstOrDefault(j => j.Id == file.Id);
                         if (existing != null)
                         {
@@ -386,7 +416,8 @@ internal static class DurableTransfers
             lock (Sync)
             {
                 if (job.State is "Completed" or "Cancelled" or "Paused" or "Error") { TransferWire.Write(output, Status(job)); return; }
-                if (stopping || job.Running || journal.Jobs.Count(j => !j.Sending && j.Running) >= 4)
+                if (stopping || job.Running || journal.Jobs.Count(j => !j.Sending && j.Running) >= 4
+                    || (job.Deferred && journal.Jobs.Any(j => !j.Sending && j.Running)))
                 { TransferWire.Write(output, new TransferMessage { Op = "Busy" }); return; }
                 job.Running = true; job.Attempt = CancellationTokenSource.CreateLinkedTokenSource(session.Token);
             }
@@ -444,7 +475,7 @@ internal static class DurableTransfers
                     job.State = "Verifying"; job.Detail = "Verifying received contents";
                     string actual = Work(output, () => { file.Flush(true); file.Position = 0; return TransferJournal.HashStream(file, job.Length, token); }, token, job.Attempt);
                     if (actual != hash) throw new InvalidDataException("Checksum mismatch. Retry will verify and replace the incomplete data.");
-                    file.Dispose(); token.ThrowIfCancellationRequested();
+                    file.Dispose(); (policy ?? (() => CheckPolicy(false)))(); token.ThrowIfCancellationRequested();
                     lock (job.Gate)
                     {
                         token.ThrowIfCancellationRequested();
@@ -474,6 +505,7 @@ internal static class DurableTransfers
     {
         File.SetAttributes(job.Partial, File.GetAttributes(job.Partial) & ~FileAttributes.Hidden);
         string stem = Path.GetFileNameWithoutExtension(job.Name), extension = Path.GetExtension(job.Name);
+        if (stem.Length == 0) { stem = job.Name; extension = ""; }
         for (int n = 0; n < 10000; n++)
         {
             string suffix = n == 0 ? "" : $" ({n})";
