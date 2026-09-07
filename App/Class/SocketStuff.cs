@@ -1668,6 +1668,7 @@ namespace MouseWithoutBorders.Class
             {
                 Logger.Log(e);
             }
+            finally { s.Close(); }
         }
 
         internal static void SendClipboardData(Socket s, Stream ecStream)
@@ -1681,9 +1682,9 @@ namespace MouseWithoutBorders.Class
             const int CLOSE_TIMEOUT = 10;
             byte[] header = new byte[1024];
             string headerString = string.Empty;
-            if (Clipboard.LastDragDropFile != null)
+            string fileName = Clipboard.LastDragDropFile;
+            if (fileName != null)
             {
-                string fileName = Clipboard.LastDragDropFile;
                 if (!Setting.Values.TransferFile) { s.Close(); return; }
                 try { _ = SendFile(s, ecStream, fileName); }
                 finally { s.Close(); }
@@ -1769,10 +1770,7 @@ namespace MouseWithoutBorders.Class
                 FileTransferForm.ShowTransfer(transfer);
                 s.SendTimeout = 30000;
                 s.SendBufferSize = FileTransferEngine.ChunkSize;
-                byte[] header = new byte[1024];
-                byte[] metadata = Common.GetBytesU($"{source.Length}*{fileName}");
-                if (metadata.Length > header.Length) throw new IOException("The source path is too long for this transfer format. Move the file to a shorter path.");
-                metadata.CopyTo(header, 0);
+                byte[] header = new TransferHeader(source.Length, fileName).Encode();
                 ecStream.Write(header, 0, header.Length);
                 FileTransferEngine.CopyExactly(source, ecStream, source.Length, transfer.Token, transfer.Report,
                     (bytes, token) =>
@@ -1782,9 +1780,7 @@ namespace MouseWithoutBorders.Class
                         FileTransferBandwidth.Pace(bytes, token);
                     });
                 // Preserve MWB's framing, using a 64-bit file length rather than an overflowing int.
-                int padding = (int)(Package.PACKAGE_SIZE - source.Length % Package.PACKAGE_SIZE);
-                ecStream.Write(new byte[padding], 0, padding);
-                ecStream.Flush();
+                FileTransferEngine.WritePadding(ecStream, source.Length);
                 transfer.Complete();
                 return true;
             }
@@ -1841,13 +1837,7 @@ namespace MouseWithoutBorders.Class
                 }
                 while (rv > 0);
 
-                if ((rv = sentCount % Package.PACKAGE_SIZE) > 0)
-                {
-                    Array.Clear(buf, 0, buf.Length);
-                    ecStream.Write(buf, 0, rv);
-                }
-
-                ecStream.Flush();
+                FileTransferEngine.WritePadding(ecStream, sentCount);
                 Logger.LogDebug("Data sent: " + data.Length.ToString(CultureInfo.InvariantCulture));
                 r = true;
             }

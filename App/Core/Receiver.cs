@@ -326,7 +326,7 @@ internal static class Receiver
                             Thread.UpdateThreads(thread);
 
                             string remoteMachine = package.MachineName;
-                            System.Net.Sockets.TcpClient client = Clipboard.ConnectToRemoteClipboardSocket(remoteMachine);
+                            using System.Net.Sockets.TcpClient client = Clipboard.ConnectToRemoteClipboardSocket(remoteMachine);
                             bool clientPushData = true;
 
                             if (Clipboard.ShakeHand(ref remoteMachine, client.Client, out Stream enStream, out Stream deStream, ref clientPushData, ref package.PostAction))
