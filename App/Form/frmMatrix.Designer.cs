@@ -643,7 +643,7 @@ namespace MouseWithoutBorders
             this.checkBoxTransferFile.Size = new System.Drawing.Size(81, 17);
             this.checkBoxTransferFile.TabIndex = 178;
             this.checkBoxTransferFile.Text = "&Transfer file";
-            this.toolTip.SetToolTip(this.checkBoxTransferFile, "If a file (<100MB) is copied, it will be transferred to the remote machine clipbo" +
+            this.toolTip.SetToolTip(this.checkBoxTransferFile, "If a file is copied, it will be transferred to the remote machine clipbo" +
         "ard.");
             this.checkBoxTransferFile.UseVisualStyleBackColor = true;
             this.checkBoxTransferFile.CheckedChanged += new System.EventHandler(this.CheckBoxTransferFile_CheckedChanged);

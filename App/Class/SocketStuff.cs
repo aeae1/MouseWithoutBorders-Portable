@@ -1672,7 +1672,7 @@ namespace MouseWithoutBorders.Class
 
         internal static void SendClipboardData(Socket s, Stream ecStream)
         {
-            if (Common.RunWithNoAdminRight && Setting.Values.OneWayClipboardMode)
+            if (!Setting.Values.ShareClipboard || (Common.RunWithNoAdminRight && Setting.Values.OneWayClipboardMode))
             {
                 s?.Close();
                 return;
@@ -1683,62 +1683,10 @@ namespace MouseWithoutBorders.Class
             string headerString = string.Empty;
             if (Clipboard.LastDragDropFile != null)
             {
-                string fileName = null;
-
-                if (!Launch.ImpersonateLoggedOnUserAndDoSomething(() =>
-                {
-                    if (!File.Exists(Clipboard.LastDragDropFile))
-                    {
-                        headerString = Directory.Exists(Clipboard.LastDragDropFile)
-                            ? $"{0}*{Clipboard.LastDragDropFile} - Folder is not supported, zip it first!"
-                            : Clipboard.LastDragDropFile.Contains("- File too big")
-                                ? $"{0}*{Clipboard.LastDragDropFile}"
-                                : $"{0}*{Clipboard.LastDragDropFile} not found!";
-                    }
-                    else
-                    {
-                        fileName = Clipboard.LastDragDropFile;
-                        headerString = $"{new FileInfo(fileName).Length}*{fileName}";
-                    }
-                }))
-                {
-                    s?.Close();
-                    return;
-                }
-
-                Common.GetBytesU(headerString).CopyTo(header, 0);
-
-                try
-                {
-                    ecStream.Write(header, 0, header.Length);
-
-                    if (!string.IsNullOrEmpty(fileName))
-                    {
-                        if (SendFile(s, ecStream, fileName))
-                        {
-                            s.Close(CLOSE_TIMEOUT);
-                        }
-                    }
-                    else
-                    {
-                        s.Close(CLOSE_TIMEOUT);
-                    }
-                }
-                catch (IOException e)
-                {
-                    string log = $"{nameof(SendClipboardData)}: Exception accessing the socket: {e.InnerException?.GetType()}/{e.Message}. (This is expected when the remote machine closes the connection during desktop switch or reconnection.)";
-                    Logger.Log(log);
-                }
-                catch (SocketException e)
-                {
-                    string log = $"{nameof(SendClipboardData)}: {e.GetType()}/{e.Message}. This is expected when the connection is closed by the remote host.";
-                    Logger.Log(log);
-                }
-                catch (ObjectDisposedException e)
-                {
-                    string log = $"{nameof(SendClipboardData)}: {e.GetType()}/{e.Message}. This is expected when the socket is disposed by a machine switch for ex..";
-                    Logger.Log(log);
-                }
+                string fileName = Clipboard.LastDragDropFile;
+                if (!Setting.Values.TransferFile) { s.Close(); return; }
+                try { _ = SendFile(s, ecStream, fileName); }
+                finally { s.Close(); }
             }
             else if (!Clipboard.IsClipboardDataImage && Clipboard.LastClipboardData != null)
             {
@@ -1812,53 +1760,46 @@ namespace MouseWithoutBorders.Class
 
         private static bool SendFileEx(Socket s, Stream ecStream, string fileName)
         {
+            FileTransferSession transfer = null;
             try
             {
-                using (FileStream f = File.OpenRead(fileName))
-                {
-                    byte[] buf = new byte[Common.NETWORK_STREAM_BUF_SIZE];
-                    int rv, sentCount = 0;
-
-                    do
+                using var source = new FileStream(fileName, FileMode.Open, FileAccess.Read, FileShare.Read,
+                    FileTransferEngine.ChunkSize, FileOptions.SequentialScan);
+                transfer = new FileTransferSession(fileName, source.Length, sending: true, s);
+                FileTransferForm.ShowTransfer(transfer);
+                s.SendTimeout = 30000;
+                s.SendBufferSize = FileTransferEngine.ChunkSize;
+                byte[] header = new byte[1024];
+                byte[] metadata = Common.GetBytesU($"{source.Length}*{fileName}");
+                if (metadata.Length > header.Length) throw new IOException("The source path is too long for this transfer format. Move the file to a shorter path.");
+                metadata.CopyTo(header, 0);
+                ecStream.Write(header, 0, header.Length);
+                FileTransferEngine.CopyExactly(source, ecStream, source.Length, transfer.Token, transfer.Report,
+                    (bytes, token) =>
                     {
-                        if ((rv = f.Read(buf, 0, Common.NETWORK_STREAM_BUF_SIZE)) > 0)
-                        {
-                            ecStream.Write(buf, 0, rv);
-                            sentCount += rv;
-                        }
-                    }
-                    while (rv > 0);
-
-                    if ((rv = Package.PACKAGE_SIZE - (sentCount % Package.PACKAGE_SIZE)) > 0)
-                    {
-                        Array.Clear(buf, 0, buf.Length);
-                        ecStream.Write(buf, 0, rv);
-                    }
-
-                    ecStream.Flush();
-
-                    Logger.LogDebug("File sent: " + fileName);
-                }
-
+                        if (!Setting.Values.ShareClipboard || !Setting.Values.TransferFile)
+                            throw new OperationCanceledException("File sharing was turned off.");
+                        FileTransferBandwidth.Pace(bytes, token);
+                    });
+                // Preserve MWB's framing, using a 64-bit file length rather than an overflowing int.
+                int padding = (int)(Package.PACKAGE_SIZE - source.Length % Package.PACKAGE_SIZE);
+                ecStream.Write(new byte[padding], 0, padding);
+                ecStream.Flush();
+                transfer.Complete();
                 return true;
             }
-            catch (Exception e)
+            catch (Exception error)
             {
-                if (e is IOException)
-                {
-                    string log = $"{nameof(SendFileEx)}: Exception accessing the socket: {e.InnerException?.GetType()}/{e.Message}. (This is expected when the remote machine closes the connection during desktop switch or reconnection.)";
-                    Logger.Log(log);
-                }
-                else
-                {
-                    Logger.Log(e);
-                }
-
-                Common.ShowToolTip(e.Message, 1000, ToolTipIcon.Warning, Setting.Values.ShowClipNetStatus);
+                transfer?.Fail(error);
+                Logger.Log(error);
+                if (transfer == null) Common.ShowToolTip("Could not send file: " + error.Message, 5000, ToolTipIcon.Warning);
+                return false;
+            }
+            finally
+            {
+                transfer?.Dispose();
                 s.Close();
             }
-
-            return false;
         }
 
         private static bool SendFile(Socket s, Stream ecStream, string fileName)
