@@ -158,9 +158,16 @@ namespace MouseWithoutBorders
                     return;
                 }
             }
+            try { DurableTransfers.Stop(); }
+            catch (Exception error)
+            {
+                Logger.Log(error);
+                if (!isFormClosing) { DurableTransfers.ResumeService(); Tag = null; MessageBox.Show("Transfer recovery information could not be saved. Please check available disk space and try Exit again."); return; }
+            }
             if (!FileTransferRegistry.StopAndWait(TimeSpan.FromSeconds(2)) && !isFormClosing)
             {
                 FileTransferRegistry.ResumeAccepting();
+                DurableTransfers.ResumeService();
                 Tag = null;
                 MessageBox.Show("A file transfer is still finishing its cleanup. Please try Exit again in a moment.",
                     Application.ProductName, MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -801,24 +808,11 @@ namespace MouseWithoutBorders
                 */
 
                 case NativeMethods.WM_SHOW_DRAG_DROP:
-                    if (!MouseWithoutBorders.Core.DragDrop.IsDropping) break; // Ignore a move posted before drop/cancel.
-                    Point p = default;
-                    _ = NativeMethods.GetCursorPos(ref p);
-                    Width = 70;
-                    Height = 70;
-                    Left = p.X - (Width / 3);
-                    Top = p.Y - (Height / 3);
-                    BackColor = Color.White;
-                    Opacity = 0.15;
-                    if (Cursor != dropCur)
-                    {
-                        Cursor = dropCur;
-                    }
-
-                    Show();
+                    TransferDragVisual.MoveImage();
                     break;
 
                 case NativeMethods.WM_HIDE_DRAG_DROP:
+                    TransferDragVisual.HideImage();
                     Helper.MainFormDot();
 
                     /*
@@ -996,6 +990,11 @@ namespace MouseWithoutBorders
 
             Common.MainForm = this;
             Hide();
+            if (!Common.RunOnLogonDesktop && !Common.RunOnScrSaverDesktop)
+            {
+                try { DurableTransfers.Initialize(); }
+                catch (Exception error) { Logger.Log(error); MessageBox.Show("Transfer recovery could not be loaded: " + error.Message, "Mouse Without Borders"); }
+            }
             if (!Common.RunOnLogonDesktop && !Common.RunOnScrSaverDesktop)
             {
                 NotifyIcon.Visible = false;

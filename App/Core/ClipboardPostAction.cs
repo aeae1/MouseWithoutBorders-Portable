@@ -22,5 +22,6 @@ internal enum ClipboardPostAction : uint
     Other = 0,
     Desktop = 1,
     Mspaint = 2,
+    DurableFiles = 4, // Independently resumable, checksummed file jobs.
     QueuedFiles = 3, // Portable RC4: versioned file batch with receiver acknowledgement.
 }
