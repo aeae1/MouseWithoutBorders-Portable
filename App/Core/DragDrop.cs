@@ -179,6 +179,7 @@ internal static class DragDrop
     private static int offeredFiles;
     private static int incomingFiles;
     private static ID incomingFileSource;
+    internal static bool IsIncomingOffer(int id) => IsDropping && incomingFiles == id;
 
     internal static void OfferAccepted(int id)
     {
@@ -270,6 +271,8 @@ internal static class DragDrop
             incomingFiles = package.Machine3 == (ID)QueuedFileTransfer.Marker ? (int)package.Machine2 : 0;
             incomingFileSource = package.Src;
             IsDropping = true;
+            var source = MachineStuff.MachinePool.TryFindMachineByID(incomingFileSource);
+            if (incomingFiles != 0 && source.Count > 0) DurableTransfers.Preview(source[0].Name.Trim(), incomingFiles);
             Common.DoSomethingInUIThread(() =>
             {
                 if (IsDropping) _ = NativeMethods.PostMessage(Common.MainForm.Handle, NativeMethods.WM_SHOW_DRAG_DROP, IntPtr.Zero, IntPtr.Zero);
@@ -319,10 +322,23 @@ internal static class DragDrop
         PowerToysTelemetry.Log.WriteEvent(new MouseWithoutBorders.Telemetry.MouseWithoutBordersDragAndDropEvent());
         if (incomingFiles != 0)
         {
-            Common.SkSend(new DATA { Type = PackageType.ClipboardAsk, Des = incomingFileSource,
-                MachineName = Common.MachineName, PostAction = ClipboardPostAction.QueuedFiles,
-                Machine2 = (ID)incomingFiles }, null, false);
+            int offer = incomingFiles;
+            ID sourceId = incomingFileSource;
             incomingFiles = 0;
+            Common.DoSomethingInUIThread(() =>
+            {
+                try
+                {
+                    var sources = MachineStuff.MachinePool.TryFindMachineByID(sourceId);
+                    if (sources.Count == 0) throw new IOException("The sending PC disconnected.");
+                    string folder = TransferDropDestination.ResolveAndOpen();
+                    DurableTransfers.RememberDrop(offer, sources[0].Name.Trim(), folder);
+                    Common.SkSend(new DATA { Type = PackageType.ClipboardAsk, Des = sourceId,
+                        MachineName = Common.MachineName, PostAction = ClipboardPostAction.DurableFiles,
+                        Machine2 = (ID)offer }, null, false);
+                }
+                catch (Exception error) { Logger.Log(error); Common.ShowToolTip(error.Message, 5000, ToolTipIcon.Error); }
+            });
         }
         else Clipboard.GetRemoteClipboard("desktop");
     }

@@ -80,6 +80,24 @@ internal static class QueuedFileTransfer
         }
     }
 
+    internal static string[] Preview(int id)
+    {
+        lock (Sync) return Offers.TryGetValue(id, out var offer) ? offer.Files.Select(f => Path.GetFileName(f.Path)).ToArray() : Array.Empty<string>();
+    }
+
+    internal static void SendDurableOffer(int id, ID peer, string peerName)
+    {
+        if (!Common.IsConnectedTo(peer) || MachineStuff.MachinePool.ResolveID(peerName) != peer) return;
+        OfferData offer;
+        lock (Sync) { if (!Offers.Remove(id, out offer) || DateTime.UtcNow - offer.Created > TimeSpan.FromMinutes(10)) return; }
+        DragDrop.OfferAccepted(id);
+        _ = Task.Run(() =>
+        {
+            try { DurableTransfers.AddOffer(id, peerName, offer.Files.Select(f => f.Path).ToArray()); }
+            catch (Exception error) { Logger.Log(error); Common.ShowToolTip(error.Message, 5000, System.Windows.Forms.ToolTipIcon.Error); }
+        });
+    }
+
     internal static void SendOffer(int id, ID peer, string peerName)
     {
         if (!Common.IsConnectedTo(peer) || MachineStuff.MachinePool.ResolveID(peerName) != peer) return;

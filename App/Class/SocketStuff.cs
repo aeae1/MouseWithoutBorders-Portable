@@ -1652,7 +1652,11 @@ namespace MouseWithoutBorders.Class
                     Common.SetToggleIcon(new int[Common.TOGGLE_ICONS_SIZE] { Common.ICON_SMALL_CLIPBOARD, -1, -1, -1 });
                 }
 
-                if (clientPushData && postAction == ClipboardPostAction.QueuedFiles)
+                if (clientPushData && postAction == ClipboardPostAction.DurableFiles)
+                {
+                    DurableTransfers.Serve(remoteEndPoint, s, enStream, deStream);
+                }
+                else if (clientPushData && postAction == ClipboardPostAction.QueuedFiles)
                 {
                     QueuedFileTransfer.Receive(s, enStream, deStream);
                 }
