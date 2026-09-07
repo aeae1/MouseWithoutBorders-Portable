@@ -7,7 +7,7 @@ using MouseWithoutBorders.Core;
 
 namespace MouseWithoutBorders;
 
-internal sealed class FileTransferForm : Form
+internal sealed class FileTransferForm : System.Windows.Forms.Form
 {
     private readonly FileTransferSession session;
     private readonly ProgressBar progress = new() { Dock = DockStyle.Fill, Maximum = 1000 };
@@ -28,7 +28,7 @@ internal sealed class FileTransferForm : Form
         MinimumSize = new Size(480, 310);
         StartPosition = FormStartPosition.CenterScreen;
         MaximizeBox = false;
-        Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath);
+        Icon = System.Drawing.Icon.ExtractAssociatedIcon(Application.ExecutablePath);
         var layout = new TableLayoutPanel { Dock = DockStyle.Fill, Padding = new Padding(18), ColumnCount = 1, RowCount = 6 };
         foreach (int height in new[] { 32, 26, 28, 52, 34, 36 }) layout.RowStyles.Add(new RowStyle(SizeType.Absolute, height));
         layout.Controls.Add(new Label { Text = session.Name, AutoEllipsis = true, Dock = DockStyle.Fill, Font = new Font(Font, FontStyle.Bold) });
