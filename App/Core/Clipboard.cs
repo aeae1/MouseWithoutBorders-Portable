@@ -755,7 +755,7 @@ internal static class Clipboard
                     {
                         if (!Setting.Values.ShareClipboard || !Setting.Values.TransferFile)
                             throw new OperationCanceledException("File sharing was turned off.");
-                        FileTransferBandwidth.Pace(bytes, token);
+                        token.ThrowIfCancellationRequested();
                     });
                 // Drain the sender's padding before closing the encrypted stream.
                 FileTransferEngine.ReadPadding(deStream, dataSize);

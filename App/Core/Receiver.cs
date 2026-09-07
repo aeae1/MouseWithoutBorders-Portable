@@ -314,6 +314,11 @@ internal static class Receiver
 
             case PackageType.ClipboardAsk:
                 Package.PackageReceived.ClipboardAsk++;
+                if (package.Des == Common.MachineID && package.PostAction == ClipboardPostAction.QueuedFiles)
+                {
+                    QueuedFileTransfer.SendOffer((int)package.Machine2, package.Src, package.MachineName);
+                    break;
+                }
 
                 if (package.Des == Common.MachineID)
                 {
