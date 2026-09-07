@@ -1,28 +1,31 @@
 {
-  "tag": "mwb-v1.0.1-rc.2",
-  "title": "Mouse Without Borders Portable 1.0.1-rc.2",
+  "tag": "mwb-v1.0.1-rc.3",
+  "title": "Mouse Without Borders Portable 1.0.1-rc.3",
   "prerelease": true,
-  "summary": "First file-transfer replacement RC: visible progress and cancellation, paced streaming to reduce mouse contention, and collision-safe incoming files. Includes rc.1 hardening. Use this RC on both PCs; real hardware feedback is needed.",
+  "summary": "Review fixes for the RC2 transfer experience, plus encrypted clipboard framing and cleanup regressions. Includes prior hardening and progress/cancel/pacing. Install the same RC on both PCs; real-PC validation remains required.",
   "changes": [
-    "Standard Windows progress window on both ends with bytes, speed, estimated time, and Cancel. Transfer I/O never synchronously updates this window.",
-    "Replaced the file copy loop with bounded 32 KiB streaming and 64-bit counters. The 100 MB clipboard-file restriction is removed.",
-    "A shared 2 MiB/s default file-traffic budget reduces bursts; the transfer window offers 10 MiB/s and unlimited modes. The default is a starting point for hardware testing, not a measured guarantee of lag-free input.",
-    "Cancellation interrupts the transfer socket. Incomplete destination files are discarded; successful duplicate names keep both files.",
-    "File sharing is checked at send/receive entry and during file streaming. Existing encrypted connections, single-EXE packaging, and mouse/keyboard protocol are retained."
+    "Correct encrypted payload padding for clipboard text/images; share framing helpers with file transfers and test awkward byte lengths.",
+    "Stop new file transfers during controlled exit, cancel active copies, and wait for their cleanup. Transfer windows no longer veto application shutdown.",
+    "Preserve both files even when adding a duplicate number to a maximum-length filename. Validate incoming headers, reserved filenames, lengths, and clipboard allocation limits.",
+    "Detach incoming image data from its stream before queuing clipboard delivery. Decode only actual text characters and bound decompression rather than append unused buffer contents.",
+    "Recheck clipboard/file sharing when delivering queued data. Discard disabled inline clipboard payloads while still draining their packets to preserve the mouse/keyboard connection.",
+    "Dispose failed clipboard connections, bound connection attempts to 10 seconds and handshake writes to 30 seconds, and guarantee session cleanup on receive failures.",
+    "Keep speed selections synchronized between transfer windows on the same PC; disable completed-window controls, keep progress below 100% until success, and retain full error details in a tooltip."
   ],
   "testing": [
-    "Exit both copies and back up the old EXE and prefs. Replace only the EXE on both PCs and confirm About shows 1.0.1-rc.2.",
-    "Copy a 200 MB or larger disposable file in each direction. Both ends should show progress, speed, remaining time, and Cancel. Confirm the destination opens and has the right size.",
-    "While copying, move the mouse, type, and drag windows on the other PC. Compare default Protect mouse against Faster/Maximum; tell us which mode remains comfortable on your Wi-Fi. The slower endpoint limits the transfer.",
-    "Cancel from the sending PC, then repeat and cancel from the receiving PC. The transfer should stop and the receiving folder should not contain a finished-looking partial file. Send again to retry.",
-    "Send two different files with the same name to the same destination. The original should survive and the second should receive a numbered name.",
-    "Disconnect Wi-Fi during a disposable transfer. Expect an interrupted status, not success on the receiver; restore Wi-Fi and send again.",
-    "Try an empty file and a file over 2 GB if available. Also recheck text/image clipboard, lock/unlock, sleep/wake, and reconnection."
+    "Exit MWB on both PCs, back up the EXE and preferences, then replace only the EXE. Confirm About says 1.0.1-rc.3 on both.",
+    "Transfer small, empty, and large disposable files both ways. While a large copy runs, move the remote mouse and type; compare Protect mouse with Faster if desired.",
+    "Cancel once from each PC. Then start another copy and choose MWB Exit while it runs. Confirm MWB exits and restarts normally; no incomplete file should be presented as a completed destination.",
+    "Send a second different file with the same name. Confirm the original survives and the new file gets a numbered name. Long filenames should also work.",
+    "Copy short Unicode text, formatted text, and screenshots in both directions. Confirm exact text and complete images. Toggle Share Clipboard off and confirm subsequent incoming clipboard content is not applied.",
+    "Disconnect Wi-Fi mid-copy; restore it and retry by sending the file again. Confirm the receiver reports interruption rather than completion.",
+    "Recheck settings persistence, reconnect, lock/unlock, and sleep/wake."
   ],
   "known_limitations": [
-    "This is the first replacement stage, not a complete new transport protocol. No pause/resume, one-click retry, end-to-end checksum receipt, folder transfer, or Explorer-window drop targeting yet.",
-    "Sender progress counts bytes written to the connection and explicitly says to check the receiving PC. Only the receiver can report that the destination was committed.",
-    "Pacing is a configurable fixed budget, not adaptive Wi-Fi QoS. Mouse improvement must be assessed on real PCs. Setting the receiver to a lower rate also limits the sender.",
-    "The existing single incoming-transfer gate remains; overlapping requests may be rejected. Broader legacy clipboard policy and IPC lifecycle audit follow-ups remain."
+    "Fixed-rate pacing remains a configurable starting point, not adaptive Wi-Fi QoS or a guarantee of lag-free input.",
+    "No pause/resume, one-click retry, end-to-end checksum receipt, folders, transfer queue, or Explorer-window drop targeting yet.",
+    "Sender completion means bytes were written to the connection; only the receiver confirms its destination was committed.",
+    "Clipboard payloads above 256 MiB and decompressed text above 32 million UTF-16 characters are rejected; ordinary disk-file transfers have no such size cap.",
+    "Hard process termination or power loss can leave a .partial file. Controlled exit attempts cleanup and keeps the app open if normal cleanup needs more time. Broader IPC listener and protocol-authentication audit follow-ups remain."
   ]
 }

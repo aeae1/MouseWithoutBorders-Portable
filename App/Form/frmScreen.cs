@@ -136,10 +136,14 @@ namespace MouseWithoutBorders
         {
             Tag = "Quitting...";
 
-            Setting.Values.SwitchCount += Common.SwitchCount;
             try
             {
-                var flush = System.Threading.Tasks.Task.Run(() => Setting.Values.SaveSettingsSynchronously());
+                var flush = System.Threading.Tasks.Task.Run(() =>
+                {
+                    Setting.Values.SwitchCount += Common.SwitchCount;
+                    Common.SwitchCount = 0;
+                    Setting.Values.SaveSettingsSynchronously();
+                });
                 if (!flush.Wait(TimeSpan.FromSeconds(2)))
                     throw new TimeoutException("Saving preferences took too long.");
             }
@@ -153,6 +157,14 @@ namespace MouseWithoutBorders
                         Application.ProductName, MessageBoxButtons.OK, MessageBoxIcon.Error);
                     return;
                 }
+            }
+            if (!FileTransferRegistry.StopAndWait(TimeSpan.FromSeconds(2)) && !isFormClosing)
+            {
+                FileTransferRegistry.ResumeAccepting();
+                Tag = null;
+                MessageBox.Show("A file transfer is still finishing its cleanup. Please try Exit again in a moment.",
+                    Application.ProductName, MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
             }
             Process me = Process.GetCurrentProcess();
             Helper.WndProcCounter++;

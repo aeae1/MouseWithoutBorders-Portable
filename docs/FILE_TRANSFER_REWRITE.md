@@ -28,7 +28,9 @@ LocalSend's Flutter app is not a drop-in library for this Windows Forms project.
 ## Included
 
 - Independent transfer snapshots observed by a 200 ms UI timer; no synchronous
-  UI dispatch from the file-copy loop.
+  UI dispatch from the file-copy loop. The prior tray updates were also queued
+  asynchronously; this change reduces posting frequency rather than removing a
+  synchronous wait.
 - 32 KiB bounded-memory reads/writes with 64-bit lengths and exact byte counts.
 - One process-wide pacing budget for both directions: 2 MiB/s by default, with
   10 MiB/s and unlimited choices for comparison. This is not adaptive QoS.
@@ -63,3 +65,39 @@ and the non-cancellable atomic commit transition. Existing receive/crypto/settin
 tests remain. Real-PC testing must cover both directions, large files, cancellation,
 Wi-Fi loss, mouse responsiveness, clipboard, reconnect, and sleep/wake. See the
 release notes for the user checklist.
+
+## RC3 review
+
+The follow-up review found gaps not covered by RC2's first seven tests:
+
+- `SendData` padded by the remainder instead of its complement. Some encrypted
+  clipboard payloads therefore left a partial AES block unwritten. Senders now
+  share the correct file-framing padding helper, exercised across every size
+  from zero through 129 bytes and larger buffer boundaries.
+- Duplicate numbering could exceed the 255-character filename component limit.
+  The stem is shortened when necessary while retaining the extension.
+- Transfer windows treated all close reasons as user cancellation and could veto
+  application exit. A registry now closes admission, requests cancellation and
+  waits for staging cleanup; application-exit window closure is allowed. A normal
+  Exit stays open if cleanup has not finished within two seconds.
+- Images backed by a stream could reach a queued UI callback after that stream
+  closed. The receiver now clones the decoded pixels before posting delivery.
+- Compressed text decoding appended unused buffer contents and repeatedly copied
+  the entire string. A bounded streaming decoder preserves exact Unicode text.
+- Header validation rejects malformed lengths, invalid/reserved filenames, and
+  excessive in-memory payload sizes before creating destinations. Inline clipboard
+  rejection still drains its packets so the shared input stream stays aligned.
+- Transfer connection failures now release their sockets. Connect attempts and
+  handshake writes are bounded, and cleanup completion is distinct from UI status.
+- UI state no longer offers stale global speed controls in completed windows or
+  reports 100% before final success. Error text remains available in a tooltip.
+
+New tests exercise encrypted framing, corrupt/missing padding, invalid headers,
+maximum-length collisions, Unicode decoding/decompression bounds, controlled-exit
+cleanup and timeout recovery, and cancellation of an encrypted blocked write.
+These complement RC2's blocked-read, truncation, staging, and >2 GB counter tests.
+They do not simulate two physical PCs or establish Wi-Fi latency improvements.
+
+The review focused on RC1/RC2 changes and adjacent transfer, clipboard, settings,
+connection, and shutdown paths. Existing deferred IPC listener lifecycle and
+protocol-authentication work is not represented as fixed by this release.
