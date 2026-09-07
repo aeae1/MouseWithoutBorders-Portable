@@ -1,28 +1,28 @@
 {
-  "tag": "mwb-v1.0.1-rc.1",
-  "title": "Mouse Without Borders Portable 1.0.1-rc.1",
+  "tag": "mwb-v1.0.1-rc.2",
+  "title": "Mouse Without Borders Portable 1.0.1-rc.2",
   "prerelease": true,
-  "summary": "Release candidate for essential reliability fixes. One self-contained EXE; use the same RC on both PCs. Windows automated checks gate publication; real two-PC testing is requested before any stable release.",
+  "summary": "First file-transfer replacement RC: visible progress and cancellation, paced streaming to reduce mouse contention, and collision-safe incoming files. Includes rc.1 hardening. Use this RC on both PCs; real hardware feedback is needed.",
   "changes": [
-    "Validated, atomic preference saves with a last-known-good backup and explicit recovery instead of silently resetting configuration.",
-    "Manual and generated keys are saved before activation; option changes are saved consistently and Exit attempts a bounded final save.",
-    "Local clipboard/settings RPC permissions are restricted to the current Windows account.",
-    "Safer installation rollback, preserved source preferences during migration, and ownership checks before removing shortcuts.",
-    "Bounded helper shutdown and normal process priority instead of Windows RealTime priority.",
-    "Release version and executable version must match; published assets cannot be silently replaced."
+    "Standard Windows progress window on both ends with bytes, speed, estimated time, and Cancel. Transfer I/O never synchronously updates this window.",
+    "Replaced the file copy loop with bounded 32 KiB streaming and 64-bit counters. The 100 MB clipboard-file restriction is removed.",
+    "A shared 2 MiB/s default file-traffic budget reduces bursts; the transfer window offers 10 MiB/s and unlimited modes. The default is a starting point for hardware testing, not a measured guarantee of lag-free input.",
+    "Cancellation interrupts the transfer socket. Incomplete destination files are discarded; successful duplicate names keep both files.",
+    "File sharing is checked at send/receive entry and during file streaming. Existing encrypted connections, single-EXE packaging, and mouse/keyboard protocol are retained."
   ],
   "testing": [
-    "Exit MWB on both PCs. Keep copies of the old EXE and adjacent MouseWithoutBorders.prefs.json. Replace only the EXE and run this RC on both PCs; confirm About says 1.0.1-rc.1 and the existing key/layout remain.",
-    "Move the mouse between PCs, click/drag, type, and use your usual shortcuts. Check ordinary responsiveness while copying a file.",
-    "Copy text and an image in both directions. Copy hello, then HELLO, and confirm the second text arrives correctly.",
-    "Transfer a disposable small file and a large file in both directions, using your usual copy/paste and drag/drop. Confirm contents and sizes; interrupt a disposable transfer by disconnecting Wi-Fi, reconnect, then transfer again.",
-    "Change an option such as Draw mouse cursor, exit immediately, reopen, and confirm it stayed changed. Restore your preferred setting.",
-    "If comfortable re-pairing, generate a new key, put it on the other PC, then restart both and confirm reconnection. Four-character custom keys remain supported.",
-    "Lock/unlock and sleep/wake the PCs, then check mouse and clipboard again. Exit and restart several times and confirm no stuck tray process prevents reopening.",
-    "Optional: try first launch/install in a separate test folder with copied preferences. Recovery/corruption tests should use copies only; ordinary testing does not require editing JSON."
+    "Exit both copies and back up the old EXE and prefs. Replace only the EXE on both PCs and confirm About shows 1.0.1-rc.2.",
+    "Copy a 200 MB or larger disposable file in each direction. Both ends should show progress, speed, remaining time, and Cancel. Confirm the destination opens and has the right size.",
+    "While copying, move the mouse, type, and drag windows on the other PC. Compare default Protect mouse against Faster/Maximum; tell us which mode remains comfortable on your Wi-Fi. The slower endpoint limits the transfer.",
+    "Cancel from the sending PC, then repeat and cancel from the receiving PC. The transfer should stop and the receiving folder should not contain a finished-looking partial file. Send again to retry.",
+    "Send two different files with the same name to the same destination. The original should survive and the second should receive a numbered name.",
+    "Disconnect Wi-Fi during a disposable transfer. Expect an interrupted status, not success on the receiver; restore Wi-Fi and send again.",
+    "Try an empty file and a file over 2 GB if available. Also recheck text/image clipboard, lock/unlock, sleep/wake, and reconnection."
   ],
   "known_limitations": [
-    "No new transfer progress window, resume support, folder-to-folder drop targeting, or Wi-Fi prioritization is included.",
-    "Additional audit follow-ups remain: transfer policy enforcement, destination-name collisions, and stronger IPC connection lifecycle recovery. Use disposable transfer files in this RC."
+    "This is the first replacement stage, not a complete new transport protocol. No pause/resume, one-click retry, end-to-end checksum receipt, folder transfer, or Explorer-window drop targeting yet.",
+    "Sender progress counts bytes written to the connection and explicitly says to check the receiving PC. Only the receiver can report that the destination was committed.",
+    "Pacing is a configurable fixed budget, not adaptive Wi-Fi QoS. Mouse improvement must be assessed on real PCs. Setting the receiver to a lower rate also limits the sender.",
+    "The existing single incoming-transfer gate remains; overlapping requests may be rejected. Broader legacy clipboard policy and IPC lifecycle audit follow-ups remain."
   ]
 }

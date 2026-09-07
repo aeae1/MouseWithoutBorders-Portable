@@ -41,7 +41,6 @@ internal static class Clipboard
 
     internal const uint BIG_CLIPBOARD_DATA_TIMEOUT = 30000;
     private const uint MAX_CLIPBOARD_DATA_SIZE_CAN_BE_SENT_INSTANTLY_TCP = 1024 * 1024; // 1MB
-    private const uint MAX_CLIPBOARD_FILE_SIZE_CAN_BE_SENT = 100 * 1024 * 1024; // 100MB
     private const int TEXT_HEADER_SIZE = 12;
     private const int DATA_SIZE = 48;
     private const string TEXT_TYPE_SEP = "{4CFF57F7-BEDD-43d5-AE8F-27A61E886F2F}";
@@ -157,7 +156,7 @@ internal static class Clipboard
                     {
                         if (File.Exists(filePath) || Directory.Exists(filePath))
                         {
-                            if (File.Exists(filePath) && new FileInfo(filePath).Length <= MAX_CLIPBOARD_FILE_SIZE_CAN_BE_SENT)
+                            if (File.Exists(filePath))
                             {
                                 Logger.LogDebug("Clipboard contains: " + filePath);
                                 LastDragDropFile = filePath;
@@ -174,9 +173,9 @@ internal static class Clipboard
                                 }
                                 else
                                 {
-                                    LastDragDropFile = filePath + " - File too big (greater than 100MB), please drag and drop the file instead!";
+                                    LastDragDropFile = filePath;
                                     Common.SendClipboardBeat();
-                                    Logger.Log("Clipboard: File too big: " + filePath);
+                                    Logger.Log("Clipboard file became unavailable: " + filePath);
                                 }
 
                                 Common.SetToggleIcon(new int[Common.TOGGLE_ICONS_SIZE] { Common.ICON_ERROR, -1, Common.ICON_ERROR, -1 });
@@ -502,6 +501,8 @@ internal static class Clipboard
     {
         ReceivedDestinationFile destinationFile = null;
         Stream m = null;
+        FileTransferSession transfer = null;
+        string committedPath = null;
 
         void CloseDestinationFile()
         {
@@ -542,12 +543,12 @@ internal static class Clipboard
             bool success;
             if (Common.RunOnLogonDesktop || Common.RunOnScrSaverDesktop)
             {
-                File.Move(sourcePath, destinationPath, overwrite: true);
+                committedPath = FileTransferEngine.CommitKeepingBoth(sourcePath, destinationPath);
                 success = true;
             }
             else
             {
-                success = Launch.ImpersonateLoggedOnUserAndDoSomething(() => File.Move(sourcePath, destinationPath, overwrite: true));
+                success = Launch.ImpersonateLoggedOnUserAndDoSomething(() => committedPath = FileTransferEngine.CommitKeepingBoth(sourcePath, destinationPath));
             }
 
             if (!success)
@@ -564,6 +565,7 @@ internal static class Clipboard
 
         try
         {
+            if (!Setting.Values.ShareClipboard) return;
             byte[] header = new byte[1024];
             byte[] buf = new byte[Common.NETWORK_STREAM_BUF_SIZE];
             string fileName = null;
@@ -587,7 +589,7 @@ internal static class Clipboard
             Logger.LogDebug("Header: " + fileName);
             string[] headers = fileName.Split(Star);
 
-            if (headers.Length < 2 || !long.TryParse(headers[0], out long dataSize))
+            if (headers.Length < 2 || !long.TryParse(headers[0], out long dataSize) || dataSize < 0)
             {
                 Logger.Log(string.Format(
                     CultureInfo.CurrentCulture,
@@ -619,13 +621,17 @@ internal static class Clipboard
                 5000,
                 ToolTipIcon.Info,
                 Setting.Values.ShowClipNetStatus);
-            if (fileName.StartsWith("image", StringComparison.CurrentCultureIgnoreCase) ||
-                fileName.StartsWith("text", StringComparison.CurrentCultureIgnoreCase))
+            if (fileName.Equals("image", StringComparison.OrdinalIgnoreCase) ||
+                fileName.Equals("text", StringComparison.OrdinalIgnoreCase))
             {
                 m = new MemoryStream();
             }
             else
             {
+                if (!Setting.Values.TransferFile) return;
+                transfer = new FileTransferSession(fileName, dataSize, sending: false, s);
+                FileTransferForm.ShowTransfer(transfer);
+                s.ReceiveBufferSize = FileTransferEngine.ChunkSize;
                 // Create received files in the same context that the destination folder is created
                 // in. For per-user storage (the user's Desktop) that means as the logged-on user, so
                 // the file ends up owned by that user and inherits the folder's permissions. On the
@@ -750,32 +756,51 @@ internal static class Clipboard
                 ToolTipIcon.Info,
                 Setting.Values.ShowClipNetStatus);
 
-            do
+            if (destinationFile != null)
             {
-                rv = deStream.ReadEx(buf, 0, buf.Length);
-
-                if (rv > 0)
-                {
-                    rv = WriteReceivedData(m, buf, rv, dataSize, ref receivedCount);
-                }
-
-                if (Common.ToggleIcons == null)
-                {
-                    Common.SetToggleIcon(new int[Common.TOGGLE_ICONS_SIZE]
+                FileTransferEngine.CopyExactly(deStream, m, dataSize, transfer.Token, transfer.Report,
+                    (bytes, token) =>
                     {
-                                Common.ICON_SMALL_CLIPBOARD,
-                                -1, Common.ICON_SMALL_CLIPBOARD, -1,
+                        if (!Setting.Values.ShareClipboard || !Setting.Values.TransferFile)
+                            throw new OperationCanceledException("File sharing was turned off.");
+                        FileTransferBandwidth.Pace(bytes, token);
+                    });
+                // Drain the sender's padding before closing the encrypted stream.
+                int padding = (int)(Package.PACKAGE_SIZE - dataSize % Package.PACKAGE_SIZE);
+                byte[] tail = new byte[padding];
+                deStream.ReadExactly(tail);
+                transfer.Token.ThrowIfCancellationRequested();
+            }
+            else
+            {
+                do
+                {
+                    rv = deStream.ReadEx(buf, 0, buf.Length);
+
+                    if (rv > 0)
+                    {
+                        rv = WriteReceivedData(m, buf, rv, dataSize, ref receivedCount);
+                    }
+
+                    if (Common.ToggleIcons == null)
+                    {
+                        Common.SetToggleIcon(new int[Common.TOGGLE_ICONS_SIZE]
+                        {
+                                    Common.ICON_SMALL_CLIPBOARD,
+                                    -1, Common.ICON_SMALL_CLIPBOARD, -1,
+                        });
+                    }
+
+                    string text = string.Format(CultureInfo.CurrentCulture, "{0}KB received: {1}", m.Length / 1024, Path.GetFileName(fileName));
+
+                    Common.DoSomethingInUIThread(() =>
+                    {
+                        Common.MainForm.SetTrayIconText(text);
                     });
                 }
+                while (rv > 0);
 
-                string text = string.Format(CultureInfo.CurrentCulture, "{0}KB received: {1}", m.Length / 1024, Path.GetFileName(fileName));
-
-                Common.DoSomethingInUIThread(() =>
-                {
-                    Common.MainForm.SetTrayIconText(text);
-                });
             }
-            while (rv > 0);
 
             if (!HasExpectedReceivedDataLength(m, dataSize))
             {
@@ -792,7 +817,12 @@ internal static class Clipboard
                 long receivedLength = m.Length;
                 if (destinationFile != null)
                 {
+                    if (!Setting.Values.ShareClipboard || !Setting.Values.TransferFile)
+                        throw new OperationCanceledException("File sharing was turned off.");
+                    transfer.BeginCommit();
                     destinationFile.Complete();
+                    tempFile = committedPath;
+                    transfer.Complete();
                 }
                 else
                 {
@@ -808,7 +838,7 @@ internal static class Clipboard
 
                 PowerToysTelemetry.Log.WriteEvent(new MouseWithoutBorders.Telemetry.MouseWithoutBordersClipboardFileTransferEvent());
 
-                if (fileName.StartsWith("image", StringComparison.CurrentCultureIgnoreCase))
+                if (fileName.Equals("image", StringComparison.OrdinalIgnoreCase))
                 {
                     Clipboard.SetImage(Image.FromStream(m));
                     toolTipText = string.Format(
@@ -818,7 +848,7 @@ internal static class Clipboard
                         "image",
                         remoteMachine);
                 }
-                else if (fileName.StartsWith("text", StringComparison.CurrentCultureIgnoreCase))
+                else if (fileName.Equals("text", StringComparison.OrdinalIgnoreCase))
                 {
                     byte[] data = (m as MemoryStream).GetBuffer();
                     toolTipText = string.Format(
@@ -901,6 +931,7 @@ internal static class Clipboard
         }
         catch (Exception e)
         {
+            transfer?.Fail(e);
             if (e is IOException)
             {
                 string log = $"{nameof(ReceiveAndProcessClipboardData)}: Exception accessing the socket: {e.InnerException?.GetType()}/{e.Message}. (This is expected when the remote machine closes the connection during desktop switch or reconnection.)";
@@ -922,7 +953,12 @@ internal static class Clipboard
             return;
         }
 
-        s.Close();
+        finally
+        {
+            CloseDestinationFile();
+            transfer?.Dispose();
+            s.Close();
+        }
     }
 
     internal static bool ExecuteClipboardReceive(Action receiveAction, int waitMilliseconds)
