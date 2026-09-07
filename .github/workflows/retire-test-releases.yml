@@ -1,0 +1,45 @@
+name: Remove retired test downloads
+on:
+  push:
+    branches:
+      - maintenance/retire-old-test-releases
+permissions:
+  contents: write
+jobs:
+  cleanup:
+    if: github.repository == 'aeae1/MouseWithoutBorders-Portable'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate and remove only Test 11 and Test 12 releases
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const targets = [
+              { id: 382809560, tag: 'mwb-v0.1.0-test.12' },
+              { id: 382802361, tag: 'mwb-v0.1.0-test.11' }
+            ];
+            const validated = [];
+            for (const target of targets) {
+              let release;
+              try {
+                release = (await github.rest.repos.getRelease({
+                  ...context.repo, release_id: target.id
+                })).data;
+              } catch (error) {
+                if (error.status === 404) {
+                  core.info(target.tag + ' is already removed.');
+                  continue;
+                }
+                throw error;
+              }
+              if (release.tag_name !== target.tag || !release.prerelease || release.draft) {
+                throw new Error('Release identity/status mismatch; no cleanup performed.');
+              }
+              validated.push(target);
+            }
+            for (const target of validated) {
+              await github.rest.repos.deleteRelease({
+                ...context.repo, release_id: target.id
+              });
+              core.info('Removed release and assets: ' + target.tag + '; source tag retained.');
+            }
