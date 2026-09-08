@@ -27,8 +27,10 @@ internal partial class FrmMatrix
     {
         private bool updatingWidths, arranging;
         private int constrainedWidth = -1;
-        internal SettingsStack()
+        private readonly bool sideBySide;
+        internal SettingsStack(bool sideBySide = false)
         {
+            this.sideBySide = sideBySide;
             AutoSize = true; AutoSizeMode = AutoSizeMode.GrowAndShrink;
             Dock = DockStyle.Top; Margin = new Padding(0); Padding = new Padding(2);
         }
@@ -38,14 +40,21 @@ internal partial class FrmMatrix
             control.Margin = new Padding(3, 1, 3, 1);
             Controls.Add(control);
         }
+        private int ColumnWidth(int width) => Math.Max(1, (width - Padding.Horizontal) /
+            (sideBySide ? Math.Max(1, Controls.Count) : 1));
+        private int ChildWidth(Control child, int width) => Math.Max(40, ColumnWidth(width) - child.Margin.Horizontal);
         private int Measure(Control child, int width) => child.AutoSize ? child.GetPreferredSize(
-            new Size(Math.Max(40, width - Padding.Horizontal - child.Margin.Horizontal), 0)).Height : child.Height;
+            new Size(ChildWidth(child, width), 0)).Height : child.Height;
         public override Size GetPreferredSize(Size proposedSize)
         {
             int width = proposedSize.Width > 0 && proposedSize.Width < int.MaxValue ? proposedSize.Width : Width;
-            int height = Padding.Vertical;
-            foreach (Control child in Controls) height += Measure(child, width) + child.Margin.Vertical;
-            return new Size(width, height);
+            int height = 0;
+            foreach (Control child in Controls)
+            {
+                int rowHeight = Measure(child, width) + child.Margin.Vertical;
+                height = sideBySide ? Math.Max(height, rowHeight) : height + rowHeight;
+            }
+            return new Size(width, height + Padding.Vertical);
         }
         protected override void OnLayout(LayoutEventArgs e)
         {
@@ -53,16 +62,17 @@ internal partial class FrmMatrix
             arranging = true;
             try
             {
-                int y = Padding.Top;
+                int y = Padding.Top, x = Padding.Left, bottom = Padding.Top;
                 foreach (Control child in Controls)
                 {
-                    y += child.Margin.Top;
                     int height = Measure(child, ClientSize.Width);
-                    child.SetBounds(Padding.Left + child.Margin.Left, y,
-                        Math.Max(40, ClientSize.Width - Padding.Horizontal - child.Margin.Horizontal), height);
-                    y += height + child.Margin.Bottom;
+                    child.SetBounds(x + child.Margin.Left, y + child.Margin.Top,
+                        ChildWidth(child, ClientSize.Width), height);
+                    bottom = Math.Max(bottom, y + child.Margin.Vertical + height);
+                    if (sideBySide) x += ColumnWidth(ClientSize.Width);
+                    else y = bottom;
                 }
-                int needed = y + Padding.Bottom;
+                int needed = bottom + Padding.Bottom;
                 if (Height != needed) Height = needed;
             }
             finally { arranging = false; }
@@ -88,7 +98,7 @@ internal partial class FrmMatrix
                 foreach (Control child in Controls)
                     if (child is Label or CheckBox or FlowLayoutPanel)
                     {
-                        var maximum = new Size(Math.Max(40, ClientSize.Width - Padding.Horizontal - child.Margin.Horizontal), 0);
+                        var maximum = new Size(ChildWidth(child, ClientSize.Width), 0);
                         if (child.MaximumSize != maximum) child.MaximumSize = maximum;
                     }
             }
@@ -219,9 +229,8 @@ internal partial class FrmMatrix
                 }
             };
 
-            var columns = new TableLayoutPanel { AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, ColumnCount = 2, RowCount = 1, Dock = DockStyle.Top };
-            columns.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50)); columns.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
-            columns.RowStyles.Add(new RowStyle(SizeType.AutoSize)); columns.Controls.Add(mouse, 0, 0); columns.Controls.Add(sharing, 1, 0);
+            var columns = new SettingsStack(sideBySide: true) { Padding = new Padding(0) };
+            columns.Add(mouse); columns.Add(sharing);
 
             var shortcuts = new SettingsStack();
             AddOption(shortcuts, checkBoxEnableKeyboardShortcuts, "Off", "Assignments below are preserved while shortcuts are disabled.");
