@@ -1,6 +1,7 @@
 using System.Net.Sockets;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using MouseWithoutBorders.Core;
+using MouseWithoutBorders.Class;
 
 namespace MouseWithoutBorders.UnitTests.Core;
 
