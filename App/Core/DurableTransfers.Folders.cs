@@ -16,11 +16,18 @@ internal static partial class DurableTransfers
         GroupId = j.GroupId, RelativePath = j.RelativePath, IsDirectory = j.IsDirectory, Skipped = j.Skipped,
         Error = j.Skipped ? j.Error : "", ModifiedUtc = j.ModifiedUtc, Protocol = 2 };
 
-    internal static void CheckPeer(string peer)
+    internal static void CheckPeer(string peer, bool requireStartOffer = false, CancellationToken token = default)
     {
-        var reply = Request(peer, new TransferMessage { Op = "Hello", Version = Application.ProductVersion });
+        var reply = Request(peer, new TransferMessage { Op = "Hello", Version = Application.ProductVersion }, token);
         if (reply.Protocol != 2 || reply.Op != "Ok") throw new InvalidDataException("File transfer is not supported by this PC's version. Update both PCs to a compatible release.");
+        ValidateStartSupport(reply, requireStartOffer);
         Logger.Log($"Transfers: {peer} supports protocol 2; app {reply.Version ?? "unknown"}.");
+    }
+
+    internal static void ValidateStartSupport(TransferMessage reply, bool required)
+    {
+        if (required && !reply.StartOfferSupported)
+            throw new InvalidDataException("Update both PCs to RC12 or newer to start this file transfer.");
     }
 
     private static void EnsureDeclared(TransferJob job, CancellationToken token)
@@ -216,7 +223,9 @@ internal static partial class DurableTransfers
     internal static string DiagnosticSummary()
     {
         var jobs = Jobs;
-        return $"Transfer protocol: 2; {jobs.Count(j => j.Running)} active, {jobs.Count(j => !j.Terminal && !j.Running)} unfinished, {jobs.Count(j => j.CleanupPending || j.PendingAction == "cancel")} cleanup/cancellation pending.\r\n"
+        var prep = Preparations.Where(p => !p.Hidden).ToArray();
+        return $"Transfer protocol: 2; {prep.Count(p => !p.Finished && !p.Cancelled)} preparing, {jobs.Count(j => j.Running)} active, {jobs.Count(j => !j.Terminal && !j.Running)} unfinished, {jobs.Count(j => j.CleanupPending || j.PendingAction == "cancel")} cleanup/cancellation pending.\r\n"
+            + string.Join("\r\n", prep.TakeLast(10).Select(p => $"Preparation {p.Offer} {(p.Sending ? "to" : "from")} {p.Peer}: {p.Stage}; finished={p.Finished}; cancelled={p.Cancelled}; {p.Error}")) + "\r\n"
             + string.Join("\r\n", jobs.Where(j => !j.Hidden).TakeLast(20).Select(j => $"{j.Id[..8]} {j.Peer}: {j.Name} — {j.State}, {j.Bytes}/{j.Length} bytes; pending={j.PendingAction ?? "none"}; {j.Error} {j.Detail}"));
     }
 }

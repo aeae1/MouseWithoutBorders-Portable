@@ -91,11 +91,30 @@ internal static class QueuedFileTransfer
         lock (Sync) return Offers.TryGetValue(id, out var offer) ? offer.Files.Select(f => Path.GetFileName(f.Path)).ToArray() : Array.Empty<string>();
     }
 
+    // An authenticated transfer connection supplies the peer; never accept source paths from it.
+    internal static string[] TakeDurableOffer(int id, DateTime? now = null)
+    {
+        CheckPolicy();
+        lock (Sync)
+        {
+            if (id <= 0 || !Offers.Remove(id, out var offer))
+                throw new IOException("The selected files are no longer available for this drag. Select them and drag again.");
+            if ((now ?? DateTime.UtcNow) - offer.Created > TimeSpan.FromMinutes(10))
+                throw new IOException("This file selection expired. Select the files and drag again.");
+            return offer.Files.Select(f => f.Path).ToArray();
+        }
+    }
+
     internal static void SendDurableOffer(int id, ID peer, string peerName)
     {
-        if (!Common.IsConnectedTo(peer) || MachineStuff.MachinePool.ResolveID(peerName) != peer) return;
+        if (!Common.IsConnectedTo(peer) || MachineStuff.MachinePool.ResolveID(peerName) != peer)
+        { Logger.Log($"Transfers: legacy start {id} rejected: peer connection or identity unavailable."); return; }
         OfferData offer;
-        lock (Sync) { if (!Offers.Remove(id, out offer) || DateTime.UtcNow - offer.Created > TimeSpan.FromMinutes(10)) return; }
+        lock (Sync)
+        {
+            if (!Offers.Remove(id, out offer) || DateTime.UtcNow - offer.Created > TimeSpan.FromMinutes(10))
+            { Logger.Log($"Transfers: legacy start {id} rejected: selection missing or expired."); return; }
+        }
         DragDrop.OfferAccepted(id);
         _ = Task.Run(() =>
         {

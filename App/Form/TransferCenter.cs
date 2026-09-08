@@ -23,6 +23,7 @@ internal sealed class TransferCenter : System.Windows.Forms.Form
     private bool closingCancelled;
     private bool allowClose;
     private int page;
+    private readonly Label overall = new() { Dock = DockStyle.Top, AutoEllipsis = true, Padding = new Padding(10, 0, 10, 0) };
     private readonly Label preparation = new() { Dock = DockStyle.Top, AutoSize = true, Padding = new Padding(10, 8, 10, 8) };
     private readonly Button previous = new() { Text = "Previous", AutoSize = true };
     private readonly Button next = new() { Text = "Next", AutoSize = true };
@@ -44,7 +45,7 @@ internal sealed class TransferCenter : System.Windows.Forms.Form
         footer.Controls.Add(next); footer.Controls.Add(previous);
         previous.Click += (_, _) => { page = Math.Max(0, page - 1); RefreshRows(); };
         next.Click += (_, _) => { page++; RefreshRows(); };
-        Controls.Add(list); Controls.Add(preparation); Controls.Add(footer);
+        Controls.Add(list); Controls.Add(overall); Controls.Add(preparation); Controls.Add(footer);
         list.SizeChanged += (_, _) => { foreach (var row in rows.Values.Cast<Control>().Concat(groups.Values)) row.Width = Math.Max(100, list.ClientSize.Width - SystemInformation.VerticalScrollBarWidth - 20); };
         timer.Tick += (_, _) =>
         {
@@ -89,6 +90,8 @@ internal sealed class TransferCenter : System.Windows.Forms.Form
         if (preparation.Text != preparing) preparation.Text = preparing;
         preparation.Visible = preparing.Length != 0;
         var jobs = DurableTransfers.Jobs.Where(j => !j.Hidden).ToArray();
+        overall.Visible = jobs.Length > 1; overall.Height = Font.Height + Units(this, 10);
+        string totals = ProgressSummary(jobs); if (overall.Text != totals) overall.Text = totals;
         var roots = jobs.GroupBy(j => j.GroupId ?? j.Id).ToArray();
         page = Math.Clamp(page, 0, Math.Max(0, (roots.Length - 1) / 50));
         previous.Visible = next.Visible = roots.Length > 50; previous.Enabled = page > 0; next.Enabled = (page + 1) * 50 < roots.Length;
@@ -158,10 +161,33 @@ internal sealed class TransferCenter : System.Windows.Forms.Form
         base.Dispose(disposing);
     }
 
+    internal static string ProgressSummary(TransferJob[] jobs)
+    {
+        var files = jobs.Where(j => !j.IsDirectory).ToArray();
+        decimal total = files.Sum(j => (decimal)j.Length);
+        decimal done = files.Sum(j => (decimal)Math.Clamp(j.Bytes, 0, j.Length));
+        string text = $"{SizeText(done)} / {SizeText(total)}";
+        if (jobs.Length == 0) return text;
+        if (jobs.All(j => j.State == "Completed")) return text + " · Completed";
+        double speed = files.Where(j => j.Running && j.State == "Transferring" && double.IsFinite(j.Speed) && j.Speed > 0).Sum(j => j.Speed);
+        text += $" · {SizeText((decimal)Math.Min(speed, (double)decimal.MaxValue / 2))}/s";
+        if (jobs.Any(j => j.State is "Paused" or "Error" or "Skipped" or "Cancelled" || j.PendingAction != null))
+            return text + " · ETA unavailable";
+        if (total == done) return text + " · Finishing / verifying";
+        if (speed <= 0) return text + " · Estimating time…";
+        double seconds = (double)(total - done) / speed;
+        return text + (seconds >= 3600 ? $" · ETA ~{Math.Ceiling(seconds / 3600):0} hr" : seconds >= 60
+            ? $" · ETA ~{Math.Ceiling(seconds / 60):0} min" : $" · ETA ~{Math.Max(1, Math.Ceiling(seconds)):0} sec");
+    }
+
+    private static string SizeText(decimal bytes) => bytes >= 1024m * 1024 * 1024 ? $"{bytes / (1024m * 1024 * 1024):0.0} GB"
+        : bytes >= 1024 * 1024 ? $"{bytes / (1024m * 1024):0.0} MB" : $"{bytes / 1024m:0.0} KB";
+
     private sealed class GroupRow : Panel
     {
         private readonly string id;
         private readonly Button title = new() { TextAlign = ContentAlignment.MiddleLeft, FlatStyle = FlatStyle.Flat, AutoEllipsis = true };
+        private readonly Label totals = new() { AutoEllipsis = true, TextAlign = ContentAlignment.MiddleLeft };
         private readonly ProgressBar progress = new() { Maximum = 1000 };
         private readonly Button pause = new() { Text = "Pause" };
         private readonly Button cancel = new() { Text = "Cancel" };
@@ -175,7 +201,7 @@ internal sealed class TransferCenter : System.Windows.Forms.Form
         {
             id = groupId; Margin = new Padding(8, 3, 8, 3); DoubleBuffered = true;
             title.FlatAppearance.BorderSize = 0;
-            Controls.AddRange(new Control[] { title, progress, pause, cancel, previous, next, Items });
+            Controls.AddRange(new Control[] { title, totals, progress, pause, cancel, previous, next, Items });
             title.Click += (_, _) => { Expanded = !Expanded; changed(); };
             previous.Click += (_, _) => { page = Math.Max(0, page - 1); changed(); };
             next.Click += (_, _) => { page++; changed(); };
@@ -196,7 +222,9 @@ internal sealed class TransferCenter : System.Windows.Forms.Form
         {
             int gap = Units(this, 6), h = ButtonHeight(this), pw = ButtonWidth(pause, "Resume"), cw = ButtonWidth(cancel, "Cancel");
             title.SetBounds(0, 0, Width, h);
-            int y = h + gap;
+            int line = Font.Height + Units(this, 2);
+            totals.SetBounds(0, h, Width, line);
+            int y = h + line + Units(this, 2);
             cancel.SetBounds(Width - cw, y, cw, h);
             pause.SetBounds(cancel.Left - gap - pw, y, pw, h);
             int barHeight = Math.Max(Units(this, 10), Font.Height / 2);
@@ -229,6 +257,8 @@ internal sealed class TransferCenter : System.Windows.Forms.Form
             decimal total = jobs.Sum(j => (decimal)j.Length), done = jobs.Sum(j => (decimal)j.Bytes);
             int value = total == 0 ? complete * 1000 / jobs.Length : (int)(done * 1000 / total);
             progress.Value = Math.Clamp(value, 0, complete == jobs.Length ? 1000 : 999);
+            string metrics = ProgressSummary(jobs);
+            if (totals.Text != metrics) { totals.Text = metrics; tips.SetToolTip(totals, metrics + "\nTime remaining is an estimate based on current copying speed; verification can take longer."); }
             var unfinished = jobs.Where(j => !j.Terminal).ToArray();
             pause.Text = unfinished.Length > 0 && unfinished.All(j => j.State is "Paused" or "Error") ? "Resume" : "Pause";
             pause.Enabled = cancel.Enabled = unfinished.Length != 0;

@@ -1099,7 +1099,7 @@ internal static class Clipboard
         return handShaken;
     }
 
-    internal static TcpClient ConnectToRemoteClipboardSocket(string remoteMachine)
+    internal static TcpClient ConnectToRemoteClipboardSocket(string remoteMachine, System.Threading.CancellationToken cancellation = default)
     {
         TcpClient clipboardTcpClient;
         clipboardTcpClient = new TcpClient(AddressFamily.InterNetworkV6);
@@ -1107,7 +1107,6 @@ internal static class Clipboard
 
         try
         {
-            using var connectTimeout = new System.Threading.CancellationTokenSource(TimeSpan.FromSeconds(10));
             SocketStuff sk = Common.Sk;
 
             if (sk != null)
@@ -1117,14 +1116,11 @@ internal static class Clipboard
                 System.Net.IPAddress ip = Common.GetConnectedClientSocketIPAddressFor(remoteMachine);
                 Logger.LogDebug($"{nameof(ConnectToRemoteClipboardSocket)}Connecting to {remoteMachine}:{ip}:{sk.TcpPort}...");
 
-                if (ip != null)
+                ConnectWithTimeout(token =>
                 {
-                    clipboardTcpClient.ConnectAsync(ip, sk.TcpPort, connectTimeout.Token).GetAwaiter().GetResult();
-                }
-                else
-                {
-                    clipboardTcpClient.ConnectAsync(remoteMachine, sk.TcpPort, connectTimeout.Token).GetAwaiter().GetResult();
-                }
+                    if (ip != null) clipboardTcpClient.ConnectAsync(ip, sk.TcpPort, token).GetAwaiter().GetResult();
+                    else clipboardTcpClient.ConnectAsync(remoteMachine, sk.TcpPort, token).GetAwaiter().GetResult();
+                }, cancellation);
 
                 Logger.LogDebug($"Connected from {clipboardTcpClient.Client.LocalEndPoint}. Getting data...");
                 return clipboardTcpClient;
@@ -1138,6 +1134,18 @@ internal static class Clipboard
         {
             clipboardTcpClient.Dispose();
             throw;
+        }
+    }
+
+    internal static void ConnectWithTimeout(Action<System.Threading.CancellationToken> connect,
+        System.Threading.CancellationToken cancellation = default, TimeSpan? timeout = null)
+    {
+        using var deadline = System.Threading.CancellationTokenSource.CreateLinkedTokenSource(cancellation);
+        deadline.CancelAfter(timeout ?? TimeSpan.FromSeconds(10));
+        try { cancellation.ThrowIfCancellationRequested(); connect(deadline.Token); }
+        catch (OperationCanceledException error) when (deadline.IsCancellationRequested && !cancellation.IsCancellationRequested)
+        {
+            throw new IOException("The file-transfer connection timed out while connecting to the other PC.", error);
         }
     }
 

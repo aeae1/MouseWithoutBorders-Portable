@@ -200,3 +200,7 @@ See [RC6_TRANSFERS.md](RC6_TRANSFERS.md) for the current fork protocol, bounded 
 `DefaultReceivingFolder` defaults to an empty string (resolve Desktop/MouseWithoutBorders on this PC at drop time). `AutoCloseTransferWindow` defaults to true. Both live in the existing preferences document and survive self-install. These are local preferences, not peer-synchronized transfer commands. Choosing a folder validates a local absolute path, directory identities, and write access using a temporary probe that deletes on close. A custom folder that disappears fails clearly; never silently redirect or recreate it. Existing transfers retain their recorded destination. Explorer targets take precedence. The new folder preference applies to durable drag/drop, not legacy clipboard file copying.
 
 Automatic closing is checked live by TransferCenter after the existing completion/cleanup predicate. Turning it off keeps finished rows visible; an explicit close still confirms cancellation and waits for cleanup. Errors remain visible in either mode.
+
+## RC12 transfer startup and timeout handling
+
+See [RC12_TRANSFERS.md](RC12_TRANSFERS.md) for acknowledged startup, bounded preparation, timeout classification, aggregate progress, evidence limits and two-PC tests. Existing protocol-2 job data is retained, but RC12 new drops require the StartOffer capability on the other PC.

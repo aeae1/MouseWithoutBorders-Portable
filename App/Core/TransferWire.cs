@@ -21,6 +21,7 @@ internal sealed class TransferMessage
     public int Protocol { get; set; }
     public bool Create { get; set; }
     public string Version { get; set; }
+    public bool StartOfferSupported { get; set; }
     public TransferGroup[] Groups { get; set; }
     public string Code { get; set; }
     public string Op { get; set; }

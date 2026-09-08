@@ -1,25 +1,25 @@
 {
-  "tag": "mwb-v1.0.1-rc.11",
-  "title": "Mouse Without Borders Portable 1.0.1-rc.11",
+  "tag": "mwb-v1.0.1-rc.12",
+  "title": "Mouse Without Borders Portable 1.0.1-rc.12",
   "prerelease": true,
-  "summary": "Make the settings divider visible and correct stale row heights that can leave empty scrolling space.",
+  "summary": "Acknowledge drag/drop startup, retry connection timeouts correctly, and show overall transfer size, speed and ETA.",
   "changes": [
-    "Use a solid grey separator above keyboard shortcuts instead of a two-pixel 3D border.",
-    "Apply each row’s current width before measuring its wrapped height, and position subsequent rows from the actual resulting bounds.",
-    "Add rendered-pixel checks and real-settings-form layout coverage at scaled geometry/text sizes, after tab switches and narrow/wide window transitions. Record a CI rendering for visual inspection.",
-    "Preserve RC10’s multiline mapping editor, clearer help, saved preferences, and compact settings layout."
+    "Start new drag/drop transfers over the acknowledged transfer connection; missing or expired selections return an error instead of silently disappearing.",
+    "Treat the private 10-second connection timeout as an I/O interruption eligible for the existing bounded retries. Preserve explicit user cancellation.",
+    "Show total bytes, combined active copy speed and estimated remaining time in folder groups and the overall list. Suppress misleading ETA when work is paused, cancelled or needs attention.",
+    "Record preparation stages and retry reasons in the bounded Mini Log. Preserve the RC11 settings layout."
   ],
   "testing": [
-    "Open Other Options and confirm a visible grey line separates keyboard shortcuts from the options above.",
-    "Switch among all settings tabs several times. Other Options should fit at the usual size without a scrollbar through empty space.",
-    "Check at your normal Windows display scaling; if a genuinely small window requires scrolling, it should stop at the final setting.",
-    "Confirm the IP Mappings box still shows multiple lines and your saved preferences remain intact."
+    "Update BOTH PCs to RC12. Drag the same multi-file selection several times into disposable destinations; confirm both transfer windows appear and every file arrives.",
+    "Copy a folder with many small files and a few large files. Check folder and overall size/speed/ETA, and confirm the completed file count and contents.",
+    "Cancel while Preparing, then start another transfer. Confirm the cancelled selection does not start later.",
+    "Temporarily disconnect during a disposable transfer; reconnect and check retries or an explicit error/paused state. Confirm Retry resumes and existing files are preserved.",
+    "Recheck pause/resume, duplicate filenames, mouse/keyboard sharing, clipboard, lock/unlock and sleep/wake. Capture both Mini Logs if any file needs attention."
   ],
   "known_limitations": [
-    "Real Windows Explorer, physical display scaling, startup/uninstall, and two-PC behavior still need the manual checks above; automated tests cannot replace them.",
-    "Receiving-folder and automatic-close preferences belong to each PC. Changing the folder affects new durable drag/drop transfers only; existing jobs and legacy clipboard file copying keep their prior destinations.",
-    "The receiving folder must be an accessible ordinary local directory. Linked directories and unavailable drives are rejected. No overwrite/merge, protocol, concurrency, speed, service, or automatic-update behavior is added.",
-    "Use the same RC on both PCs for consistent Settings. RC6/RC7 protocol-2 transfers remain compatible; older EXEs may discard the new preference fields if they rewrite the same preferences file.",
-    "Full-speed Wi-Fi transfers can still cause mouse lag. Offline temporary data can only be cleaned when the peer reconnects."
+    "This is a candidate fix. Automated checks do not confirm the intermittent real-PC startup problem is resolved.",
+    "RC12 requires the other PC to advertise acknowledged startup for new incoming drags; update both PCs. Existing protocol-2 file jobs retain their format.",
+    "ETA estimates copying at current speed and does not predict verification time. Short files may finish before a speed estimate settles.",
+    "Four outgoing transfers remain the limit. Full-speed Wi-Fi transfers can still cause mouse lag."
   ]
 }

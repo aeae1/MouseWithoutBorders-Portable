@@ -341,12 +341,7 @@ internal static class DragDrop
                         try
                         {
                             preparation.Token.ThrowIfCancellationRequested();
-                            DurableTransfers.CheckPeer(peer);
-                            preparation.Token.ThrowIfCancellationRequested();
-                            DurableTransfers.RememberDrop(offer, peer, folder);
-                            Common.SkSend(new DATA { Type = PackageType.ClipboardAsk, Des = sourceId,
-                                MachineName = Common.MachineName, PostAction = ClipboardPostAction.DurableFiles,
-                                Machine2 = (ID)offer }, null, false);
+                            DurableTransfers.RequestPreparedOffer(preparation, folder);
                         }
                         catch (Exception error) { preparation.Fail(error); Logger.Log("Transfer unavailable: " + error.Message); Common.ShowToolTip(error.Message, 5000, ToolTipIcon.Error); }
                     });

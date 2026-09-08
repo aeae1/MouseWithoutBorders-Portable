@@ -15,9 +15,9 @@
   <a href="https://github.com/aeae1/MouseWithoutBorders-Portable/actions/workflows/build.yml">Windows build status</a>
 </p>
 
-## New file transfers — available in RC11
+## New file transfers — available in RC12
 
-The new transfer system is a major upgrade over the original file-copy feature. **[Download RC11](https://github.com/aeae1/MouseWithoutBorders-Portable/releases/tag/mwb-v1.0.1-rc.11)** and use it on both PCs. This remains a release candidate while real-PC testing continues.
+The new transfer system is a major upgrade over the original file-copy feature. **[Download RC12](https://github.com/aeae1/MouseWithoutBorders-Portable/releases/tag/mwb-v1.0.1-rc.12)** and use it on both PCs. This remains a release candidate while real-PC testing continues.
 
 - **Copy files and folders between PCs:** drop into an open Explorer folder, or use the desktop MouseWithoutBorders folder, which opens immediately.
 - **One compact transfer window:** immediate “Preparing transfer…” feedback, expandable folder groups, a progress bar for each file, and up to four outgoing transfers at once per PC.
@@ -25,11 +25,12 @@ The new transfer system is a major upgrade over the original file-copy feature. 
 - **Recover interrupted work:** checked partial data can resume after a disconnect or restart. Recovered transfers stay paused until you decide what to do.
 - **Protect existing files:** duplicate names keep separate copies; incoming folders never merge with or overwrite existing folders. Cancellation removes incomplete data and keeps completed files.
 - **Your receiving folder:** choose a default destination for new drag/drop transfers on each PC, or keep Desktop \ MouseWithoutBorders. Drops into an Explorer folder still go there.
-- **Clearer feedback:** copy speed, estimated copy time, verification stages, disk-space errors, and concise details in Mini Log.
+- **Clearer feedback:** per-file and overall copy size/speed/estimated time, verification stages, disk-space errors, and preparation/retry details in Mini Log.
+- **Acknowledged startup:** new drag/drop requests receive success or an error. Connection timeouts use the existing bounded retries; update both PCs to RC12 for this start-up improvement.
 
 Minimize to keep copying. Closing unfinished work asks whether to cancel it. Completed or cancelled lists close after local cleanup by default; you can turn automatic closing off in Settings. Full-speed copying can still cause mouse lag on busy Wi-Fi. The new controls apply to **drag/drop**; clipboard file copy/paste retains its separate transport.
 
-[RC11 settings and test guide](docs/RC11_SETTINGS.md) · [Folder-copy behavior and recovery guide](docs/RC6_TRANSFERS.md)
+[RC12 transfer fixes and test guide](docs/RC12_TRANSFERS.md) · [Settings guide](docs/RC11_SETTINGS.md) · [Folder-copy behavior and recovery guide](docs/RC6_TRANSFERS.md)
 
 
 > [!IMPORTANT]

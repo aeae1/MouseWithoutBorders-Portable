@@ -63,14 +63,17 @@ internal static partial class DurableTransfers
         }
     }
 
-    internal static void AddOffer(int offer, string peer, string[] paths)
+    internal static void AddOffer(int offer, string peer, string[] paths, CancellationToken requestToken = default)
     {
         using var preparation = BeginPreparation(offer, peer, true);
+        using var cancellation = CancellationTokenSource.CreateLinkedTokenSource(preparation.Token, requestToken);
+        var token = cancellation.Token;
         (TransferJob[] Jobs, TransferGroup[] Groups) manifest;
         try
         {
-            Initialize(); preparation.Token.ThrowIfCancellationRequested(); CheckPeer(peer);
-            manifest = TransferFolders.Scan(paths, peer, offer, preparation.Token);
+            Initialize(); token.ThrowIfCancellationRequested(); CheckPeer(peer, token: token);
+            preparation.Stage = "Scanning the selected files";
+            manifest = TransferFolders.Scan(paths, peer, offer, token);
         }
         catch (Exception error) { preparation.Fail(error); throw; }
         var added = manifest.Jobs;
@@ -78,7 +81,7 @@ internal static partial class DurableTransfers
         {
             lock (Sync)
             {
-                preparation.Token.ThrowIfCancellationRequested();
+                token.ThrowIfCancellationRequested();
                 if (stopping || journal.Jobs.Count(j => !j.Terminal) + added.Length > TransferFolders.MaxEntries || journal.Jobs.Count + added.Length > 8192)
                     throw new IOException("Too many unfinished transfers. Finish or cancel some items first.");
                 foreach (var j in added) { j.Protocol = 2; j.Declaring = true; if (j.Skipped) j.State = "Skipped"; }
@@ -96,7 +99,8 @@ internal static partial class DurableTransfers
         TransferCenter.ShowCenter();
         try
         {
-            Declare(peer, offer, added, preparation.Token, create: true, manifest.Groups);
+            preparation.Stage = "Waiting for the receiver to accept the file list";
+            Declare(peer, offer, added, token, create: true, manifest.Groups);
             lock (Sync)
             {
                 foreach (var job in added) { job.Declared = true; if (job.State == "Preparing") job.State = job.Skipped ? "Skipped" : "Waiting"; }
@@ -104,7 +108,7 @@ internal static partial class DurableTransfers
             }
             Logger.Log($"Transfers: queued {added.Length} items in {manifest.Groups.Length} folders for {peer}.");
         }
-        catch (Exception error) { FailMany(added, error); }
+        catch (Exception error) { FailMany(added, error); preparation.Fail(error); throw; }
         finally { lock (Sync) { foreach (var job in added) job.Declaring = false; } }
     }
 
@@ -295,7 +299,7 @@ internal static partial class DurableTransfers
                 try { SendAttempt(job, token); return; }
                 catch (Exception error) when ((error is IOException or SocketException) && error is not InvalidDataException && attempt < 2 && !token.IsCancellationRequested)
                 {
-                    job.Detail = $"Connection interrupted — retry {attempt + 1}/2"; TransferEvent(job, job.Detail);
+                    job.Detail = $"Connection interrupted — retry {attempt + 1}/2"; TransferEvent(job, job.Detail + ": " + error.Message);
                     if (token.WaitHandle.WaitOne(TimeSpan.FromSeconds(1 << attempt))) token.ThrowIfCancellationRequested();
                 }
             }
@@ -450,7 +454,7 @@ internal static partial class DurableTransfers
         internal Connection(string peer, CancellationToken token)
         {
             token.ThrowIfCancellationRequested();
-            client = Clipboard.ConnectToRemoteClipboardSocket(peer);
+            client = Clipboard.ConnectToRemoteClipboardSocket(peer, token);
             try
             {
                 session = new FileTransferSession("Transfer connection", 0, true, client.Client);
@@ -476,8 +480,13 @@ internal static partial class DurableTransfers
             Initialize(); CheckPolicy(false);
             var message = TransferWire.Read(input);
             if (message.Op == "Hello")
-            { TransferWire.Write(output, new TransferMessage { Op = "Ok", Version = Application.ProductVersion }); return; }
+            { TransferWire.Write(output, new TransferMessage { Op = "Ok", Version = Application.ProductVersion, StartOfferSupported = true }); return; }
             if (message.Protocol != 2) throw new InvalidDataException("File transfer versions are incompatible. Update both PCs.");
+            if (message.Op == "StartOffer")
+            {
+                PrepareRequestedOffer(peer, message.Offer, output, session.Token);
+                TransferWire.Write(output, new TransferMessage { Op = "Ok" }); return;
+            }
             if (message.Op == "Preview")
             {
                 TransferWire.Write(output, new TransferMessage { Op = "Ok", Names = QueuedFileTransfer.Preview(message.Offer) }); return;

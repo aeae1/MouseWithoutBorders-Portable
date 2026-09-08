@@ -12,6 +12,44 @@ namespace MouseWithoutBorders.Core;
 internal static partial class DurableTransfers
 {
     private static readonly List<Preparation> preparations = new();
+
+    internal static void RequestPreparedOffer(Preparation preparation, string folder)
+    {
+        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(preparation.Token);
+        timeout.CancelAfter(TimeSpan.FromMinutes(2));
+        preparation.Stage = "Checking transfer support";
+        CheckPeer(preparation.Peer, requireStartOffer: true, token: timeout.Token);
+        RememberDrop(preparation.Offer, preparation.Peer, folder);
+        preparation.Stage = "Waiting for the sender to prepare the file list";
+        Logger.Log($"Transfers: requesting start {preparation.Offer} from {preparation.Peer}.");
+        RequireOk(Request(preparation.Peer, new TransferMessage { Op = "StartOffer", Offer = preparation.Offer }, timeout.Token));
+        Logger.Log($"Transfers: start {preparation.Offer} acknowledged by {preparation.Peer}.");
+    }
+
+    // Keep the start connection alive until the manifest is accepted, so source-side
+    // preparation errors reach the receiver instead of leaving an unacknowledged drop.
+    internal static void PrepareRequestedOffer(string peer, int offer, Stream output, CancellationToken token)
+    {
+        CheckPolicy(true);
+        using var preparation = BeginPreparation(offer, peer, true);
+        using var cancellation = CancellationTokenSource.CreateLinkedTokenSource(preparation.Token, token);
+        cancellation.CancelAfter(TimeSpan.FromMinutes(2));
+        try
+        {
+            cancellation.Token.ThrowIfCancellationRequested();
+            preparation.Stage = "Reading the selected files";
+            Logger.Log($"Transfers: received start {offer} from {peer}.");
+            var paths = QueuedFileTransfer.TakeDurableOffer(offer);
+            DragDrop.OfferAccepted(offer);
+            _ = Work(output, () =>
+            {
+                AddOffer(offer, peer, paths, cancellation.Token);
+                return true;
+            }, cancellation.Token, cancellation);
+        }
+        catch (Exception error) { preparation.Fail(error); throw; }
+    }
+
     internal static Preparation[] Preparations { get { lock (Sync) return preparations.ToArray(); } }
     internal static bool Preparing => Preparations.Any(p => !p.Finished && !p.Cancelled);
     internal static bool PreparationCleanupFinished => Preparations.All(p => !p.Sending || p.Finished);
@@ -29,6 +67,7 @@ internal static partial class DurableTransfers
             {
                 if (preparations.Count >= 256) throw new IOException("Too many transfer preparations. Please wait for the current work to finish.");
                 result = new Preparation(offer, peer, sending); preparations.Add(result);
+                Logger.Log($"Transfers: preparing {offer} {(sending ? "to" : "from")} {peer}.");
             }
         }
         TransferCenter.ShowCenter();
@@ -119,12 +158,25 @@ internal static partial class DurableTransfers
         internal CancellationToken Token { get; }
         internal bool Finished, Cancelled, Hidden;
         internal string Error = "";
+        internal string Stage = "Starting";
         internal Preparation(int offer, string peer, bool sending)
         { Offer = offer; Peer = peer; Sending = sending; Token = cancellation.Token; }
         internal void Cancel() { if (!disposed) cancellation.Cancel(); }
         internal void Fail(Exception error)
         {
-            lock (Sync) { Error = Cancelled ? "" : "Could not prepare transfer: " + error.Message; Finished = true; }
+            lock (Sync)
+            {
+                // A manifest may already have arrived when its final acknowledgement
+                // is lost. Do not turn that accepted preparation back into an error.
+                if (disposed) return;
+                Error = Cancelled ? "" : "Could not prepare transfer: " + error.Message; Finished = true;
+                if (!Sending && journal != null)
+                {
+                    foreach (var drop in journal.Drops.Where(d => d.Offer == Offer && SamePeer(d.Peer, Peer))) drop.Accepted = true;
+                    try { Save(); } catch (Exception saveError) { Logger.Log("Could not save failed preparation: " + saveError.Message); }
+                }
+                Logger.Log($"Transfers: preparation {Offer} {(Sending ? "to" : "from")} {Peer} failed during {Stage}: {error.Message}");
+            }
         }
         public void Dispose()
         {

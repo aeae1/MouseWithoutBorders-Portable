@@ -171,3 +171,7 @@ RC7 fixes installation over a running copy and automatic relaunch, keeps the tra
 ## RC11 divider and scroll range
 
 [RC11_SETTINGS.md](RC11_SETTINGS.md) documents the visible separator, row-measurement fix, real-form rendering checks, and manual validation.
+
+## RC12 transfer startup and timeout handling
+
+See [RC12_TRANSFERS.md](RC12_TRANSFERS.md) for acknowledged startup, bounded preparation, timeout classification, aggregate progress, evidence limits and two-PC tests. Existing protocol-2 job data is retained, but RC12 new drops require the StartOffer capability on the other PC.
