@@ -4,7 +4,8 @@ RC9 keeps RC8's receiving-folder and automatic-transfer-window preferences,
 Installation controls, and saved settings. It changes settings presentation only.
 
 Other Options removes the separate help/default line and nested table for each
-checkbox, and groups keyboard shortcuts into compact rows. Width constraints are
+checkbox, and groups keyboard shortcuts into compact rows. Sections measure their
+rows directly rather than reserving space through nested autosizing tables. Width constraints are
 updated when a section changes size, rather than during its layout pass. This
 avoids repeatedly invalidating preferred-size measurements when a tab is shown.
 Descriptions and defaults are available by hovering. Disabled options receive

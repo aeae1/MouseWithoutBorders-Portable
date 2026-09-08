@@ -23,21 +23,49 @@ internal partial class FrmMatrix
 
     // Keep options directly in each section. Nested, autosizing tables for every
     // option multiply preferred-size passes when a hidden tab becomes visible.
-    internal sealed class SettingsStack : TableLayoutPanel
+    internal sealed class SettingsStack : Panel
     {
-        private bool updatingWidths;
+        private bool updatingWidths, arranging;
         private int constrainedWidth = -1;
         internal SettingsStack()
         {
             AutoSize = true; AutoSizeMode = AutoSizeMode.GrowAndShrink;
-            ColumnCount = 1; ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
             Dock = DockStyle.Top; Margin = new Padding(0); Padding = new Padding(2);
         }
         internal void Add(Control control)
         {
-            control.Dock = DockStyle.Top; control.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
-            control.Margin = new Padding(3, 2, 3, 2);
-            Controls.Add(control, 0, RowCount++); RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            control.Dock = DockStyle.None; control.Anchor = AnchorStyles.Top | AnchorStyles.Left;
+            control.Margin = new Padding(3, 1, 3, 1);
+            Controls.Add(control);
+        }
+        private int Measure(Control child, int width) => child.AutoSize ? child.GetPreferredSize(
+            new Size(Math.Max(40, width - Padding.Horizontal - child.Margin.Horizontal), 0)).Height : child.Height;
+        public override Size GetPreferredSize(Size proposedSize)
+        {
+            int width = proposedSize.Width > 0 && proposedSize.Width < int.MaxValue ? proposedSize.Width : Width;
+            int height = Padding.Vertical;
+            foreach (Control child in Controls) height += Measure(child, width) + child.Margin.Vertical;
+            return new Size(width, height);
+        }
+        protected override void OnLayout(LayoutEventArgs e)
+        {
+            if (arranging) return;
+            arranging = true;
+            try
+            {
+                int y = Padding.Top;
+                foreach (Control child in Controls)
+                {
+                    y += child.Margin.Top;
+                    int height = Measure(child, ClientSize.Width);
+                    child.SetBounds(Padding.Left + child.Margin.Left, y,
+                        Math.Max(40, ClientSize.Width - Padding.Horizontal - child.Margin.Horizontal), height);
+                    y += height + child.Margin.Bottom;
+                }
+                int needed = y + Padding.Bottom;
+                if (Height != needed) Height = needed;
+            }
+            finally { arranging = false; }
         }
         protected override void OnSizeChanged(EventArgs e)
         {
@@ -51,22 +79,18 @@ internal partial class FrmMatrix
         }
         private void UpdateChildWidths(bool force = false)
         {
-            // Do not change layout constraints from inside OnLayout: changing a
-            // MaximumSize there invalidates the layout currently being measured.
+            // Changing height alone must not invalidate every child's measurement.
             if (updatingWidths || (!force && constrainedWidth == ClientSize.Width)) return;
-            updatingWidths = true;
-            constrainedWidth = ClientSize.Width;
+            updatingWidths = true; constrainedWidth = ClientSize.Width;
             SuspendLayout();
             try
             {
                 foreach (Control child in Controls)
-                {
                     if (child is Label or CheckBox or FlowLayoutPanel)
                     {
                         var maximum = new Size(Math.Max(40, ClientSize.Width - Padding.Horizontal - child.Margin.Horizontal), 0);
                         if (child.MaximumSize != maximum) child.MaximumSize = maximum;
                     }
-                }
             }
             finally { ResumeLayout(true); updatingWidths = false; }
         }
