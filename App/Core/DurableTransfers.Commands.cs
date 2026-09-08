@@ -35,6 +35,7 @@ internal static partial class DurableTransfers
                     if (action == "fail") job.Error = error ?? "The other PC could not finish this file.";
                     job.Attempt?.Cancel();
                 }
+                if (action == "cancel") job.PendingAction = null;
                 MarkGroupCleanup(job);
                 return new TransferActionResult { Id = id, State = job.State };
             }).ToArray();

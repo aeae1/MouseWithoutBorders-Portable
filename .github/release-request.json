@@ -1,38 +1,34 @@
 {
-  "tag": "mwb-v1.0.1-rc.6",
-  "title": "Mouse Without Borders Portable 1.0.1-rc.6",
+  "tag": "mwb-v1.0.1-rc.7",
+  "title": "Mouse Without Borders Portable 1.0.1-rc.7",
   "prerelease": true,
-  "summary": "Folder copying, safer cancellation, clearer progress, and a very manual update check. Use RC6 on BOTH PCs. Cancel old RC5 transfers on both PCs before upgrading. This is a release candidate: the Windows automated checks still need the real two-PC checks below.",
+  "summary": "Fix installation over a running copy and automatic launch, remove tray overlays, and make transfers more compact and predictable. Use RC7 on both PCs. RC6 settings and transfer recovery remain compatible; upgrades pause unfinished transfers.",
   "changes": [
-    "Drag regular local folders as well as files. Preserve the folder tree, empty folders, and supported file modification times. An incoming same-name folder gets a numbered sibling such as Project (2); folders never merge and existing files are never overwritten.",
-    "Drop over an Explorer window to use its open folder. Other drops open Desktop\\MouseWithoutBorders immediately and copy there. Retry reuses the original transfer and reserved folder; dragging again makes a new copy.",
-    "Keep one transfer list per PC with collapsible folder groups and individual progress, Pause/Resume, Move to end, Cancel, and Retry. Folder controls apply to the whole group. Four outgoing and four incoming jobs are allowed per PC, shared across folders and peers.",
-    "Bound large-list rendering to 50 top-level entries per page and 100 children per expanded folder page. Folder-wide controls batch journal saves and peer commands instead of making thousands of separate requests.",
-    "Closing a list with unfinished work asks to cancel it. Confirmation cancels all unfinished work in that PC's list, including other pages, and waits for local temporary-file cleanup. Completed and source files remain. Minimize continues copying; successful lists close automatically.",
-    "Remember cancellation for disconnected PCs and deliver it on reconnect. Pause on sleep, exit, or restart; recovered work requires an explicit Resume/Retry or Cancel. Keep unfinished data until that decision rather than expiring it after 30 days.",
-    "Check available destination space before copying and during chunk writes. Show source checking, copying, and receiver verification separately, with smoothed speed and remaining-copy-time estimates.",
-    "Automatically report unsupported file-transfer versions and connection failures. Add concise transfer lifecycle events and a compact status snapshot to the existing bounded Mini Log.",
-    "Add About → Check for updates. Only a click contacts GitHub; any update is offered as a GitHub link. No automatic checks, download, or installation. Stable builds exclude RCs.",
-    "Reject unsafe paths, links, junctions, and reparse-point/cloud-placeholder entries. Verify and pin receiving folder identities during writes; use no-overwrite final moves and delete only owned empty directories on cancellation. Retain chunk, resume-prefix, and complete-file checksum verification."
+    "Close only the verified running installation before replacing its EXE. Preserve its final preferences and transfer recovery save, and retain rollback copies until setup succeeds.",
+    "Launch the installed application automatically through the same EXE after setup exits. Remove the extra completion click and the PowerShell dependency for installation relaunch.",
+    "Always show the plain green MWB tray icon, without clipboard dots, error dots, connection borders, or status flashing.",
+    "Make ordinary file rows roughly half their previous height. Size buttons from their text and display scale; make the footer fit its buttons. Show an extra detail line only when needed.",
+    "Open the transfer window immediately with Preparing transfer feedback while checking the connection and scanning files. A cancelled preparation rejects a late arriving transfer offer.",
+    "Protect cancellation and newer controls from stale data replies. Prioritize cancel/pause commands and send them while data connections are winding down, with bounded command attempts and useful synchronization logs.",
+    "Show cancelled counts in folder summaries. Completed/cancelled lists close after local cleanup, while offline cancellation requests remain saved for reconnection.",
+    "Retain safe folder copying, keep-both duplicate handling, individual/group controls, checksums, manual recovery, disk-space checks, and the click-only GitHub update check. Add a prominent README section for the new transfer system."
   ],
   "testing": [
-    "Before replacing the EXE, cancel obsolete RC5 transfers on BOTH PCs. Exit MWB, back up the EXE/preferences, replace only the EXE in its existing folder, and confirm About shows 1.0.1-rc.6 on both PCs. If already upgraded, cancel the old entries separately on BOTH PCs and drag again; old jobs cannot resume or synchronize cancellation through the RC6 protocol.",
-    "Copy a disposable folder containing nested folders, an empty folder, and several files into an Explorer window. Verify hierarchy and contents. Repeat a drop elsewhere and confirm the desktop MWB folder opens immediately.",
-    "Create a same-name receiving folder with a file you want preserved. Copy the source folder twice. Expect separate numbered sibling folders and no changes to the original receiving files. Test a duplicate individual filename too.",
-    "Copy at least six files, including large files, and expand a folder group. Try Pause/Resume, Move to end, individual Cancel, and folder Pause/Cancel from both PCs. Other transfers should continue; no more than four outgoing jobs should run per PC. Try more than 100 entries to check paging.",
-    "Minimize during copying and confirm it continues. Close during another copy: choose No once, then Yes. Completed files should survive; incomplete local files should be removed before the list closes.",
-    "Disconnect Wi-Fi during a large copy, cancel from the other PC, then reconnect. Expect cancellation and cleanup without resumed copying. Separately test sleep/restart without cancellation: unfinished work should remain paused until you choose what to do.",
-    "Try a destination with insufficient space. Expect a useful error with no damage to existing files. Check the Mini Log after a failure. In About, click Check for updates and verify it only offers a GitHub link.",
-    "Check new drags join the same window, both PCs bring it forward for new work, typing does not flash the cursor or lose focus on progress ticks, and successful lists close automatically. Recheck mouse/keyboard switching, drag feedback, text/image clipboard, legacy single-file copy/paste, lock/unlock, and sleep/wake."
+    "Leave RC6 running, open the downloaded RC7 EXE from a separate folder, and choose Install for me into the existing installation folder. Expect the old copy to exit and RC7 to start automatically. Verify the security key, PC layout, and About version.",
+    "Repeat a fresh install into a new writable folder. It should launch automatically. Test installing an already configured portable copy from Settings too.",
+    "Copy text/images and connect/disconnect a peer. The tray icon should remain the plain green icon with no colored dots or borders.",
+    "Drop a folder containing many files. Expect immediate Preparing transfer feedback followed by compact rows. Expand the folder, resize the window, and check buttons at your usual Windows display scaling.",
+    "Cancel one file and then a folder from each PC in separate runs. Both sides should show cancellation, keep completed files, remove incomplete local data, and close the finished/cancelled list. Minimize should continue copying.",
+    "Pause and quickly resume/cancel during a large copy. A late reply should not restore the old state. Disconnect a peer, cancel, then reconnect; the saved cancellation should be delivered.",
+    "Cancel while Preparing is showing. No later transfer should start from that drop. Recheck folder targeting, duplicate protection, sleep/restart recovery, and normal mouse/keyboard/clipboard use."
   ],
   "known_limitations": [
-    "RC6 uses transfer protocol 2. Use RC6 on every participating PC; old RC5 jobs need to be cancelled separately on both sides and dragged again. Mouse/keyboard packet formats and the underlying MWB encryption are unchanged.",
-    "Full-speed file copying can still cause Wi-Fi mouse lag. Source hashing, resume-prefix checks, and final receiver verification can take time; the time estimate covers copying only.",
-    "This copies regular local folder contents, not backup metadata: links, junctions, reparse points/cloud placeholders, alternate streams, and ACLs are not replicated. Make a regular local copy of linked/cloud-only contents first. Skipped entries remain visible.",
-    "Explorer virtual folders, unopened subfolder icons, sidebar targets, and specific Windows 11 tabs are not guaranteed. Drag preview uses Windows icons in a custom window; it is not a native cross-PC Explorer/OLE drag session or an SMB copy dialog.",
-    "Remote temporary data cannot be cleaned while its PC is offline. Cleanup failures stay pending for retry. A file already being committed can complete as cancellation arrives; completed files are retained.",
-    "Recovery requires MouseWithoutBorders.transfers.json and its backup beside the EXE plus hidden .mwb-<id>.partial files in receiving folders. Keep these when you want to resume. Completed hidden receipts are pruned after 10 minutes only after commands and cleanup finish; unfinished data is not automatically aged out.",
-    "Limits: 256 top-level selections per drag; 4096 expanded entries including directories and 4096 unfinished jobs; 8192 retained job records; 4 MiB manifests/frames; relative paths up to 1024 characters and 64 components; 16 MiB journal. Split larger/deeper selections into smaller batches.",
-    "Legacy clipboard file copy/paste keeps its existing separate single-file transport. No installed service, protected UAC/sign-in support, wake lock, or sleep prevention is added. Real two-PC acceptance testing remains necessary."
+    "Automated Windows tests do not replace the running-installation, Explorer, display-scaling, and two-PC checks above.",
+    "A blocked or unresponsive running installation is not force-killed. Setup asks you to exit it from the tray and retry. Folder permissions, antivirus locks, or a different Windows account can still block installation.",
+    "RC6 transfer protocol and recovery records remain supported. Use RC7 on both PCs to get all preparation, cancellation, and UI fixes. RC5 and earlier unfinished jobs still require cancellation separately on both PCs and a new drag.",
+    "Remote temporary data cannot be cleaned while its PC is offline. Cleanup failures remain pending and should show a reason. A file already committed is kept when cancellation arrives.",
+    "Full-speed Wi-Fi copying can still make the mouse lag. Large-file source hashing and final verification can take time.",
+    "Folder transfers are regular local contents copies, with no merge/overwrite, links/junctions/cloud-placeholder traversal, ACL/alternate-stream backup, virtual Explorer targets, or native cross-PC OLE/SMB copy dialog.",
+    "Legacy clipboard file copy/paste retains its separate transport. No installed service or UAC/sign-in control is added."
   ]
 }

@@ -1,6 +1,6 @@
 # RC6: folder transfers and predictable cancellation
 
-Status: release candidate, September 8, 2026. Use **1.0.1-rc.6 on both PCs**. The automated Windows checks accompany, rather than replace, the real-PC acceptance checks below.
+Historical RC6 baseline; RC7 retains this file protocol and adds the [RC7 fixes](RC7_FIXES.md). Status: release candidate, September 8, 2026. Use **1.0.1-rc.6 on both PCs**. The automated Windows checks accompany, rather than replace, the real-PC acceptance checks below.
 
 ## Everyday use
 

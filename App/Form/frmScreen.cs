@@ -663,6 +663,11 @@ namespace MouseWithoutBorders
 
         internal void ChangeIcon(int iconCode)
         {
+#if PORTABLE_SINGLE_FILE
+            // The portable tray always uses the plain product icon. Status remains
+            // available in Settings and the log, without dots, borders or flashing.
+            return;
+#else
             try
             {
                 Graphics g;
@@ -746,6 +751,7 @@ namespace MouseWithoutBorders
             {
                 Logger.Log(e);
             }
+#endif
         }
 
         internal void MenuAllPC_Click(object sender, EventArgs e)

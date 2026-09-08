@@ -151,3 +151,7 @@ Do **not** assume compatibility with the old Garage standalone `2.2.1.0327`; Mic
 The current transfer candidate adds safe folder copying, cancellation cleanup when closing the transfer window, disk-space checks, clearer progress and estimates, compact log events, and a manual GitHub update check in About. Use RC6 on both PCs.
 
 See [RC6 behavior, limitations, and acceptance checks](RC6_TRANSFERS.md). Source files and existing destination contents are preserved; cancelled partial data is cleaned up, while interruptions remain recoverable until you Resume or Cancel. The earlier RC4 design document is historical.
+
+## RC7 follow-up
+
+RC7 fixes installation over a running copy and automatic relaunch, keeps the tray icon plain, and adds compact DPI-aware transfer rows, immediate preparation feedback, cancellation-state protection, and automatic closing of cancelled lists after cleanup. See [RC7 changes and tests](RC7_FIXES.md).
