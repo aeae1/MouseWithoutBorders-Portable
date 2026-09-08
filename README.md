@@ -17,15 +17,15 @@
 
 ## A much better file-transfer experience
 
-The new system goes well beyond the original file-copy feature. **[Try RC12](https://github.com/aeae1/MouseWithoutBorders-Portable/releases/tag/mwb-v1.0.1-rc.12)** on both PCs while we finish real-world testing.
+The new system goes well beyond the original file-copy feature. **[Try RC13](https://github.com/aeae1/MouseWithoutBorders-Portable/releases/tag/mwb-v1.0.1-rc.13)** on both PCs while we finish real-world testing.
 
 - **Drag files and whole folders between PCs**, directly into an open Explorer folder or your chosen receiving folder.
 - **See what's happening:** one transfer window with individual progress bars, overall speed and estimated time remaining.
-- **Stay in control:** pause, resume, retry or cancel individual files and folder groups.
+- **Stay in control:** reorder queued work, pause, resume, retry or cancel individual files and folder groups.
 - **Recover interrupted transfers** using checked, saved progress.
 - **Keep existing files safe:** matching names get separate copies instead of overwriting your originals.
 
-[Transfer details and testing guide](https://github.com/aeae1/MouseWithoutBorders-Portable/blob/mwb-v1.0.1-rc.12/docs/RC12_TRANSFERS.md)
+[Transfer details and testing guide](https://github.com/aeae1/MouseWithoutBorders-Portable/blob/mwb-v1.0.1-rc.13/docs/RC13_TRANSFERS.md)
 
 > [!IMPORTANT]
 > This is an unofficial fork, not a Microsoft release. Version 1.0.0 is the first stable portable release after the Test and Release Candidate series. It packages the maintained MWB engine as one standalone EXE and includes the completed portable setup, settings, diagnostics, shortcuts, branding, and responsive machine-matrix work.
