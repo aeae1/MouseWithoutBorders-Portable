@@ -351,6 +351,10 @@ namespace Microsoft.PowerToys.Settings.UI.Library
             FirstCtrlShiftS = false;
         }
 
+        // Portable transfer preferences. Missing fields in older documents retain these defaults.
+        public string DefaultReceivingFolder { get; set; } = string.Empty;
+        public bool AutoCloseTransferWindow { get; set; } = true;
+
         public object Clone() => JsonSerializer.Deserialize<MouseWithoutBordersProperties>(
             JsonSerializer.Serialize(this, SettingsUtils.SerializerOptions), SettingsUtils.SerializerOptions)!;
     }

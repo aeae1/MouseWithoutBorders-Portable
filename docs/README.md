@@ -155,3 +155,7 @@ See [RC6 behavior, limitations, and acceptance checks](RC6_TRANSFERS.md). Source
 ## RC7 follow-up
 
 RC7 fixes installation over a running copy and automatic relaunch, keeps the tray icon plain, and adds compact DPI-aware transfer rows, immediate preparation feedback, cancellation-state protection, and automatic closing of cancelled lists after cleanup. See [RC7 changes and tests](RC7_FIXES.md).
+
+## RC8 settings cleanup
+
+[RC8_SETTINGS.md](RC8_SETTINGS.md) documents the current settings layout, inline defaults, receiving-folder selection, automatic transfer-window closing, installation controls, and real-PC checks. RC6/RC7 guides describe their historical transfer and installer baselines.

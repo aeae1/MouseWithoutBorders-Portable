@@ -7,6 +7,7 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using MouseWithoutBorders.Core;
+using MouseWithoutBorders.Class;
 
 namespace MouseWithoutBorders;
 
@@ -78,7 +79,8 @@ internal static class TransferDropDestination
     {
         TransferDragVisual.HideImage();
         IntPtr target = GetAncestor(WindowFromPoint(Cursor.Position), 2);
-        string fallback = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory), "MouseWithoutBorders");
+        string configured = Setting.Values.DefaultReceivingFolder;
+        string fallback = TransferReceivePreferences.ResolveFolder(configured, TransferReceivePreferences.DesktopFolder);
         object shell = null, windows = null;
         bool matchedTarget = false;
         try
@@ -104,7 +106,7 @@ internal static class TransferDropDestination
                 }
                 finally { if (Marshal.IsComObject(window)) Marshal.ReleaseComObject(window); }
             }
-            Directory.CreateDirectory(fallback);
+            TransferReceivePreferences.PrepareFallback(configured, TransferReceivePreferences.DesktopFolder);
             if (existingDefault != IntPtr.Zero) { SetForegroundWindow(existingDefault); return fallback; }
         }
         catch (Exception error) { if (matchedTarget) throw; Logger.LogDebug("Explorer drop target lookup: " + error.Message); }
@@ -113,7 +115,7 @@ internal static class TransferDropDestination
             if (windows != null && Marshal.IsComObject(windows)) Marshal.ReleaseComObject(windows);
             if (shell != null && Marshal.IsComObject(shell)) Marshal.ReleaseComObject(shell);
         }
-        Directory.CreateDirectory(fallback);
+        TransferReceivePreferences.PrepareFallback(configured, TransferReceivePreferences.DesktopFolder);
         Process.Start(new ProcessStartInfo(fallback) { UseShellExecute = true });
         return fallback;
     }

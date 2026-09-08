@@ -1,34 +1,32 @@
 {
-  "tag": "mwb-v1.0.1-rc.7",
-  "title": "Mouse Without Borders Portable 1.0.1-rc.7",
+  "tag": "mwb-v1.0.1-rc.8",
+  "title": "Mouse Without Borders Portable 1.0.1-rc.8",
   "prerelease": true,
-  "summary": "Fix installation over a running copy and automatic launch, remove tray overlays, and make transfers more compact and predictable. Use RC7 on both PCs. RC6 settings and transfer recovery remain compatible; upgrades pause unfinished transfers.",
+  "summary": "Settings cleanup with inline default labels, Installation controls, a selectable receiving folder, and optional automatic transfer-window closing. RC7 installer and transfer fixes are retained; existing supported preferences and protocol-2 recovery remain compatible.",
   "changes": [
-    "Close only the verified running installation before replacing its EXE. Preserve its final preferences and transfer recovery save, and retain rollback copies until setup succeeds.",
-    "Launch the installed application automatically through the same EXE after setup exits. Remove the extra completion click and the PowerShell dependency for installation relaunch.",
-    "Always show the plain green MWB tray icon, without clipboard dots, error dots, connection borders, or status flashing.",
-    "Make ordinary file rows roughly half their previous height. Size buttons from their text and display scale; make the footer fit its buttons. Show an extra detail line only when needed.",
-    "Open the transfer window immediately with Preparing transfer feedback while checking the connection and scanning files. A cancelled preparation rejects a late arriving transfer offer.",
-    "Protect cancellation and newer controls from stale data replies. Prioritize cancel/pause commands and send them while data connections are winding down, with bounded command attempts and useful synchronization logs.",
-    "Show cancelled counts in folder summaries. Completed/cancelled lists close after local cleanup, while offline cancellation requests remain saved for reconnection.",
-    "Retain safe folder copying, keep-both duplicate handling, individual/group controls, checksums, manual recovery, disk-space checks, and the click-only GitHub update check. Add a prominent README section for the new transfer system."
+    "Group mouse, sharing/transfers, and shortcuts into measured, wrapping settings rows with clear default labels and explanations. Move DNS validation into IP Mappings.",
+    "Remove service-only controls and the misleading subnet checkbox. Disable optional clipboard/network status popups; keep actual failures and Mini Log. Explicit managed network policy remains enforced.",
+    "Clarify that Allow file transfers covers drag/drop and clipboard file copying. Preserve its saved choice when opening Settings or toggling Share Clipboard. Remove page flashing during preference saves.",
+    "Rename Portable to Installation. Move Start with Windows and Uninstall from the tray into that tab, alongside current paths, Open folder, and Install for me for portable copies.",
+    "Choose a default receiving folder on each PC for new drag/drop transfers. Explorer folder targets still take precedence. Unavailable custom folders fail clearly rather than redirecting files.",
+    "Add Automatically close finished transfers, enabled by default. Turning it off keeps finished/cancelled rows visible; explicit close still waits for cleanup and errors stay visible.",
+    "Preserve existing supported preferences, key, and layout. Add tests for migration, install copying, failed preference saves, unavailable destinations, settings layout, and automatic closing. Update documentation."
   ],
   "testing": [
-    "Leave RC6 running, open the downloaded RC7 EXE from a separate folder, and choose Install for me into the existing installation folder. Expect the old copy to exit and RC7 to start automatically. Verify the security key, PC layout, and About version.",
-    "Repeat a fresh install into a new writable folder. It should launch automatically. Test installing an already configured portable copy from Settings too.",
-    "Copy text/images and connect/disconnect a peer. The tray icon should remain the plain green icon with no colored dots or borders.",
-    "Drop a folder containing many files. Expect immediate Preparing transfer feedback followed by compact rows. Expand the folder, resize the window, and check buttons at your usual Windows display scaling.",
-    "Cancel one file and then a folder from each PC in separate runs. Both sides should show cancellation, keep completed files, remove incomplete local data, and close the finished/cancelled list. Minimize should continue copying.",
-    "Pause and quickly resume/cancel during a large copy. A late reply should not restore the old state. Disconnect a peer, cancel, then reconnect; the saved cancellation should be delivered.",
-    "Cancel while Preparing is showing. No later transfer should start from that drop. Recheck folder targeting, duplicate protection, sleep/restart recovery, and normal mouse/keyboard/clipboard use."
+    "Install RC8 over RC7 on both PCs. Check About, automatic launch, key/layout, and your existing supported checkbox/shortcut choices.",
+    "Open Other Options at your usual display scale, resize Settings, and scroll through all controls. Check defaults, explanations, dropdowns, and absence of service/subnet/status-message options.",
+    "Disable Allow file transfers, close/reopen Settings, then turn Share Clipboard off/on. The saved file-transfer choice must stay off. Re-enable it before transfer tests.",
+    "Choose a new receiving folder on the receiver. Drop to its desktop, then separately into an Explorer folder. Check the destination and immediate folder opening. Restart and verify the saved choice; Use default should restore Desktop/MouseWithoutBorders.",
+    "Choose a temporary custom folder, rename it, then drop to the desktop. Expect an error and no copy to another folder. Restore the folder or choose a valid destination afterward.",
+    "Turn automatic closing off on one PC. Complete or cancel transfers: its list should remain visible while the other PC follows its own setting. Turn it back on and check automatic closing. Closing active work still asks to cancel.",
+    "In Installation, toggle Start with Windows and reopen Settings to verify it. Check Open folder. If testing uninstall, use a disposable installation and choose No to keep preferences; Cancel must exit the uninstall flow.",
+    "Recheck ordinary mouse/keyboard/clipboard use, transfer pause/cancel/recovery, duplicate-name protection, and sleep/reconnect."
   ],
   "known_limitations": [
-    "Automated Windows tests do not replace the running-installation, Explorer, display-scaling, and two-PC checks above.",
-    "A blocked or unresponsive running installation is not force-killed. Setup asks you to exit it from the tray and retry. Folder permissions, antivirus locks, or a different Windows account can still block installation.",
-    "RC6 transfer protocol and recovery records remain supported. Use RC7 on both PCs to get all preparation, cancellation, and UI fixes. RC5 and earlier unfinished jobs still require cancellation separately on both PCs and a new drag.",
-    "Remote temporary data cannot be cleaned while its PC is offline. Cleanup failures remain pending and should show a reason. A file already committed is kept when cancellation arrives.",
-    "Full-speed Wi-Fi copying can still make the mouse lag. Large-file source hashing and final verification can take time.",
-    "Folder transfers are regular local contents copies, with no merge/overwrite, links/junctions/cloud-placeholder traversal, ACL/alternate-stream backup, virtual Explorer targets, or native cross-PC OLE/SMB copy dialog.",
-    "Legacy clipboard file copy/paste retains its separate transport. No installed service or UAC/sign-in control is added."
+    "Real Windows Explorer, physical display scaling, startup/uninstall, and two-PC behavior still need the manual checks above; automated tests cannot replace them.",
+    "Receiving-folder and automatic-close preferences belong to each PC. Changing the folder affects new durable drag/drop transfers only; existing jobs and legacy clipboard file copying keep their prior destinations.",
+    "The receiving folder must be an accessible ordinary local directory. Linked directories and unavailable drives are rejected. No overwrite/merge, protocol, concurrency, speed, service, or automatic-update behavior is added.",
+    "Use the same RC on both PCs for consistent Settings. RC6/RC7 protocol-2 transfers remain compatible; older EXEs may discard the new preference fields if they rewrite the same preferences file.",
+    "Full-speed Wi-Fi transfers can still cause mouse lag. Offline temporary data can only be cleaned when the peer reconnects."
   ]
 }

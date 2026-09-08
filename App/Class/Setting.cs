@@ -43,7 +43,7 @@ using SettingsHelper = Microsoft.PowerToys.Settings.UI.Library.Utilities.Helper;
 
 namespace MouseWithoutBorders.Class
 {
-    internal class Settings
+        internal class Settings
     {
         internal bool Changed;
 
@@ -944,6 +944,39 @@ namespace MouseWithoutBorders.Class
             }
         }
 
+        internal string DefaultReceivingFolder
+        {
+            get { lock (_loadingSettingsLock) return _properties.DefaultReceivingFolder; }
+        }
+
+        internal bool AutoCloseTransferWindow
+        {
+            get { lock (_loadingSettingsLock) return _properties.AutoCloseTransferWindow; }
+        }
+
+        internal void SetDefaultReceivingFolder(string folder)
+        {
+            folder = TransferReceivePreferences.NormalizeFolder(folder);
+            lock (_loadingSettingsLock)
+            {
+                string previous = _properties.DefaultReceivingFolder;
+                _properties.DefaultReceivingFolder = folder;
+                try { SaveSettingsSynchronously(); }
+                catch { _properties.DefaultReceivingFolder = previous; throw; }
+            }
+        }
+
+        internal void SetAutoCloseTransferWindow(bool enabled)
+        {
+            lock (_loadingSettingsLock)
+            {
+                bool previous = _properties.AutoCloseTransferWindow;
+                _properties.AutoCloseTransferWindow = enabled;
+                try { SaveSettingsSynchronously(); }
+                catch { _properties.AutoCloseTransferWindow = previous; throw; }
+            }
+        }
+
         internal bool ReverseLookup
         {
             get
@@ -996,7 +1029,12 @@ namespace MouseWithoutBorders.Class
 
                 lock (_loadingSettingsLock)
                 {
+#if PORTABLE_SINGLE_FILE
+                    // Removed legacy prefix filter; explicit managed policy above still applies.
+                    return false;
+#else
                     return _properties.SameSubnetOnly;
+#endif
                 }
             }
 
@@ -1158,7 +1196,11 @@ namespace MouseWithoutBorders.Class
             {
                 lock (_loadingSettingsLock)
                 {
+#if PORTABLE_SINGLE_FILE
+                    return false;
+#else
                     return _properties.ShowClipboardAndNetworkStatusMessages;
+#endif
                 }
             }
 
