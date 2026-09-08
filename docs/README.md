@@ -163,3 +163,7 @@ RC7 fixes installation over a running copy and automatic relaunch, keeps the tra
 ## RC9 compact settings
 
 [RC9_SETTINGS.md](RC9_SETTINGS.md) documents the compact layout and hover help that replace RC8's inline default/description rows. Transfer preferences and installation controls remain as described in RC8.
+
+## RC10 settings polish
+
+[RC10_SETTINGS.md](RC10_SETTINGS.md) records the restored shortcut divider, multiline mapping editor, clearer connection help, and focused validation. RC9’s compact layout and RC8’s saved preferences remain intact.

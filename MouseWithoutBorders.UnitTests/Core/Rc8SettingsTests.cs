@@ -126,12 +126,29 @@ public sealed class Rc8SettingsTests
                     + $"Client: {other.ClientSize}; content: {other.DisplayRectangle}. "
                     + string.Join("; ", Descendants(other).Where(c => c.Visible).Select(c => $"{c.GetType().Name}/{c.Name}: {c.Bounds}")));
                 Assert.IsFalse(Descendants(other).Any(c => c.Visible && c.Text.Contains("Default:")), "Defaults belong in tooltips, not visible option rows.");
+                var divider = controls.OfType<Panel>().Single(c => c.Name == "keyboardShortcutDivider");
+                var shortcuts = controls.Single(c => c.Name == "checkBoxEnableKeyboardShortcuts").Parent!;
+                Assert.IsTrue(divider.Visible && divider.Height >= 2 && divider.BorderStyle == BorderStyle.Fixed3D);
+                Assert.IsTrue(divider.Bottom <= shortcuts.Top, "The divider must separate options from shortcuts.");
                 var twoRows = controls.Single(c => c.Name == "checkBoxTwoRow");
                 Assert.AreEqual("Two rows", twoRows.Text);
                 Assert.IsFalse(tips.GetToolTip(twoRows).Contains("Default", StringComparison.OrdinalIgnoreCase));
-                var mappings = controls.Single(c => c.Name == "textBoxMachineName2IP");
+                var mappings = controls.OfType<TextBox>().Single(c => c.Name == "textBoxMachineName2IP");
                 Assert.IsFalse(tips.GetToolTip(mappings).Contains("Default:", StringComparison.OrdinalIgnoreCase));
                 Assert.IsTrue(tips.GetToolTip(mappings).Contains("OFFICE-PC 192.168.1.20"));
+                var mappingsPage = tabs.TabPages.Cast<TabPage>().Single(t => t.Text == "IP Mappings");
+                tabs.SelectedTab = mappingsPage; Application.DoEvents();
+                Assert.IsTrue(mappings.Visible && mappings.Multiline);
+                Assert.IsTrue(mappings.ClientSize.Height >= mappings.Font.Height * 6,
+                    "An empty mappings editor must show at least six lines, not collapse to one.");
+                mappings.Text = "OFFICE-PC 192.168.1.20\r\nLAPTOP 192.168.1.21\r\nDESKTOP 192.168.1.22";
+                Application.DoEvents();
+                Assert.AreEqual(3, mappings.Lines.Length);
+                Assert.IsTrue(mappings.GetPositionFromCharIndex(mappings.TextLength - 1).Y + mappings.Font.Height <= mappings.ClientSize.Height,
+                    "Multiple mapping entries must be visible together.");
+                mappings.Clear(); Application.DoEvents();
+                Assert.IsTrue(mappings.ClientSize.Height >= mappings.Font.Height * 6, "Clearing entries must not collapse the editor.");
+                tabs.SelectedTab = other; Application.DoEvents();
                 // Exercise real hide/show layout, not only control construction.
                 // The generous bound catches multi-second layout stalls per visit.
                 var switchTime = Stopwatch.StartNew();

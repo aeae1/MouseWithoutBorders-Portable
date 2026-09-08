@@ -248,20 +248,32 @@ internal partial class FrmMatrix
             shortcuts.Add(Actions(labelLockMachine, comboBoxLockMachine, labelSwitch2AllPCMode, comboBoxSwitchToAllPC));
             shortcuts.Add(Actions(labelReconnect, comboBoxReconnect, LabelToggleEasyMouse, comboBoxEasyMouse));
             groupBoxOtherOptions.Visible = groupBoxShortcuts.Visible = false;
-            var content = new SettingsStack(); content.Add(columns); content.Add(shortcuts); HostStack(tabPageOther, content);
+            var content = new SettingsStack();
+            content.Add(columns);
+            content.Add(new Panel { Name = "keyboardShortcutDivider", Height = 2, BorderStyle = BorderStyle.Fixed3D });
+            content.Add(shortcuts);
+            HostStack(tabPageOther, content);
 
             var network = Section("Connection troubleshooting");
             checkBoxReverseLookup.Text = "Check computer names against DNS" + (Setting.Values.ReverseLookupIsGpoConfigured ? " [Managed]" : "");
-            AddOption(network, checkBoxReverseLookup, "Off", "Check that an IP address resolves back to the expected computer name. Missing or incorrect DNS records can prevent a connection.");
+            AddOption(network, checkBoxReverseLookup, "Off", "Ask the network's name service (DNS) to check that an IP address matches the expected PC name. Use this to troubleshoot name/address mismatches. Some home networks have no matching DNS records, so enabling this check can prevent a connection.");
             network.Add(new Label { Text = "Machine name to IP address mappings", AutoSize = true });
-            const string mappingHelp = "Use this when MWB cannot find a computer by name, or you want it to connect to a specific IP address. Enter the name shown in Machine Setup, a space, then that PC's IP address. Use one computer per line; leave this empty to use automatic lookup.\n\nExample: OFFICE-PC 192.168.1.20\n\nKeep the address current if it changes; a DHCP reservation on your router can keep it consistent.";
+            const string mappingHelp = "MWB normally finds your other PCs automatically. If they already connect, you can leave this box empty.\n\nIf MWB cannot find a PC, enter its exact name from Machine Setup, a space, and its local IP address. Add one PC per line.\nExample: OFFICE-PC 192.168.1.20\n\nAn IP address is a PC's address on your network. Find it in that PC's Windows network settings (IPv4 address). If it changes, update the entry here. A router setting called a DHCP reservation can keep that address from changing.";
             network.Add(Explanation(mappingHelp));
             toolTip.SetToolTip(textBoxMachineName2IP, mappingHelp);
-            textBoxMachineName2IP.Height = Math.Max(150, Font.Height * 8); network.Add(textBoxMachineName2IP);
+            // A multiline TextBox can still report a one-line preferred height.
+            // Keep room for entries even when the editor is empty.
+            textBoxMachineName2IP.AutoSize = false;
+            textBoxMachineName2IP.MinimumSize = new Size(0, Math.Max(150, Font.Height * 8));
+            textBoxMachineName2IP.Height = textBoxMachineName2IP.MinimumSize.Height;
+            network.Add(textBoxMachineName2IP);
             if (Setting.Values.Name2IpPolicyListIsGpoConfigured)
             {
-                network.Add(Explanation("Mappings set by your administrator [Managed]"));
-                textBoxMachineName2IPPolicyList.Height = Font.Height * 6; network.Add(textBoxMachineName2IPPolicyList);
+                network.Add(Explanation("These mappings are set by your Windows administrator and cannot be edited here."));
+                textBoxMachineName2IPPolicyList.AutoSize = false;
+                textBoxMachineName2IPPolicyList.MinimumSize = new Size(0, Math.Max(120, Font.Height * 6));
+                textBoxMachineName2IPPolicyList.Height = textBoxMachineName2IPPolicyList.MinimumSize.Height;
+                network.Add(textBoxMachineName2IPPolicyList);
             }
             groupBoxDNS.Visible = groupBoxName2IPPolicyList.Visible = pictureBoxMouseWithoutBorders.Visible = textBoxDNS.Visible = false;
             HostStack(tabPageAdvancedSettings, network);
@@ -309,8 +321,8 @@ internal partial class FrmMatrix
         var tab = new TabPage { Text = "Installation", Name = "installationTab", BackColor = tabPageOther.BackColor };
         var content = Section(PortableApplication.IsInstalledCopy ? "Installed for your Windows account" : "Running as a portable copy");
         content.Add(Explanation(PortableApplication.IsInstalledCopy
-            ? "Manage startup or remove this installation here."
-            : "Use this EXE directly from its folder, or install it with your existing settings."));
+            ? "Choose whether MWB starts when you sign in, or uninstall this copy."
+            : "Run MWB from this folder, or install it for your Windows account and keep your current settings."));
         content.Add(new Label { Text = "Application location", AutoSize = true });
         content.Add(Explanation(PortableApplication.CurrentExecutablePath));
         content.Add(new Label { Text = "Preferences", AutoSize = true });
@@ -335,7 +347,7 @@ internal partial class FrmMatrix
             content.Add(SettingsButton("Uninstall…", UninstallInstalledCopy));
         }
         else content.Add(SettingsButton("Install for me…", InstallPortableCopyButton_Click));
-        content.Add(Explanation("Preferences stay beside the EXE. No Windows service or automatic updater is installed."));
+        content.Add(Explanation("Your settings are saved beside MouseWithoutBorders.exe. The app does not install a Windows service, and updates are downloaded manually."));
         HostStack(tab, content); tabControlSetting.TabPages.Add(tab);
     }
     private void RefreshInstallationStartup()

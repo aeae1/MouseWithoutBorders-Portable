@@ -1,21 +1,19 @@
 {
-  "tag": "mwb-v1.0.1-rc.9",
-  "title": "Mouse Without Borders Portable 1.0.1-rc.9",
+  "tag": "mwb-v1.0.1-rc.10",
+  "title": "Mouse Without Borders Portable 1.0.1-rc.10",
   "prerelease": true,
-  "summary": "Restore compact Other Options with hover help and reduce tab-opening layout work. Keep RC8 transfer preferences and installation controls.",
+  "summary": "Restore the keyboard-shortcut divider and a large multiline IP mappings editor, with clearer help. Keep RC9’s fast, compact settings layout.",
   "changes": [
-    "Remove the separate description/default row and nested table for every option. Move option help and defaults into tooltips, and compact the keyboard-shortcut rows.",
-    "Update wrapping constraints on size changes instead of inside the layout pass, reducing repeated work when Other Options becomes visible.",
-    "Remove default text entirely from Two rows, Start with Windows, and machine-to-IP mappings. Keep expanded mapping instructions visible, including an example and advice for changing IP addresses.",
-    "Keep hover help available for disabled options through their parent controls. Preserve all saved values, transfer behavior, installation controls, and keyboard assignments.",
-    "Check compact layout at the original window size, repeated tab-opening responsiveness, disabled-option help, and larger text in Windows UI tests."
+    "Restore the visual divider above keyboard shortcuts without adding nested layout tables.",
+    "Keep the IP mappings editor large enough for multiple computer entries, including when empty. Apply the same minimum-height protection to administrator-provided mappings.",
+    "Rewrite mapping help to explain when entries are needed, the name/address format, where to find the local IPv4 address, and how a router DHCP reservation helps. Keep the explanation visible.",
+    "Clarify DNS hover help and Installation descriptions. Preserve tooltip defaults and their existing exceptions, saved preferences, and transfer behavior."
   ],
   "testing": [
-    "Open Other Options repeatedly and confirm the opening lag is gone. Check the compact page at your normal display scale, then resize it.",
-    "Hover over options for descriptions and defaults. Two rows and Start with Windows should have descriptions but no default text.",
-    "Disable Share Clipboard and hover over the disabled Allow file transfers option; its tooltip should explain the dependency. Restore clipboard sharing and confirm your saved transfer choice is preserved.",
-    "Open IP Mappings and check the visible instructions and example, with no default label for the mappings field.",
-    "Confirm RC8 receiving-folder, automatic transfer-window closing, shortcuts, and Installation settings still retain your choices."
+    "Open Other Options repeatedly: it should still open promptly, with a horizontal divider above keyboard shortcuts and no new scrolling at the usual window size.",
+    "Open IP Mappings: the empty box should show several lines. If you use mappings, confirm multiple entries remain visible when editing and after switching tabs. Do not add example addresses unless they match your PCs.",
+    "Check that the visible mapping instructions and DNS tooltip are clear. Resize the window or use your normal Windows display scaling to check the editor and text.",
+    "Confirm receiving-folder, automatic transfer-window closing, shortcuts, and Installation settings retain your choices."
   ],
   "known_limitations": [
     "Real Windows Explorer, physical display scaling, startup/uninstall, and two-PC behavior still need the manual checks above; automated tests cannot replace them.",
