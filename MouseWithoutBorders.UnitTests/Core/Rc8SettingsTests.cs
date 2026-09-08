@@ -221,19 +221,20 @@ public sealed class Rc8SettingsTests
     [DataRow(200)]
     public async Task SettingsDividerRendersAndScrollRangeTracksContent(int scalePercent)
     {
-        string stage = "starting UI thread";
         void Trace(string step)
         {
-            stage = step;
             if (Environment.GetEnvironmentVariable("RUNNER_TEMP") is string temp)
                 File.WriteAllText(Path.Combine(temp, $"mwb-settings-stage-{scalePercent}.txt"), step);
         }
         await OnSta(() =>
         {
             var original = Setting.Values;
+            string machineName = Common.MachineName;
             try
             {
                 Setting.Values = Settings();
+                Common.MachineName = "LOCAL-PC";
+                Setting.Values.Username = "layout-test";
                 Trace("constructing form");
                 using var settings = new SettingsWindowWithoutNetworkTimer();
                 settings.TraceStep = Trace;
@@ -293,7 +294,7 @@ public sealed class Rc8SettingsTests
                 }
                 Trace("closing form"); Setting.Values.SaveSettingsSynchronously(); settings.Close(); Trace("complete");
             }
-            finally { Setting.Values = original; }
+            finally { Setting.Values = original; Common.MachineName = machineName; }
         });
     }
 
