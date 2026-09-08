@@ -15,24 +15,27 @@
   <a href="https://github.com/aeae1/MouseWithoutBorders-Portable/actions/workflows/build.yml">Windows build status</a>
 </p>
 
-## New file transfers — available in RC7
+## New file transfers — available in RC8
 
-The new transfer system is a major upgrade over the original file-copy feature. **[Download RC7](https://github.com/aeae1/MouseWithoutBorders-Portable/releases/tag/mwb-v1.0.1-rc.7)** and use it on both PCs. This remains a release candidate while real-PC testing continues.
+The new transfer system is a major upgrade over the original file-copy feature. **[Download RC8](https://github.com/aeae1/MouseWithoutBorders-Portable/releases/tag/mwb-v1.0.1-rc.8)** and use it on both PCs. This remains a release candidate while real-PC testing continues.
 
 - **Copy files and folders between PCs:** drop into an open Explorer folder, or use the desktop MouseWithoutBorders folder, which opens immediately.
 - **One compact transfer window:** immediate “Preparing transfer…” feedback, expandable folder groups, a progress bar for each file, and up to four outgoing transfers at once per PC.
 - **Control individual files or whole folders:** pause, resume, move to the end of the queue, or cancel. Cancellation is communicated to the other PC; offline requests wait for reconnection.
 - **Recover interrupted work:** checked partial data can resume after a disconnect or restart. Recovered transfers stay paused until you decide what to do.
 - **Protect existing files:** duplicate names keep separate copies; incoming folders never merge with or overwrite existing folders. Cancellation removes incomplete data and keeps completed files.
+- **Your receiving folder:** choose a default destination for new drag/drop transfers on each PC, or keep Desktop \ MouseWithoutBorders. Drops into an Explorer folder still go there.
 - **Clearer feedback:** copy speed, estimated copy time, verification stages, disk-space errors, and concise details in Mini Log.
 
-Minimize to keep copying. Closing unfinished work asks whether to cancel it. Completed or cancelled lists close after local cleanup. Full-speed copying can still cause mouse lag on busy Wi-Fi. The new controls apply to **drag/drop**; clipboard file copy/paste retains its separate transport.
+Minimize to keep copying. Closing unfinished work asks whether to cancel it. Completed or cancelled lists close after local cleanup by default; you can turn automatic closing off in Settings. Full-speed copying can still cause mouse lag on busy Wi-Fi. The new controls apply to **drag/drop**; clipboard file copy/paste retains its separate transport.
 
-[RC7 changes and installation tests](https://github.com/aeae1/MouseWithoutBorders-Portable/blob/release/1.0.1-rc.7/docs/RC7_FIXES.md) · [Folder-copy behavior and recovery guide](https://github.com/aeae1/MouseWithoutBorders-Portable/blob/release/1.0.1-rc.7/docs/RC6_TRANSFERS.md)
+[RC8 settings and test guide](https://github.com/aeae1/MouseWithoutBorders-Portable/blob/release/1.0.1-rc.8/docs/RC8_SETTINGS.md) · [Folder-copy behavior and recovery guide](https://github.com/aeae1/MouseWithoutBorders-Portable/blob/release/1.0.1-rc.8/docs/RC6_TRANSFERS.md)
 
 
 > [!IMPORTANT]
 > This is an unofficial fork, not a Microsoft release. Version 1.0.0 is the first stable portable release after the Test and Release Candidate series. It packages the maintained MWB engine as one standalone EXE and includes the completed portable setup, settings, diagnostics, shortcuts, branding, and responsive machine-matrix work.
+
+RC8 also reorganizes Settings, shows each option’s default, removes service-only controls and optional status popups, and moves startup/uninstall into **Installation**. Existing supported preferences are preserved.
 
 ## What this project is
 
