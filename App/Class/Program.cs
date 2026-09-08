@@ -72,6 +72,8 @@ namespace MouseWithoutBorders.Class
             _ = Application.SetHighDpiMode(HighDpiMode.PerMonitorV2);
             Application.SetCompatibleTextRenderingDefault(false);
 
+            if (PortableInstallLifecycle.RunLaunchHelper(startupArgs)) return;
+
             if (!PortableApplication.PrepareFirstLaunch())
             {
                 return;
@@ -404,7 +406,7 @@ namespace MouseWithoutBorders.Class
 
             public void Shutdown()
             {
-                Common.MainForm.Quit(true, false);
+                Common.DoSomethingInUIThread(() => Common.MainForm?.Quit(true, false));
             }
         }
 

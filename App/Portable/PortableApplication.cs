@@ -167,17 +167,6 @@ internal static class PortableApplication
                     preserveCurrentPreferences: true,
                     restartCurrentProcess: true);
 
-                if (!keepRunning)
-                {
-                    _ = MessageBox.Show(
-                        owner,
-                        "Installation is complete. Mouse Without Borders will now restart from:\r\n\r\n" +
-                        Path.Combine(Path.GetFullPath(Environment.ExpandEnvironmentVariables(dialog.InstallDirectory)), "MouseWithoutBorders.exe"),
-                        "Mouse Without Borders installed",
-                        MessageBoxButtons.OK,
-                        MessageBoxIcon.Information);
-                }
-
                 return keepRunning;
             }
             catch (Exception ex)
@@ -260,6 +249,10 @@ internal static class PortableApplication
         if (preserveCurrentPreferences) _ = PortableSettingsStore.Read(CurrentSettingsPath);
         if (File.Exists(installedSettingsPath)) _ = PortableSettingsStore.Read(installedSettingsPath);
 
+        // Stop only the verified destination instance before backing up or replacing
+        // its files, so its final preferences/recovery save is included.
+        using var runningCopy = isCurrentLocation ? null : PortableInstallLifecycle.StopInstalledCopy(installedExecutablePath);
+        if (File.Exists(installedSettingsPath)) _ = PortableSettingsStore.Read(installedSettingsPath);
         if (preserveCurrentPreferences && !isCurrentLocation) DurableTransfers.PrepareInstall();
         using var transaction = new PortableInstallTransaction();
         if (preserveCurrentPreferences && !isCurrentLocation)
@@ -314,6 +307,7 @@ internal static class PortableApplication
         {
             IsInstalledCopy = true;
             transaction.Complete();
+            runningCopy?.Complete();
             return true;
         }
 
@@ -324,6 +318,7 @@ internal static class PortableApplication
         }
         ScheduleInstalledLaunchAfterExit(installedExecutablePath, installDirectory);
         transaction.Complete();
+        runningCopy?.Complete();
         return false;
     }
 
@@ -499,35 +494,10 @@ internal static class PortableApplication
 
     private static void ScheduleInstalledLaunchAfterExit(string executablePath, string workingDirectory)
     {
-        var script = new StringBuilder();
-        script.Append("$ErrorActionPreference='SilentlyContinue';");
-        script.Append("Wait-Process -Id ").Append(Environment.ProcessId).Append(';');
-        script.Append("Start-Sleep -Milliseconds 300;");
-        // Keep the original portable preferences as recovery material. Starting a
-        // process is not proof that its initialization or helper startup succeeded.
-        script.Append("Start-Process -FilePath '").Append(EscapePowerShellLiteral(executablePath))
-            .Append("' -WorkingDirectory '").Append(EscapePowerShellLiteral(workingDirectory)).Append("';");
-
-        var encodedCommand = Convert.ToBase64String(Encoding.Unicode.GetBytes(script.ToString()));
-        var powerShellPath = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.System),
-            "WindowsPowerShell",
-            "v1.0",
-            "powershell.exe");
-
-        var launchProcess = Process.Start(new ProcessStartInfo
-        {
-            FileName = powerShellPath,
-            Arguments = "-NoProfile -NonInteractive -EncodedCommand " + encodedCommand,
-            CreateNoWindow = true,
-            UseShellExecute = false,
-            WindowStyle = ProcessWindowStyle.Hidden,
-        });
-
-        if (launchProcess is null)
-        {
-            throw new InvalidOperationException("Windows could not start the installed copy.");
-        }
+        using var parent = Process.GetCurrentProcess();
+        using var launch = Process.Start(PortableInstallLifecycle.CreateLaunchHelperStartInfo(
+            executablePath, workingDirectory, parent.Id, parent.StartTime.ToUniversalTime().Ticks))
+            ?? throw new InvalidOperationException("Windows could not start the installed copy.");
     }
 
     private static string EscapePowerShellLiteral(string value) => value.Replace("'", "''", StringComparison.Ordinal);

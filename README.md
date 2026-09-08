@@ -15,7 +15,21 @@
   <a href="https://github.com/aeae1/MouseWithoutBorders-Portable/actions/workflows/build.yml">Windows build status</a>
 </p>
 
-> **Testing 1.0.1-rc.6:** safe folder copies, individual transfer controls, cancellation cleanup, clearer progress, compact diagnostics, and a manual GitHub update check. Use RC6 on both PCs. [Download RC6](https://github.com/aeae1/MouseWithoutBorders-Portable/releases/tag/mwb-v1.0.1-rc.6) · [Behavior and testing guide](docs/RC6_TRANSFERS.md).
+## New file transfers — available in RC7
+
+The new transfer system is a major upgrade over the original file-copy feature. **[Download RC7](https://github.com/aeae1/MouseWithoutBorders-Portable/releases/tag/mwb-v1.0.1-rc.7)** and use it on both PCs. This remains a release candidate while real-PC testing continues.
+
+- **Copy files and folders between PCs:** drop into an open Explorer folder, or use the desktop MouseWithoutBorders folder, which opens immediately.
+- **One compact transfer window:** immediate “Preparing transfer…” feedback, expandable folder groups, a progress bar for each file, and up to four outgoing transfers at once per PC.
+- **Control individual files or whole folders:** pause, resume, move to the end of the queue, or cancel. Cancellation is communicated to the other PC; offline requests wait for reconnection.
+- **Recover interrupted work:** checked partial data can resume after a disconnect or restart. Recovered transfers stay paused until you decide what to do.
+- **Protect existing files:** duplicate names keep separate copies; incoming folders never merge with or overwrite existing folders. Cancellation removes incomplete data and keeps completed files.
+- **Clearer feedback:** copy speed, estimated copy time, verification stages, disk-space errors, and concise details in Mini Log.
+
+Minimize to keep copying. Closing unfinished work asks whether to cancel it. Completed or cancelled lists close after local cleanup. Full-speed copying can still cause mouse lag on busy Wi-Fi. The new controls apply to **drag/drop**; clipboard file copy/paste retains its separate transport.
+
+[RC7 changes and installation tests](docs/RC7_FIXES.md) · [Folder-copy behavior and recovery guide](docs/RC6_TRANSFERS.md)
+
 
 > [!IMPORTANT]
 > This is an unofficial fork, not a Microsoft release. Version 1.0.0 is the first stable portable release after the Test and Release Candidate series. It packages the maintained MWB engine as one standalone EXE and includes the completed portable setup, settings, diagnostics, shortcuts, branding, and responsive machine-matrix work.

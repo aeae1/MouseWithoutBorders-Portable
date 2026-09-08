@@ -144,19 +144,32 @@ internal static partial class DurableTransfers
 
     internal static void CancelVisible()
     {
+        CancelPreparations();
         ChangeMany(Jobs.Where(j => !j.Hidden), "cancel");
     }
-    internal static bool LocalCleanupFinished => Jobs.Where(j => !j.Hidden).All(j => !j.Declaring && !j.Running && !j.CleanupPending) && !Groups.Any(g => g.CleanupPending);
+    internal static bool LocalCleanupFinished => PreparationCleanupFinished && Jobs.Where(j => !j.Hidden).All(j => !j.Declaring && !j.Running && !j.CleanupPending) && !Groups.Any(g => g.CleanupPending);
+    internal static bool CanAutoClose
+    {
+        get
+        {
+            var jobs = Jobs.Where(j => !j.Hidden).ToArray();
+            var prep = Preparations.Where(p => !p.Hidden).ToArray();
+            return !Preparing && LocalCleanupFinished && !prep.Any(p => p.Error != "")
+                && (jobs.Length > 0 || prep.Any(p => p.Cancelled))
+                && jobs.All(j => j.State is "Completed" or "Cancelled");
+        }
+    }
     internal static TransferGroup[] Groups { get { lock (Sync) return journal?.Groups.ToArray() ?? Array.Empty<TransferGroup>(); } }
     internal static bool IsStopping { get { lock (Sync) return stopping; } }
     internal static void DismissVisible()
     {
-        lock (Sync) { foreach (var j in journal.Jobs.Where(j => j.Terminal && !j.Running && !j.CleanupPending)) j.Hidden = true; Save(); }
+        lock (Sync) { foreach (var p in preparations.Where(p => p.Finished)) p.Hidden = true; if (journal == null) return; foreach (var j in journal.Jobs.Where(j => j.Terminal && !j.Running && !j.CleanupPending)) j.Hidden = true; Save(); }
     }
 
     internal static void RunMaintenanceForTests() => Maintenance();
     private static void Maintenance()
     {
+        PreparationMaintenance();
         bool changed = false;
         foreach (var job in Jobs.Where(j => j.CleanupPending && !j.Running && !j.Sending))
         {
@@ -204,6 +217,6 @@ internal static partial class DurableTransfers
     {
         var jobs = Jobs;
         return $"Transfer protocol: 2; {jobs.Count(j => j.Running)} active, {jobs.Count(j => !j.Terminal && !j.Running)} unfinished, {jobs.Count(j => j.CleanupPending || j.PendingAction == "cancel")} cleanup/cancellation pending.\r\n"
-            + string.Join("\r\n", jobs.Where(j => !j.Hidden).TakeLast(20).Select(j => $"{j.Id[..8]} {j.Peer}: {j.Name} — {j.State}, {j.Bytes}/{j.Length} bytes; {j.Error}"));
+            + string.Join("\r\n", jobs.Where(j => !j.Hidden).TakeLast(20).Select(j => $"{j.Id[..8]} {j.Peer}: {j.Name} — {j.State}, {j.Bytes}/{j.Length} bytes; pending={j.PendingAction ?? "none"}; {j.Error} {j.Detail}"));
     }
 }
