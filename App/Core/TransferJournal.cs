@@ -93,6 +93,7 @@ internal sealed class TransferJournal
         foreach (var job in journal.Jobs)
         {
             if ((!Guid.TryParseExact(job.Id, "N", out var parsedId) || parsedId.ToString("N") != job.Id) || !ids.Add(job.Id) || job.Length < 0 || job.Bytes < 0 || job.Bytes > job.Length
+                || job.Order < 0 || job.RootOrder < 0 || job.Order > DateTime.MaxValue.Ticks || job.RootOrder > DateTime.MaxValue.Ticks
                 || string.IsNullOrWhiteSpace(job.Peer) || !ValidName(job.Name)
                 || (!job.Sending && (!Path.IsPathFullyQualified(job.Folder ?? "") || (job.Destination != null
                     && !string.Equals(Path.GetDirectoryName(job.Destination), job.Folder, StringComparison.OrdinalIgnoreCase)))))

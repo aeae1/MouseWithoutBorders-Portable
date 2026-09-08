@@ -40,7 +40,7 @@ internal static partial class DurableTransfers
 
     internal static void AppendQueue(TransferJob[] added)
     {
-        long order = Math.Max(DateTime.UtcNow.Ticks, journal.Jobs.Select(j => Math.Max(j.Order, j.RootOrder)).DefaultIfEmpty(0).Max() + 1);
+        long order = Math.Max(DateTime.UtcNow.Ticks, journal.Jobs.Where(j => j.Sending).Select(j => Math.Max(j.Order, j.RootOrder)).DefaultIfEmpty(0).Max() + 1);
         foreach (var root in added.GroupBy(QueueRoot))
         {
             long rootOrder = order++;
@@ -163,7 +163,7 @@ internal static partial class DurableTransfers
 
     internal static void AcceptQueueSnapshot(string peer, TransferQueuePosition[] positions)
     {
-        if (positions == null || positions.Length > 8192 || positions.Any(p => p == null || !TransferJournal.ValidId(p.Id) || p.Order < 0 || p.RootOrder < 0)
+        if (positions == null || positions.Length > 8192 || positions.Any(p => p == null || !TransferJournal.ValidId(p.Id) || p.Order < 0 || p.RootOrder < 0 || p.Order > DateTime.MaxValue.Ticks || p.RootOrder > DateTime.MaxValue.Ticks)
             || positions.Select(p => p.Id).Distinct().Count() != positions.Length) throw new InvalidDataException("Invalid sender queue.");
         lock (Sync)
         {

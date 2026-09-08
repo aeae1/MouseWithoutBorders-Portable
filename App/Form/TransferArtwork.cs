@@ -82,7 +82,16 @@ internal sealed class TransferIconCache : IDisposable
     }
     private void Load()
     {
-        Application.OleRequired();
+        try
+        {
+            Application.OleRequired();
+            LoadPending();
+        }
+        catch (Exception) { /* Shell failure must not stop input sharing. */ }
+        finally { lock (sync) { if (disposed) pending.Dispose(); } }
+    }
+    private void LoadPending()
+    {
         foreach (string key in pending.GetConsumingEnumerable())
         {
             lock (sync) if (disposed) break;
@@ -98,7 +107,6 @@ internal sealed class TransferIconCache : IDisposable
             finally { if (info.Icon != IntPtr.Zero) DestroyIcon(info.Icon); }
             lock (sync) { if (disposed) image?.Dispose(); else images[key] = image; }
         }
-        pending.Dispose();
     }
     private static Image Fallback(bool folder)
     {

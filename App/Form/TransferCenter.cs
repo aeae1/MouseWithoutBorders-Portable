@@ -311,7 +311,7 @@ internal sealed class TransferCenter : System.Windows.Forms.Form
             if (group?.CleanupPending == true) summary += " · " + (string.IsNullOrEmpty(group.CleanupError) ? "Cleaning up…" : group.CleanupError);
             if (jobs.Any(j => j.PendingAction == "cancel")) summary += " · Confirming cancellation with other PC…";
             expand.Text = Expanded ? "▼" : "▶";
-            string text = root.Name + (root.Sending ? " → " : " ← ") + root.Peer + " · " + summary;
+            string text = (group?.Name ?? root.Name) + (root.Sending ? " → " : " ← ") + root.Peer + " · " + summary;
             if (title.Text != text) { title.Text = text; tips.SetToolTip(title, text); }
             decimal total = jobs.Sum(j => (decimal)j.Length), done = jobs.Sum(j => (decimal)j.Bytes);
             int value = total == 0 ? complete * 1000 / jobs.Length : (int)(done * 1000 / total);

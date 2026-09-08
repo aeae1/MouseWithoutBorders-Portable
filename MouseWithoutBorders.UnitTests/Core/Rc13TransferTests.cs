@@ -12,11 +12,12 @@ namespace MouseWithoutBorders.UnitTests.Core;
 public sealed class Rc13TransferTests
 {
     private string directory = null!;
+    private bool share, transfer;
     private TransferJob File(string name, long order, string? group = null, string peer = "NET") => new()
     { Name = name, Peer = peer, Sending = true, State = "Waiting", Order = order, RootOrder = group == null ? order : 10, GroupId = group, Length = 100, Folder = directory, Protocol = 2, Declared = true };
     private void Configure(params TransferJob[] jobs) => DurableTransfers.ConfigureForTests(Path.Combine(directory, "journal.json"), jobs);
-    [TestInitialize] public void Setup() { directory = Path.Combine(Path.GetTempPath(), "mwb-queue-" + Guid.NewGuid().ToString("N")); Directory.CreateDirectory(directory); Configure(); }
-    [TestCleanup] public void Cleanup() { DurableTransfers.ResetAfterTests(); Directory.Delete(directory, true); }
+    [TestInitialize] public void Setup() { share = Setting.Values.ShareClipboard; transfer = Setting.Values.TransferFile; Setting.Values.ShareClipboard = true; Setting.Values.TransferFile = true; directory = Path.Combine(Path.GetTempPath(), "mwb-queue-" + Guid.NewGuid().ToString("N")); Directory.CreateDirectory(directory); Configure(); }
+    [TestCleanup] public void Cleanup() { DurableTransfers.ResetAfterTests(); Setting.Values.ShareClipboard = share; Setting.Values.TransferFile = transfer; Directory.Delete(directory, true); }
 
     [TestMethod]
     public void MovingStartedFolderLetsCurrentFilesFinishAndGivesNextSlotToHigherEntry()
@@ -84,9 +85,12 @@ public sealed class Rc13TransferTests
         var order = DurableTransfers.OrderedJobs(DurableTransfers.Jobs).Select(j => j.Id).ToArray();
         DurableTransfers.ApplyQueueMove("NET", b.Id, a.Id, false, true);
         CollectionAssert.AreEqual(order, DurableTransfers.OrderedJobs(DurableTransfers.Jobs).Select(j => j.Id).ToArray());
+        var incoming = File("incoming", DateTime.MaxValue.Ticks); incoming.Sending = false;
+        Configure(a, b, incoming);
         var added = new[] { File("new", 1), File("new2", 2) }; DurableTransfers.AppendQueue(added);
         Assert.IsTrue(added.All(j => j.RootOrder > Math.Max(a.RootOrder, b.RootOrder)));
         Assert.IsTrue(added[1].RootOrder > added[0].RootOrder);
+        Assert.IsTrue(added[1].RootOrder < incoming.RootOrder, "A remote queue must not set local append priority.");
     }
 
     [TestMethod]
@@ -127,7 +131,7 @@ public sealed class Rc13TransferTests
     public void RowsHaveFullWidthBarsIconsSeparatorsAndFitAtLargerFonts()
     {
         Exception? failure = null;
-        var thread = new Thread(() =>
+        var thread = new System.Threading.Thread(() =>
         {
             try
             {

@@ -59,6 +59,7 @@ internal static partial class DurableTransfers
             foreach (var f in files)
             {
                 if (f == null || !TransferJournal.ValidId(f.Id) || !ids.Add(f.Id) || !TransferJournal.ValidName(f.Name) || f.Length < 0
+                    || f.Order < 0 || f.RootOrder < 0 || f.Order > DateTime.MaxValue.Ticks || f.RootOrder > DateTime.MaxValue.Ticks
                     || (f.IsDirectory && f.Length != 0) || (f.GroupId == null && (f.RelativePath != null || f.IsDirectory))
                     || (f.GroupId != null && (!TransferJournal.ValidId(f.GroupId) || !TransferFolders.ValidRelative(f.RelativePath))))
                     throw new InvalidDataException("Invalid transfer entry.");
