@@ -175,3 +175,7 @@ RC7 fixes installation over a running copy and automatic relaunch, keeps the tra
 ## RC12 transfer startup and timeout handling
 
 See [RC12_TRANSFERS.md](RC12_TRANSFERS.md) for acknowledged startup, bounded preparation, timeout classification, aggregate progress, evidence limits and two-PC tests. Existing protocol-2 job data is retained, but RC12 new drops require the StartOffer capability on the other PC.
+
+## RC13 transfer window and queue
+
+See [RC13_TRANSFERS.md](RC13_TRANSFERS.md) for sender-controlled queue ordering, full-width rows, cached icons, title-bar progress, failure behavior and two-PC acceptance checks. RC11 settings and RC12 startup/retry fixes are retained.

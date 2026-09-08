@@ -1,25 +1,25 @@
 {
-  "tag": "mwb-v1.0.1-rc.12",
-  "title": "Mouse Without Borders Portable 1.0.1-rc.12",
+  "tag": "mwb-v1.0.1-rc.13",
+  "title": "Mouse Without Borders Portable 1.0.1-rc.13",
   "prerelease": true,
-  "summary": "Acknowledge drag/drop startup, retry connection timeouts correctly, and show overall transfer size, speed and ETA.",
+  "summary": "A clearer transfer window with glossy queue arrows, file/folder icons, full-width progress bars and title-bar totals.",
   "changes": [
-    "Start new drag/drop transfers over the acknowledged transfer connection; missing or expired selections return an error instead of silently disappearing.",
-    "Treat the private 10-second connection timeout as an I/O interruption eligible for the existing bounded retries. Preserve explicit user cancellation.",
-    "Show total bytes, combined active copy speed and estimated remaining time in folder groups and the overall list. Suppress misleading ETA when work is paused, cancelled or needs attention.",
-    "Record preparation stages and retry reasons in the bounded Mini Log. Preserve the RC11 settings layout."
+    "Move queued files and folder groups up or down from either PC. The sender confirms order; already-copying files finish and paused files stay paused.",
+    "Use consistent full-width progress bars, compact row separators, and cached Windows file-type/folder icons.",
+    "Move overall percentage, combined speed and ETA into the title bar, with clear Preparing, Paused and needs-attention states.",
+    "Keep the compact RC11 settings and RC12 acknowledged startup and connection-timeout retries. Simplify the README introduction."
   ],
   "testing": [
-    "Update BOTH PCs to RC12. Drag the same multi-file selection several times into disposable destinations; confirm both transfer windows appear and every file arrives.",
-    "Copy a folder with many small files and a few large files. Check folder and overall size/speed/ETA, and confirm the completed file count and contents.",
-    "Cancel while Preparing, then start another transfer. Confirm the cancelled selection does not start later.",
-    "Temporarily disconnect during a disposable transfer; reconnect and check retries or an explicit error/paused state. Confirm Retry resumes and existing files are preserved.",
-    "Recheck pause/resume, duplicate filenames, mouse/keyboard sharing, clipboard, lock/unlock and sleep/wake. Capture both Mini Logs if any file needs attention."
+    "Install RC13 on BOTH PCs. Send two folders and a large loose file; check icons, row separators, full-width bars and title-bar progress.",
+    "Move a started folder below another entry on either PC. Current files should finish; the higher entry should take the next available slots. Check the other window agrees within a few seconds.",
+    "Pause one file, wait for it to stop, move it, and verify it stays paused. Reorder children within an expanded folder, then collapse/reopen it.",
+    "Cancel while reordering, then disconnect/reconnect during a disposable transfer. Completed files must remain intact; resume/retry unfinished work explicitly when paused.",
+    "Check window resizing and your Windows display scaling. Recheck mouse/keyboard sharing, clipboard, sleep/wake and settings."
   ],
   "known_limitations": [
-    "This is a candidate fix. Automated checks do not confirm the intermittent real-PC startup problem is resolved.",
-    "RC12 requires the other PC to advertise acknowledged startup for new incoming drags; update both PCs. Existing protocol-2 file jobs retain their format.",
-    "ETA estimates copying at current speed and does not predict verification time. Short files may finish before a speed estimate settles.",
-    "Four outgoing transfers remain the limit. Full-speed Wi-Fi transfers can still cause mouse lag."
+    "Queue arrows on the receiving PC need RC13 or newer on the sender. Use the same RC on both PCs.",
+    "Each sender/destination pair has its own order; four outgoing file workers are shared across destinations. Arrows do not interrupt files currently copying.",
+    "ETA is an estimate of remaining copying, not a promise about verification time. Wi-Fi saturation can still cause mouse lag.",
+    "Automated Windows tests do not replace real two-PC validation, including disconnect and sleep/wake behavior."
   ]
 }

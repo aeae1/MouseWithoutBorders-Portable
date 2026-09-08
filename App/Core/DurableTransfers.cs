@@ -25,10 +25,11 @@ internal static partial class DurableTransfers
     private static string JournalPath => journalOverride ?? Path.Combine(AppContext.BaseDirectory, "MouseWithoutBorders.transfers.json");
     internal static void ConfigureForTests(string path, params TransferJob[] jobs)
     {
+        queuePeers.Clear();
         journalOverride = path;
         journal = new TransferJournal(); journal.Jobs.AddRange(jobs); stopping = false;
     }
-    internal static void ResetAfterTests() { foreach (var p in Preparations) p.Dispose(); preparations.Clear(); journalOverride = null; journal = null; }
+    internal static void ResetAfterTests() { foreach (var p in Preparations) p.Dispose(); preparations.Clear(); queuePeers.Clear(); journalOverride = null; journal = null; }
     internal static TransferJob[] Jobs { get { lock (Sync) return journal?.Jobs.ToArray() ?? Array.Empty<TransferJob>(); } }
 
     internal static void Initialize()
@@ -84,6 +85,7 @@ internal static partial class DurableTransfers
                 token.ThrowIfCancellationRequested();
                 if (stopping || journal.Jobs.Count(j => !j.Terminal) + added.Length > TransferFolders.MaxEntries || journal.Jobs.Count + added.Length > 8192)
                     throw new IOException("Too many unfinished transfers. Finish or cancel some items first.");
+                AppendQueue(added);
                 foreach (var j in added) { j.Protocol = 2; j.Declaring = true; if (j.Skipped) j.State = "Skipped"; }
                 journal.Jobs.AddRange(added); journal.Groups.AddRange(manifest.Groups);
                 try { Save(); }
@@ -147,7 +149,7 @@ internal static partial class DurableTransfers
         {
             case "pause": job.State = "Paused"; break;
             case "resume": case "queue":
-                job.State = "Waiting"; job.Deferred = action == "queue"; job.Order = DateTime.UtcNow.Ticks; job.Error = ""; job.RetryAfter = default; break;
+                job.State = "Waiting"; job.Deferred = action == "queue"; if (action == "queue") job.Order = DateTime.UtcNow.Ticks; job.Error = ""; job.RetryAfter = default; break;
             case "cancel": job.State = "Cancelled"; job.CleanupPending = !job.Sending; break;
             case "fail": job.State = "Error"; break;
             default: throw new InvalidDataException("Unknown file action.");
@@ -267,7 +269,7 @@ internal static partial class DurableTransfers
         var all = jobs.ToArray();
         int slots = Math.Max(0, 4 - all.Count(j => j.Sending && j.Running));
         var ready = all.Where(j => j.Sending && !j.Running && !j.CommandRunning && j.State == "Waiting" && j.PendingAction == null && j.RetryAfter <= DateTime.UtcNow);
-        var normal = ready.Where(j => !j.Deferred).OrderBy(j => j.Order).Take(slots).ToArray();
+        var normal = OrderedJobs(ready.Where(j => !j.Deferred)).OrderBy(j => j.RootOrder == 0 ? j.Order : j.RootOrder).ThenBy(j => j.Order).Take(slots).ToArray();
         if (normal.Length > 0 || all.Any(j => j.Sending && (j.Running || (!j.Deferred && j.State == "Waiting")))) return normal;
         // Explicitly deferred files wait for the other work, then run one at a time.
         return ready.Where(j => j.Deferred).OrderBy(j => j.Order).Take(Math.Min(1, slots)).ToArray();
@@ -480,8 +482,14 @@ internal static partial class DurableTransfers
             Initialize(); CheckPolicy(false);
             var message = TransferWire.Read(input);
             if (message.Op == "Hello")
-            { TransferWire.Write(output, new TransferMessage { Op = "Ok", Version = Application.ProductVersion, StartOfferSupported = true }); return; }
+            { TransferWire.Write(output, new TransferMessage { Op = "Ok", Version = Application.ProductVersion, StartOfferSupported = true, QueueSupported = true }); return; }
             if (message.Protocol != 2) throw new InvalidDataException("File transfer versions are incompatible. Update both PCs.");
+            if (message.Op == "QueueState" || message.Op == "MoveQueue")
+            {
+                var queue = message.Op == "QueueState" ? SenderQueue(peer)
+                    : ApplyQueueMove(peer, message.Id, message.TargetId, message.WholeGroup, message.Before);
+                TransferWire.Write(output, new TransferMessage { Op = "Ok", Queue = queue }); return;
+            }
             if (message.Op == "StartOffer")
             {
                 PrepareRequestedOffer(peer, message.Offer, output, session.Token);

@@ -34,6 +34,7 @@ internal sealed class TransferJob
     public bool Sending { get; set; }
     public int Offer { get; set; }
     public long Order { get; set; } = DateTime.UtcNow.Ticks;
+    public long RootOrder { get; set; }
     public string PendingAction { get; set; }
     public bool Hidden { get; set; }
     public bool Deferred { get; set; }

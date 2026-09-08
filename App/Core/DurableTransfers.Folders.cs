@@ -14,7 +14,7 @@ internal static partial class DurableTransfers
     private static DateTime lastMaintenance, lastProgressSave;
     private static TransferJob WireJob(TransferJob j) => new() { Id = j.Id, Name = j.Name, Length = j.Length,
         GroupId = j.GroupId, RelativePath = j.RelativePath, IsDirectory = j.IsDirectory, Skipped = j.Skipped,
-        Error = j.Skipped ? j.Error : "", ModifiedUtc = j.ModifiedUtc, Protocol = 2 };
+        Order = j.Order, RootOrder = j.RootOrder, Error = j.Skipped ? j.Error : "", ModifiedUtc = j.ModifiedUtc, Protocol = 2 };
 
     internal static void CheckPeer(string peer, bool requireStartOffer = false, CancellationToken token = default)
     {

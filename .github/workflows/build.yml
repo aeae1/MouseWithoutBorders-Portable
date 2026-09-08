@@ -48,9 +48,11 @@ jobs:
         if: always()
         shell: pwsh
         run: |
-          $preview = Join-Path $env:RUNNER_TEMP 'mwb-ui-previews/settings-150.png'
-          if (Test-Path $preview) {
-            Write-Output ('MWB_UI_PREVIEW settings-150.png ' + [Convert]::ToBase64String([IO.File]::ReadAllBytes($preview)))
+          foreach ($name in @('settings-150.png', 'transfers-9.png', 'transfers-14.png')) {
+            $preview = Join-Path $env:RUNNER_TEMP ('mwb-ui-previews/' + $name)
+            if (Test-Path $preview) {
+              Write-Output ('MWB_UI_PREVIEW ' + $name + ' ' + [Convert]::ToBase64String([IO.File]::ReadAllBytes($preview)))
+            }
           }
           Get-ChildItem (Join-Path $env:RUNNER_TEMP 'mwb-settings-stage-*.txt') | ForEach-Object {
             Write-Output ($_.Name + ': ' + (Get-Content $_.FullName -Raw))

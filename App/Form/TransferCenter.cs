@@ -23,7 +23,8 @@ internal sealed class TransferCenter : System.Windows.Forms.Form
     private bool closingCancelled;
     private bool allowClose;
     private int page;
-    private readonly Label overall = new() { Dock = DockStyle.Top, AutoEllipsis = true, Padding = new Padding(10, 0, 10, 0) };
+    private readonly TransferIconCache icons = new();
+    private readonly Stopwatch titleClock = new();
     private readonly Label preparation = new() { Dock = DockStyle.Top, AutoSize = true, Padding = new Padding(10, 8, 10, 8) };
     private readonly Button previous = new() { Text = "Previous", AutoSize = true };
     private readonly Button next = new() { Text = "Next", AutoSize = true };
@@ -45,7 +46,7 @@ internal sealed class TransferCenter : System.Windows.Forms.Form
         footer.Controls.Add(next); footer.Controls.Add(previous);
         previous.Click += (_, _) => { page = Math.Max(0, page - 1); RefreshRows(); };
         next.Click += (_, _) => { page++; RefreshRows(); };
-        Controls.Add(list); Controls.Add(overall); Controls.Add(preparation); Controls.Add(footer);
+        Controls.Add(list); Controls.Add(preparation); Controls.Add(footer);
         list.SizeChanged += (_, _) => { foreach (var row in rows.Values.Cast<Control>().Concat(groups.Values)) row.Width = Math.Max(100, list.ClientSize.Width - SystemInformation.VerticalScrollBarWidth - 20); };
         timer.Tick += (_, _) =>
         {
@@ -89,9 +90,12 @@ internal sealed class TransferCenter : System.Windows.Forms.Form
         string preparing = DurableTransfers.PreparationText;
         if (preparation.Text != preparing) preparation.Text = preparing;
         preparation.Visible = preparing.Length != 0;
-        var jobs = DurableTransfers.Jobs.Where(j => !j.Hidden).ToArray();
-        overall.Visible = jobs.Length > 1; overall.Height = Font.Height + Units(this, 10);
-        string totals = ProgressSummary(jobs); if (overall.Text != totals) overall.Text = totals;
+        var jobs = DurableTransfers.OrderedJobs(DurableTransfers.Jobs.Where(j => !j.Hidden));
+        DurableTransfers.RefreshQueuePeers();
+        if (!closingCancelled && (!titleClock.IsRunning || titleClock.ElapsedMilliseconds >= 1000))
+        { string text = TitleSummary(jobs, DurableTransfers.Preparing); if (Text != text) Text = text; titleClock.Restart(); }
+        var rootNeighbors = DurableTransfers.QueueNeighbors(jobs, true);
+        var childNeighbors = DurableTransfers.QueueNeighbors(jobs, false);
         var roots = jobs.GroupBy(j => j.GroupId ?? j.Id).ToArray();
         page = Math.Clamp(page, 0, Math.Max(0, (roots.Length - 1) / 50));
         previous.Visible = next.Visible = roots.Length > 50; previous.Enabled = page > 0; next.Enabled = (page + 1) * 50 < roots.Length;
@@ -112,7 +116,7 @@ internal sealed class TransferCenter : System.Windows.Forms.Form
                     if (!groups.TryGetValue(first.GroupId, out parent))
                     {
                         string groupId = first.GroupId;
-                        parent = new GroupRow(groupId, () =>
+                        parent = new GroupRow(groupId, icons, () =>
                         {
                             foreach (var pair in groups) if (pair.Key != groupId) pair.Value.Expanded = false;
                             RefreshRows();
@@ -124,15 +128,23 @@ internal sealed class TransferCenter : System.Windows.Forms.Form
                 {
                     visible.Add(job.Id);
                     if (!rows.TryGetValue(job.Id, out var row) || row.IsDisposed)
-                    { row = new JobRow(job) { Width = Math.Max(100, list.ClientSize.Width - SystemInformation.VerticalScrollBarWidth - 20) }; rows[job.Id] = row; (parent == null ? list.Controls : parent.Items.Controls).Add(row); }
-                    row.RefreshStatus();
+                    { row = new JobRow(job, icons) { Width = Math.Max(100, list.ClientSize.Width - SystemInformation.VerticalScrollBarWidth - 20) }; rows[job.Id] = row; (parent == null ? list.Controls : parent.Items.Controls).Add(row); }
+                    var neighbors = parent == null ? rootNeighbors : childNeighbors;
+                    neighbors.TryGetValue(parent == null ? DurableTransfers.QueueRoot(job) : job.Id, out var adjacent);
+                    row.RefreshStatus(adjacent);
+                    var container = parent == null ? list : parent.Items;
+                    int index = parent == null ? Array.IndexOf(displayed, root) : Array.IndexOf(parent.VisibleMembers(members), job);
+                    if (container.Controls.GetChildIndex(row) != index) container.Controls.SetChildIndex(row, index);
                 }
                 // Retire old child pages before measuring the group's new height.
                 if (parent != null)
                 {
                     foreach (var row in parent.Items.Controls.OfType<JobRow>().Where(r => !visible.Contains(r.JobId)).ToArray())
                     { rows.Remove(row.JobId); row.Dispose(); }
-                    parent.RefreshStatus(members);
+                    rootNeighbors.TryGetValue(root.Key, out var adjacent);
+                    parent.RefreshStatus(members, adjacent);
+                    int index = Array.IndexOf(displayed, root);
+                    if (list.Controls.GetChildIndex(parent) != index) list.Controls.SetChildIndex(parent, index);
                 }
             }
             foreach (var id in rows.Keys.Where(id => !visible.Contains(id)).ToArray())
@@ -157,7 +169,7 @@ internal sealed class TransferCenter : System.Windows.Forms.Form
 
     protected override void Dispose(bool disposing)
     {
-        if (disposing) timer.Dispose();
+        if (disposing) { timer.Dispose(); icons.Dispose(); }
         base.Dispose(disposing);
     }
 
@@ -180,29 +192,67 @@ internal sealed class TransferCenter : System.Windows.Forms.Form
             ? $" · ETA ~{Math.Ceiling(seconds / 60):0} min" : $" · ETA ~{Math.Max(1, Math.Ceiling(seconds)):0} sec");
     }
 
+    internal static string TitleSummary(TransferJob[] jobs, bool preparing = false)
+    {
+        const string name = "MWB transfers";
+        if (preparing) return name + " — Preparing…";
+        if (jobs.Length == 0) return name;
+        int issues = jobs.Count(j => j.State is "Error" or "Skipped");
+        if (issues > 0) return name + $" — {issues} {(issues == 1 ? "item needs" : "items need")} attention";
+        if (jobs.All(j => j.State == "Completed")) return name + " — Completed";
+        if (jobs.All(j => j.Terminal)) return name + " — " + (jobs.All(j => j.State == "Cancelled") ? "Cancelled" : "Finished · some cancelled");
+        if (jobs.Where(j => !j.Terminal).All(j => j.State == "Paused")) return name + " — Paused";
+        decimal total = jobs.Sum(j => (decimal)j.Length), done = jobs.Sum(j => (decimal)Math.Clamp(j.Bytes, 0, j.Length));
+        int percent = total == 0 ? 0 : Math.Clamp((int)(done * 100 / total), 0, 99);
+        string metrics = ProgressSummary(jobs);
+        int divider = metrics.IndexOf(" · ", StringComparison.Ordinal);
+        return name + $" — {percent}%" + (divider < 0 ? "" : metrics[divider..]);
+    }
+
     private static string SizeText(decimal bytes) => bytes >= 1024m * 1024 * 1024 ? $"{bytes / (1024m * 1024 * 1024):0.0} GB"
         : bytes >= 1024 * 1024 ? $"{bytes / (1024m * 1024):0.0} MB" : $"{bytes / 1024m:0.0} KB";
 
-    private sealed class GroupRow : Panel
+    private class TransferRow : Panel
+    {
+        protected bool GroupBoundary;
+        protected TransferRow() { DoubleBuffered = true; }
+        protected override void OnPaint(PaintEventArgs e)
+        {
+            base.OnPaint(e);
+            using var pen = new Pen(SystemInformation.HighContrast ? SystemColors.WindowText : GroupBoundary ? SystemColors.ControlDark : Color.FromArgb(207, 207, 207));
+            e.Graphics.DrawLine(pen, 0, Height - 1, Width - 1, Height - 1);
+        }
+    }
+
+    private sealed class GroupRow : TransferRow
     {
         private readonly string id;
+        private readonly Button expand = new() { FlatStyle = FlatStyle.Flat, AccessibleName = "Expand or collapse folder" };
+        private readonly TransferIconCache icons;
+        private readonly PictureBox icon = new() { SizeMode = PictureBoxSizeMode.Zoom };
+        private readonly TransferArrowButton up = new(true), down = new(false);
+        private (string Up, string Down) adjacent;
+        private TransferJob root;
+        private void Move(bool before) { try { DurableTransfers.MoveQueue(root, before ? adjacent.Up : adjacent.Down, true, before); } catch (Exception e) { MessageBox.Show(this, e.Message, "Queue changed"); } }
         private readonly Button title = new() { TextAlign = ContentAlignment.MiddleLeft, FlatStyle = FlatStyle.Flat, AutoEllipsis = true };
         private readonly Label totals = new() { AutoEllipsis = true, TextAlign = ContentAlignment.MiddleLeft };
         private readonly ProgressBar progress = new() { Maximum = 1000 };
         private readonly Button pause = new() { Text = "Pause" };
         private readonly Button cancel = new() { Text = "Cancel" };
         private readonly ToolTip tips = new();
-        internal readonly FlowLayoutPanel Items = new() { FlowDirection = FlowDirection.TopDown, WrapContents = false, AutoSize = true };
+        internal readonly FlowLayoutPanel Items = new() { FlowDirection = FlowDirection.TopDown, WrapContents = false, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, Margin = Padding.Empty };
         internal bool Expanded;
         private int page;
         private readonly Button previous = new() { Text = "Previous 100" };
         private readonly Button next = new() { Text = "Next 100" };
-        internal GroupRow(string groupId, Action changed)
+        internal GroupRow(string groupId, TransferIconCache icons, Action changed)
         {
-            id = groupId; Margin = new Padding(8, 3, 8, 3); DoubleBuffered = true;
-            title.FlatAppearance.BorderSize = 0;
-            Controls.AddRange(new Control[] { title, totals, progress, pause, cancel, previous, next, Items });
+            id = groupId; this.icons = icons; Margin = new Padding(8, 0, 8, 0); GroupBoundary = true;
+            up.Click += (_, _) => Move(true); down.Click += (_, _) => Move(false);
+            title.FlatAppearance.BorderSize = 0; expand.FlatAppearance.BorderSize = 0;
+            Controls.AddRange(new Control[] { title, expand, icon, totals, progress, pause, up, down, cancel, previous, next, Items });
             title.Click += (_, _) => { Expanded = !Expanded; changed(); };
+            expand.Click += (_, _) => title.PerformClick(); icon.Click += (_, _) => title.PerformClick();
             previous.Click += (_, _) => { page = Math.Max(0, page - 1); changed(); };
             next.Click += (_, _) => { page++; changed(); };
             pause.Click += (_, _) => DurableTransfers.ChangeMany(Members(), pause.Text == "Resume" ? "resume" : "pause");
@@ -220,31 +270,39 @@ internal sealed class TransferCenter : System.Windows.Forms.Form
         }
         private void LayoutRows()
         {
-            int gap = Units(this, 6), h = ButtonHeight(this), pw = ButtonWidth(pause, "Resume"), cw = ButtonWidth(cancel, "Cancel");
-            title.SetBounds(0, 0, Width, h);
-            int line = Font.Height + Units(this, 2);
-            totals.SetBounds(0, h, Width, line);
-            int y = h + line + Units(this, 2);
-            cancel.SetBounds(Width - cw, y, cw, h);
-            pause.SetBounds(cancel.Left - gap - pw, y, pw, h);
-            int barHeight = Math.Max(Units(this, 10), Font.Height / 2);
-            progress.SetBounds(0, y + (h - barHeight) / 2, Math.Max(20, pause.Left - gap), barHeight);
-            y += h + gap;
+            int gap = Units(this, 5), h = ButtonHeight(this), pw = ButtonWidth(pause, "Resume"), cw = ButtonWidth(cancel, "Cancel");
+            int top = Units(this, 8), imageSize = Units(this, 20);
+            cancel.SetBounds(Width - cw, top, cw, h);
+            pause.SetBounds(cancel.Left - gap - pw, top, pw, h);
+            down.SetBounds(pause.Left - gap - h, top, h, h); up.SetBounds(down.Left - gap - h, top, h, h);
+            expand.SetBounds(0, top, Units(this, 20), h);
+            icon.SetBounds(expand.Right, top + (h - imageSize) / 2, imageSize, imageSize);
+            title.SetBounds(icon.Right + gap, top, Math.Max(20, up.Left - icon.Right - 2 * gap), h);
+            int line = Font.Height + Units(this, 3);
+            totals.SetBounds(0, top + h, Width, line);
+            int y = totals.Bottom + Units(this, 3), barHeight = Units(this, 8);
+            progress.SetBounds(0, y, Width, barHeight);
+            y += barHeight + Units(this, 8);
             if (previous.Visible)
             {
                 int previousWidth = ButtonWidth(previous, previous.Text), nextWidth = ButtonWidth(next, next.Text);
                 previous.SetBounds(gap, y, previousWidth, h); next.SetBounds(previous.Right + gap, y, nextWidth, h);
                 y += h + gap;
             }
-            Items.Location = new Point(gap, y); Items.Width = Math.Max(20, Width - gap);
+            Items.Location = new Point(Units(this, 14), y); Items.Width = Math.Max(20, Width - Items.Left);
             foreach (Control row in Items.Controls) row.Width = Math.Max(20, Items.Width - row.Margin.Horizontal);
             int needed = y + (Expanded ? Items.Controls.Cast<Control>().Sum(c => c.Height + c.Margin.Vertical) : 0);
             if (Height != needed) Height = needed;
         }
-        internal void RefreshStatus(TransferJob[] jobs)
+        internal void RefreshStatus(TransferJob[] jobs, (string Up, string Down) adjacent)
         {
             if (jobs.Length == 0) return;
-            var root = jobs.FirstOrDefault(j => j.RelativePath == "") ?? jobs[0];
+            root = jobs.FirstOrDefault(j => j.RelativePath == "") ?? jobs[0];
+            this.adjacent = adjacent;
+            icon.Image = icons.Get(root.Name, true);
+            up.Enabled = adjacent.Up != null && DurableTransfers.QueueControlsReady(root, true);
+            down.Enabled = adjacent.Down != null && DurableTransfers.QueueControlsReady(root, true);
+            tips.SetToolTip(up, "Move up. " + DurableTransfers.QueueHelp(root, true)); tips.SetToolTip(down, "Move down. " + DurableTransfers.QueueHelp(root, true));
             int complete = jobs.Count(j => j.State == "Completed"), cancelled = jobs.Count(j => j.State == "Cancelled"), issues = jobs.Count(j => j.State is "Error" or "Skipped");
             string summary = cancelled == jobs.Length ? "Cancelled" : $"{complete}/{jobs.Length} complete";
             if (cancelled > 0 && cancelled != jobs.Length) summary += $" · {cancelled} cancelled";
@@ -252,12 +310,15 @@ internal sealed class TransferCenter : System.Windows.Forms.Form
             var group = DurableTransfers.Groups.FirstOrDefault(g => g.Id == id);
             if (group?.CleanupPending == true) summary += " · " + (string.IsNullOrEmpty(group.CleanupError) ? "Cleaning up…" : group.CleanupError);
             if (jobs.Any(j => j.PendingAction == "cancel")) summary += " · Confirming cancellation with other PC…";
-            string text = (Expanded ? "▼ " : "▶ ") + root.Name + (root.Sending ? " → " : " ← ") + root.Peer + " · " + summary;
+            expand.Text = Expanded ? "▼" : "▶";
+            string text = root.Name + (root.Sending ? " → " : " ← ") + root.Peer + " · " + summary;
             if (title.Text != text) { title.Text = text; tips.SetToolTip(title, text); }
             decimal total = jobs.Sum(j => (decimal)j.Length), done = jobs.Sum(j => (decimal)j.Bytes);
             int value = total == 0 ? complete * 1000 / jobs.Length : (int)(done * 1000 / total);
             progress.Value = Math.Clamp(value, 0, complete == jobs.Length ? 1000 : 999);
             string metrics = ProgressSummary(jobs);
+            string queueError = root.Sending ? "" : DurableTransfers.QueueError(root.Peer);
+            if (queueError.StartsWith("Queue move", StringComparison.Ordinal)) metrics += " · " + queueError;
             if (totals.Text != metrics) { totals.Text = metrics; tips.SetToolTip(totals, metrics + "\nTime remaining is an estimate based on current copying speed; verification can take longer."); }
             var unfinished = jobs.Where(j => !j.Terminal).ToArray();
             pause.Text = unfinished.Length > 0 && unfinished.All(j => j.State is "Paused" or "Error") ? "Resume" : "Pause";
@@ -270,7 +331,7 @@ internal sealed class TransferCenter : System.Windows.Forms.Form
         protected override void Dispose(bool disposing) { if (disposing) tips.Dispose(); base.Dispose(disposing); }
     }
 
-    private sealed class JobRow : Panel
+    private sealed class JobRow : TransferRow
     {
         private readonly TransferJob job;
         internal string JobId => job.Id;
@@ -279,17 +340,20 @@ internal sealed class TransferCenter : System.Windows.Forms.Form
         private readonly Label detail = new() { AutoEllipsis = true, TextAlign = ContentAlignment.MiddleLeft };
         private readonly ProgressBar progress = new() { Maximum = 1000 };
         private readonly Button pause = new();
-        private readonly Button queue = new() { Text = "Move to end" };
+        private readonly TransferArrowButton up = new(true), down = new(false);
+        private readonly PictureBox icon = new() { SizeMode = PictureBoxSizeMode.Zoom };
+        private readonly TransferIconCache icons;
+        private (string Up, string Down) adjacent;
         private readonly Button cancel = new() { Text = "Cancel" };
         private readonly ToolTip tips = new();
-        internal JobRow(TransferJob item)
+        internal JobRow(TransferJob item, TransferIconCache icons)
         {
-            job = item; Margin = new Padding(5, 2, 5, 2); DoubleBuffered = true;
+            job = item; this.icons = icons; Margin = new Padding(job.GroupId == null ? 8 : 0, 0, job.GroupId == null ? 8 : 0, 0);
             title.Text = (job.RelativePath?.Length > 0 ? job.RelativePath : job.Name) + (job.Sending ? " → " : " ← ") + job.Peer;
             tips.SetToolTip(title, title.Text);
-            Controls.AddRange(new Control[] { title, progress, pause, queue, cancel, status, detail });
+            Controls.AddRange(new Control[] { title, icon, progress, pause, up, down, cancel, status, detail });
             pause.Click += (_, _) => DurableTransfers.Change(job, job.State is "Paused" or "Error" ? "resume" : "pause");
-            queue.Click += (_, _) => DurableTransfers.Change(job, "queue");
+            up.Click += (_, _) => Move(true); down.Click += (_, _) => Move(false);
             cancel.Click += (_, _) => DurableTransfers.Change(job, "cancel");
             SizeChanged += (_, _) => LayoutRow();
             DpiChangedAfterParent += (_, _) => LayoutRow();
@@ -297,26 +361,33 @@ internal sealed class TransferCenter : System.Windows.Forms.Form
         }
         private void LayoutRow()
         {
-            int gap = Units(this, 5), h = ButtonHeight(this), line = Font.Height + Units(this, 4);
-            int cw = ButtonWidth(cancel, "Cancel"), qw = ButtonWidth(queue, "Move to end"), pw = ButtonWidth(pause, "Resume");
-            cancel.SetBounds(Width - cw, 0, cw, h);
-            queue.SetBounds(cancel.Left - gap - qw, 0, qw, h);
-            pause.SetBounds(queue.Left - gap - pw, 0, pw, h);
-            title.SetBounds(0, 0, Math.Max(20, pause.Left - gap), h);
-            int y = h + Units(this, 2), barWidth = Math.Min(Units(this, 150), Math.Max(40, Width / 4)), barHeight = Units(this, 8);
-            progress.SetBounds(0, y + (line - barHeight) / 2, barWidth, barHeight);
-            status.SetBounds(progress.Right + gap, y, Math.Max(20, Width - progress.Right - gap), line);
-            y += line;
+            int gap = Units(this, 5), h = ButtonHeight(this), line = Font.Height + Units(this, 3), top = Units(this, 8);
+            int cw = ButtonWidth(cancel, "Cancel"), pw = ButtonWidth(pause, "Resume");
+            cancel.SetBounds(Width - cw, top, cw, h);
+            pause.SetBounds(cancel.Left - gap - pw, top, pw, h);
+            down.SetBounds(pause.Left - gap - h, top, h, h); up.SetBounds(down.Left - gap - h, top, h, h);
+            int imageSize = Units(this, 20);
+            icon.SetBounds(0, top + (h - imageSize) / 2, imageSize, imageSize);
+            title.SetBounds(icon.Right + gap, top, Math.Max(20, up.Left - icon.Right - 2 * gap), h);
+            int y = top + h;
+            status.SetBounds(0, y, Width, line); y += line;
             detail.Visible = detail.Text.Length > 0;
             if (detail.Visible) { detail.SetBounds(0, y, Width, line); y += line; }
-            if (Height != y + Units(this, 2)) Height = y + Units(this, 2);
+            progress.SetBounds(0, y + Units(this, 3), Width, Units(this, 8));
+            if (Height != progress.Bottom + Units(this, 8)) Height = progress.Bottom + Units(this, 8);
         }
-        internal void RefreshStatus()
+        private void Move(bool before)
+        { try { DurableTransfers.MoveQueue(job, before ? adjacent.Up : adjacent.Down, false, before); } catch (Exception e) { MessageBox.Show(this, e.Message, "Queue changed"); } }
+        internal void RefreshStatus((string Up, string Down) adjacent)
         {
             int value = job.Length == 0 ? (job.State == "Completed" ? 1000 : 0) : Math.Clamp((int)(job.Bytes / (double)job.Length * 1000), 0, job.State == "Completed" ? 1000 : 999);
             if (progress.Value != value) progress.Value = value;
             pause.Text = job.State == "Error" ? "Retry" : job.State == "Paused" ? "Resume" : "Pause";
-            pause.Enabled = queue.Enabled = cancel.Enabled = !job.Terminal;
+            pause.Enabled = cancel.Enabled = !job.Terminal;
+            this.adjacent = adjacent; icon.Image = icons.Get(job.Name, job.IsDirectory);
+            up.Enabled = adjacent.Up != null && DurableTransfers.QueueControlsReady(job, false);
+            down.Enabled = adjacent.Down != null && DurableTransfers.QueueControlsReady(job, false);
+            tips.SetToolTip(up, "Move up. " + DurableTransfers.QueueHelp(job, false)); tips.SetToolTip(down, "Move down. " + DurableTransfers.QueueHelp(job, false));
             bool checking = !job.IsDirectory && job.State is "Preparing" or "Verifying";
             var style = checking ? ProgressBarStyle.Marquee : ProgressBarStyle.Continuous;
             if (progress.Style != style) progress.Style = style;
@@ -331,6 +402,7 @@ internal sealed class TransferCenter : System.Windows.Forms.Form
             if (job.PendingAction != null) text += job.PendingAction == "cancel" ? " · Confirming cancellation…" : " · Updating other PC…";
             if (status.Text != text) { status.Text = text; tips.SetToolTip(status, text); }
             string more = job.CleanupPending ? (job.Detail.Length > 0 ? job.Detail : "Removing temporary data…") : job.Error.Length > 0 ? job.Error : job.PendingAction != null ? job.Detail : "";
+            if (more.Length == 0 && !job.Sending) { string queueError = DurableTransfers.QueueError(job.Peer); if (queueError.StartsWith("Queue move", StringComparison.Ordinal)) more = queueError; }
             if (detail.Text != more) { detail.Text = more; tips.SetToolTip(detail, more); }
             LayoutRow();
         }
