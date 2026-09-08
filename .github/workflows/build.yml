@@ -52,6 +52,9 @@ jobs:
           if (Test-Path $preview) {
             Write-Output ('MWB_UI_PREVIEW settings-150.png ' + [Convert]::ToBase64String([IO.File]::ReadAllBytes($preview)))
           }
+          Get-ChildItem (Join-Path $env:RUNNER_TEMP 'mwb-settings-stage-*.txt') | ForEach-Object {
+            Write-Output ($_.Name + ': ' + (Get-Content $_.FullName -Raw))
+          }
 
       - name: Publish single-file portable app
         shell: pwsh

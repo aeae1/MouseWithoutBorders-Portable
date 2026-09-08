@@ -93,7 +93,12 @@ public sealed class Rc8SettingsTests
         var done = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var thread = new System.Threading.Thread(() =>
         {
-            try { action(); done.SetResult(); } catch (Exception error) { done.SetException(error); }
+            try
+            {
+                Application.SetUnhandledExceptionMode(UnhandledExceptionMode.ThrowException, true);
+                action(); done.SetResult();
+            }
+            catch (Exception error) { done.SetException(error); }
         }) { IsBackground = true };
         thread.SetApartmentState(ApartmentState.STA); thread.Start();
         await done.Task.WaitAsync(TimeSpan.FromSeconds(25));
@@ -195,12 +200,17 @@ public sealed class Rc8SettingsTests
 
     private sealed class SettingsWindowWithoutNetworkTimer : MouseWithoutBorders.FrmMatrix
     {
+        internal Action<string> TraceStep = _ => { };
         protected override void OnShown(EventArgs e)
         {
             // Use the real form, Load, machine setup and layout initialization.
             // Omit only the Shown handler's network/input polling timer.
             foreach (var name in new[] { "InitAll", "ConfigurePortableMachineTiles" })
+            {
+                TraceStep(name);
                 typeof(MouseWithoutBorders.FrmMatrix).GetMethod(name, BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(this, null);
+            }
+            TraceStep("Shown complete");
             typeof(MouseWithoutBorders.FrmMatrix).GetField("formShown", BindingFlags.Instance | BindingFlags.NonPublic)!.SetValue(this, true);
         }
     }
@@ -211,20 +221,29 @@ public sealed class Rc8SettingsTests
     [DataRow(200)]
     public async Task SettingsDividerRendersAndScrollRangeTracksContent(int scalePercent)
     {
+        string stage = "starting UI thread";
+        void Trace(string step)
+        {
+            stage = step;
+            if (Environment.GetEnvironmentVariable("RUNNER_TEMP") is string temp)
+                File.WriteAllText(Path.Combine(temp, $"mwb-settings-stage-{scalePercent}.txt"), step);
+        }
         await OnSta(() =>
         {
             var original = Setting.Values;
             try
             {
                 Setting.Values = Settings();
+                Trace("constructing form");
                 using var settings = new SettingsWindowWithoutNetworkTimer();
+                settings.TraceStep = Trace;
                 float scale = scalePercent / 100f;
                 // Exercise scaled geometry and text, including controls built in Load.
                 // Physical per-monitor DPI changes remain a real-PC check.
-                settings.Scale(new SizeF(scale, scale));
+                Trace("scaling form"); settings.Scale(new SizeF(scale, scale));
                 using var font = new Font(settings.Font.FontFamily, settings.Font.SizeInPoints * scale);
                 settings.Font = font;
-                settings.Show(); Application.DoEvents();
+                Trace("showing form"); settings.Show(); Trace("pumping first show"); Application.DoEvents();
                 var originalSize = settings.ClientSize;
                 var tabs = settings.Controls.OfType<TabControl>().Single();
                 var other = tabs.TabPages.Cast<TabPage>().Single(t => t.Text == "Other Options");
@@ -232,9 +251,11 @@ public sealed class Rc8SettingsTests
                 var divider = Descendants(other).Single(c => c.Name == "keyboardShortcutDivider");
                 foreach (var width in new[] { originalSize.Width, originalSize.Width + 240, originalSize.Width * 2 / 3, originalSize.Width })
                 {
+                    Trace($"resizing to {width}");
                     settings.ClientSize = new Size(width, originalSize.Height);
                     foreach (var page in tabs.TabPages.Cast<TabPage>())
                     {
+                        Trace($"visiting {page.Text} at {width}");
                         tabs.SelectedTab = page; Application.DoEvents();
                         tabs.SelectedTab = other; Application.DoEvents();
                         string bounds = $"Scale {scalePercent}; client {other.ClientSize}; display {other.DisplayRectangle}; root {content.Bounds}. "
@@ -251,6 +272,7 @@ public sealed class Rc8SettingsTests
                             Assert.IsFalse(other.VerticalScroll.Visible, "The original-size page should not need a scrollbar. " + bounds);
                     }
                 }
+                Trace("rendering divider");
                 using var pixels = new Bitmap(other.ClientSize.Width, other.ClientSize.Height);
                 other.DrawToBitmap(pixels, other.ClientRectangle);
                 var line = other.RectangleToClient(divider.RectangleToScreen(divider.ClientRectangle));
@@ -269,7 +291,7 @@ public sealed class Rc8SettingsTests
                     string previews = Path.Combine(runnerTemp, "mwb-ui-previews"); Directory.CreateDirectory(previews);
                     pixels.Save(Path.Combine(previews, "settings-150.png"), System.Drawing.Imaging.ImageFormat.Png);
                 }
-                Setting.Values.SaveSettingsSynchronously(); settings.Close();
+                Trace("closing form"); Setting.Values.SaveSettingsSynchronously(); settings.Close(); Trace("complete");
             }
             finally { Setting.Values = original; }
         });
