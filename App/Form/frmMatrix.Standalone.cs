@@ -33,6 +33,7 @@ internal partial class FrmMatrix
 
         ConfigurePortableOtherOptions();
         ConfigurePortableShortcutControls();
+        LayoutPortableSettingsPages();
         AddPortableSettingsTab();
         Shown += FrmMatrixPortable_Shown;
     }
@@ -140,8 +141,8 @@ internal partial class FrmMatrix
     {
         // Disabled WinForms controls cannot show their tooltips. Explain permanent
         // limitations inline, and remove the deprecated mapping switch altogether.
-        checkBoxDisableCAD.Text = "Skip Ctrl+Alt+Del [service required]";
-        checkBoxHideLogo.Text = "Hide logon-screen logo [service required]";
+        checkBoxDisableCAD.Visible = checkBoxHideLogo.Visible = false;
+        checkBoxSameSubNet.Visible = checkBoxClipNetStatus.Visible = false;
         int mouseEdgeSwitchingTop = checkBoxClipNetStatus.Top;
         int activationTop = checkBoxSendLog.Top;
 
@@ -253,12 +254,10 @@ internal partial class FrmMatrix
 
     private void UpdatePortableTransferFileText()
     {
-        if (!Setting.Values.TransferFileIsGpoConfigured)
-        {
-            checkBoxTransferFile.Text = checkBoxShareClipboard.Checked
-                ? "Transfer file"
-                : "Transfer file [requires Share Clipboard]";
-        }
+        checkBoxTransferFile.Text = "Allow file transfers" + (Setting.Values.TransferFileIsGpoConfigured ? " [Managed]" : "");
+        if (transferDescription != null)
+            transferDescription.Text = "Default: On · Copy files between PCs using drag/drop or copy and paste."
+                + (checkBoxShareClipboard.Checked ? "" : " Requires Share Clipboard to be enabled.");
     }
 
     private void ConfigurePortableShortcutControls()
@@ -318,9 +317,7 @@ internal partial class FrmMatrix
     private void UpdatePortableShortcutControlState()
     {
         bool enabled = checkBoxEnableKeyboardShortcuts.Checked;
-        checkBoxEnableKeyboardShortcuts.Text = enabled
-            ? "Enable keyboard shortcuts"
-            : "Enable keyboard shortcuts (currently off; assignments below are preserved)";
+        checkBoxEnableKeyboardShortcuts.Text = "Enable keyboard shortcuts";
 
         foreach (Control control in new Control[]
         {
@@ -412,104 +409,6 @@ internal partial class FrmMatrix
         return key is >= 'A' and <= 'Z'
             ? new HotkeySettings(false, true, true, false, key)
             : new HotkeySettings();
-    }
-
-    private void AddPortableSettingsTab()
-    {
-        var portableTab = new TabPage
-        {
-            BackColor = Color.FromArgb(246, 245, 242),
-            Text = "Portable",
-        };
-
-        var titleLabel = new Label
-        {
-            AutoSize = true,
-            Font = new Font(SystemFonts.MessageBoxFont, FontStyle.Bold),
-            Location = new Point(24, 24),
-            Text = PortableApplication.IsInstalledCopy ? "Installed copy" : "Portable copy",
-        };
-
-        var modeDescriptionLabel = new Label
-        {
-            AutoSize = true,
-            Font = SystemFonts.MessageBoxFont,
-            Location = new Point(24, 54),
-            MaximumSize = new Size(620, 0),
-            Text = PortableApplication.IsInstalledCopy
-                ? "This copy is installed for your Windows account. Use the tray menu to change Start with Windows or uninstall it."
-                : "This EXE is running directly from its current folder. You can keep using it this way or install this configured copy later.",
-        };
-
-        var executableHeadingLabel = new Label
-        {
-            AutoSize = true,
-            Font = new Font(SystemFonts.MessageBoxFont, FontStyle.Bold),
-            Location = new Point(24, 112),
-            Text = "EXE",
-        };
-
-        var executablePathLabel = new Label
-        {
-            AutoEllipsis = true,
-            AutoSize = false,
-            Font = SystemFonts.MessageBoxFont,
-            Location = new Point(24, 134),
-            Size = new Size(505, 22),
-            Text = PortableApplication.CurrentExecutablePath,
-        };
-        toolTip.SetToolTip(executablePathLabel, PortableApplication.CurrentExecutablePath);
-
-        var preferencesHeadingLabel = new Label
-        {
-            AutoSize = true,
-            Font = new Font(SystemFonts.MessageBoxFont, FontStyle.Bold),
-            Location = new Point(24, 170),
-            Text = "Preferences",
-        };
-
-        var preferencesPathLabel = new Label
-        {
-            AutoEllipsis = true,
-            AutoSize = false,
-            Font = SystemFonts.MessageBoxFont,
-            Location = new Point(24, 192),
-            Size = new Size(505, 22),
-            Text = PortableApplication.CurrentSettingsPath,
-        };
-        toolTip.SetToolTip(preferencesPathLabel, PortableApplication.CurrentSettingsPath);
-
-        var actionButton = new Button
-        {
-            Enabled = !PortableApplication.IsInstalledCopy,
-            Location = new Point(24, 240),
-            Size = new Size(205, 34),
-            Text = PortableApplication.IsInstalledCopy ? "Already installed" : "Install this portable copy…",
-            UseVisualStyleBackColor = true,
-        };
-        actionButton.Click += InstallPortableCopyButton_Click;
-
-        var noteLabel = new Label
-        {
-            AutoSize = true,
-            Font = SystemFonts.MessageBoxFont,
-            ForeColor = Color.DimGray,
-            Location = new Point(24, 292),
-            MaximumSize = new Size(620, 0),
-            Text = PortableApplication.IsInstalledCopy
-                ? "Your preferences remain beside the installed EXE. No background updater or Windows service is added."
-                : "Installing copies the EXE and moves these preferences only after the current app closes, preserving your key, layout, and options.",
-        };
-
-        portableTab.Controls.Add(titleLabel);
-        portableTab.Controls.Add(modeDescriptionLabel);
-        portableTab.Controls.Add(executableHeadingLabel);
-        portableTab.Controls.Add(executablePathLabel);
-        portableTab.Controls.Add(preferencesHeadingLabel);
-        portableTab.Controls.Add(preferencesPathLabel);
-        portableTab.Controls.Add(actionButton);
-        portableTab.Controls.Add(noteLabel);
-        tabControlSetting.TabPages.Add(portableTab);
     }
 
     private void InstallPortableCopyButton_Click(object sender, EventArgs e)

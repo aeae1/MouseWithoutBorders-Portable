@@ -27,7 +27,7 @@ internal sealed class TransferCenter : System.Windows.Forms.Form
     private readonly Button previous = new() { Text = "Previous", AutoSize = true };
     private readonly Button next = new() { Text = "Next", AutoSize = true };
 
-    internal TransferCenter(Func<bool> confirmCancellation = null)
+    internal TransferCenter(Func<bool> confirmCancellation = null, Func<bool> autoCloseFinished = null)
     {
         Text = "File transfers — Mouse Without Borders";
         AutoScaleDimensions = new SizeF(96, 96); AutoScaleMode = AutoScaleMode.Dpi;
@@ -52,7 +52,7 @@ internal sealed class TransferCenter : System.Windows.Forms.Form
             RefreshRows();
             if (closingCancelled && DurableTransfers.LocalCleanupFinished && !DurableTransfers.Preparing && !DurableTransfers.Jobs.Any(j => !j.Hidden && !j.Terminal))
             { DurableTransfers.DismissVisible(); allowClose = true; Close(); return; }
-            if (DurableTransfers.CanAutoClose)
+            if ((autoCloseFinished?.Invoke() ?? Setting.Values.AutoCloseTransferWindow) && DurableTransfers.CanAutoClose)
             { if (!finished.IsRunning) finished.Start(); if (finished.Elapsed.TotalSeconds > 2) { DurableTransfers.DismissVisible(); allowClose = true; Close(); } }
             else finished.Reset();
         };

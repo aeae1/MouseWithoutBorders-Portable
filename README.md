@@ -15,24 +15,27 @@
   <a href="https://github.com/aeae1/MouseWithoutBorders-Portable/actions/workflows/build.yml">Windows build status</a>
 </p>
 
-## New file transfers — available in RC7
+## New file transfers — available in RC8
 
-The new transfer system is a major upgrade over the original file-copy feature. **[Download RC7](https://github.com/aeae1/MouseWithoutBorders-Portable/releases/tag/mwb-v1.0.1-rc.7)** and use it on both PCs. This remains a release candidate while real-PC testing continues.
+The new transfer system is a major upgrade over the original file-copy feature. **[Download RC8](https://github.com/aeae1/MouseWithoutBorders-Portable/releases/tag/mwb-v1.0.1-rc.8)** and use it on both PCs. This remains a release candidate while real-PC testing continues.
 
 - **Copy files and folders between PCs:** drop into an open Explorer folder, or use the desktop MouseWithoutBorders folder, which opens immediately.
 - **One compact transfer window:** immediate “Preparing transfer…” feedback, expandable folder groups, a progress bar for each file, and up to four outgoing transfers at once per PC.
 - **Control individual files or whole folders:** pause, resume, move to the end of the queue, or cancel. Cancellation is communicated to the other PC; offline requests wait for reconnection.
 - **Recover interrupted work:** checked partial data can resume after a disconnect or restart. Recovered transfers stay paused until you decide what to do.
 - **Protect existing files:** duplicate names keep separate copies; incoming folders never merge with or overwrite existing folders. Cancellation removes incomplete data and keeps completed files.
+- **Your receiving folder:** choose a default destination for new drag/drop transfers on each PC, or keep Desktop \ MouseWithoutBorders. Drops into an Explorer folder still go there.
 - **Clearer feedback:** copy speed, estimated copy time, verification stages, disk-space errors, and concise details in Mini Log.
 
-Minimize to keep copying. Closing unfinished work asks whether to cancel it. Completed or cancelled lists close after local cleanup. Full-speed copying can still cause mouse lag on busy Wi-Fi. The new controls apply to **drag/drop**; clipboard file copy/paste retains its separate transport.
+Minimize to keep copying. Closing unfinished work asks whether to cancel it. Completed or cancelled lists close after local cleanup by default; you can turn automatic closing off in Settings. Full-speed copying can still cause mouse lag on busy Wi-Fi. The new controls apply to **drag/drop**; clipboard file copy/paste retains its separate transport.
 
-[RC7 changes and installation tests](docs/RC7_FIXES.md) · [Folder-copy behavior and recovery guide](docs/RC6_TRANSFERS.md)
+[RC8 settings and test guide](docs/RC8_SETTINGS.md) · [Folder-copy behavior and recovery guide](docs/RC6_TRANSFERS.md)
 
 
 > [!IMPORTANT]
 > This is an unofficial fork, not a Microsoft release. Version 1.0.0 is the first stable portable release after the Test and Release Candidate series. It packages the maintained MWB engine as one standalone EXE and includes the completed portable setup, settings, diagnostics, shortcuts, branding, and responsive machine-matrix work.
+
+RC8 also reorganizes Settings, shows each option’s default, removes service-only controls and optional status popups, and moves startup/uninstall into **Installation**. Existing supported preferences are preserved.
 
 ## What this project is
 
@@ -76,7 +79,7 @@ The finished product is deliberately small from a user's perspective:
 - Lets an already-configured portable copy install itself later from the **Portable** settings tab without losing its key, layout, or options.
 - Does not expire security keys or periodically demand that a manually chosen key be regenerated.
 - Keeps only the current and previous 5 MB local diagnostic logs instead of allowing one log to grow indefinitely.
-- Reduces the tray menu to the everyday controls: Settings, About, and Exit, plus Start with Windows and Uninstall for installed copies.
+- Keeps the tray menu to Settings, File transfers, About, and Exit. Startup and uninstall live in Settings → Installation.
 - Makes the About window fully opaque instead of retaining the original 90% transparency.
 - Makes an applied security-key edit persist immediately before reconnecting, and treats letter case as significant.
 - Opens Mini Log as a resizable, modeless Diagnostic Log instead of disabling Settings or overwriting the clipboard automatically.
@@ -101,7 +104,7 @@ The finished product is deliberately small from a user's perspective:
 > [!NOTE]
 > **Why is the EXE roughly 88 MB (about 84 MiB)?** This is a self-contained .NET 10 Windows build. The single EXE bundles the .NET runtime, Windows Forms desktop assemblies, and required native runtime components so the destination computer does not need a separate .NET installation. Most of that file size is the bundled platform, not the Mouse Without Borders application code itself.
 
-If you start portably and decide to install later, open Settings and select the **Portable** tab. MWB copies the existing prefs, then restarts from the installed folder with the same key, layout, and options. The original portable prefs remain available for recovery until you remove the old copy.
+If you start portably and decide to install later, open Settings and select the **Installation** tab. MWB copies the existing prefs, then restarts from the installed folder with the same key, layout, and options. The original portable prefs remain available for recovery until you remove the old copy.
 
 Use the same release on every connected computer.
 
@@ -166,12 +169,12 @@ This section records how the PowerToys module became this portable product. It i
 5. **Reduced the shipped product to one program.** The clipboard helper was folded into a hidden command-line mode of `MouseWithoutBorders.exe`, preserving the existing IPC design without distributing a companion helper. The release publish is self-contained and is checked to contain exactly one executable.
 6. **Implemented adjacent portable preferences.** MWB settings are stored in `MouseWithoutBorders.prefs.json` beside the running EXE. Writes use a temporary file followed by replacement. Startup was reordered so the preferences singleton cannot silently create defaults before the user sees the first-launch choice—the cause of the original “process exists but no window or tray icon” failure.
 7. **Built optional self-installation without an installer package.** First launch can run in place or copy the EXE into a per-user folder. Installation writes the prefs beside that EXE, creates a Start Menu shortcut, offers a desktop shortcut checked by default, and can add a current-user Start with Windows entry. No service, MSI, machine-wide registry registration, or administrator permission is added.
-8. **Made portable-to-installed migration lossless.** A **Portable** tab in Settings can install an already-running configured copy. MWB first forces a synchronous preferences save, validates and copies the JSON with `appMode` changed to `Installed`, creates the selected shortcuts/startup entry, waits for the old process to exit, retains the old prefs for recovery, and launches the installed EXE. Invalid JSON aborts the migration without overwriting the destination or deleting the source.
+8. **Made portable-to-installed migration lossless.** An **Installation** tab in Settings can install an already-running configured copy. MWB first forces a synchronous preferences save, validates and copies the JSON with `appMode` changed to `Installed`, creates the selected shortcuts/startup entry, waits for the old process to exit, retains the old prefs for recovery, and launches the installed EXE. Invalid JSON aborts the migration without overwriting the destination or deleting the source.
 9. **Simplified first connection setup.** The legacy blue setup wizard and its dead reconfigure link were removed from the portable flow. First run opens the classic matrix, shows the generated key, validates that checked computer names are nonblank and unique, and reports connection state on each configured tile in plain language.
 10. **Adjusted key policy deliberately.** The fork accepts manually chosen keys of four or more characters and generates twelve-character keys from an easy-to-type alphabet using `RandomNumberGenerator`. The 31-character alphabet provides about 59.5 bits of entropy at that length. The modern PowerToys-era AES/PBKDF2 transport remains. Legacy timed enforcement that demanded an auto-generated key or warned that a key had expired is excluded from the portable build; keys change only when the user changes them.
 11. **Restored a recognizable, exact icon.** `ClassicGreen.svg` reproduces the old 32×32 pixel grid exactly while mechanically mapping only the orange pixels to green. `ClassicGreen.ico` contains nearest-neighbor sizes from 16 through 256 pixels. The embedded icon is used by Explorer, title bars, and the tray, and the same SVG is displayed at the top of this page. A Test 5 experiment that simplified the smallest ICO frames was rejected because it lost part of the black pixel structure; Test 7 restores the complete pre-Test-5 artwork byte-for-byte.
 12. **Added long-running and release safety rails.** The local diagnostic log rolls at 5 MB and retains only one previous file; there is no updater, survey, or telemetry sender. The fork audited PowerToys MWB through September 3, 2026 and ported Microsoft's September 2 transactional incoming-file protections. GitHub Actions builds, tests, checks the one-file package, computes a SHA-256 checksum, and creates test releases only after validation succeeds. Release-candidate publishing retains the two newest RC download pages and removes older RC release entries without deleting their source tags. Physical two-PC testing remains the final authority for input, clipboard, file transfer, sleep/wake, firewall, install, and uninstall behavior.
-13. **Simplified the everyday interface.** The portable build's tray menu intentionally exposes only Settings, About, and Exit; installed copies additionally expose Start with Windows and Uninstall. Legacy screen-capture, broadcast-control, machine-switching, diagnostic, and dead help entries were removed from the visible menu without removing the underlying connection engine.
+13. **Simplified the everyday interface.** The tray menu exposes Settings, File transfers, About, and Exit. Installed copies manage Start with Windows and Uninstall in Settings → Installation. Legacy screen-capture, broadcast-control, machine-switching, diagnostic, and dead help entries were removed from the visible menu without removing the underlying connection engine.
 14. **Polished the portable presentation and build retention.** The portable About window overrides the legacy form's 90% opacity and renders fully opaque. Temporary CI executables are retained for one day—long enough for release publication and diagnosis—while durable downloadable builds remain attached to GitHub Releases.
 15. **Fixed key application and made diagnostics inspectable.** Applying a typed security key now updates both the live encryption state and the adjacent preferences JSON, forces that save to finish before sockets reconnect, and compares keys with case-sensitive semantics. The **Mini Log** link opens a resizable/maximizable, modeless **Diagnostic Log** with selectable text and an explicit **Copy all** button. It combines the configuration/connection snapshot with version, mode, paths, environment, process, key-checksum, and a bounded recent-event tail; the actual key is redacted and the viewer warns that names, IPs, and paths may appear. It does not disable Settings, repeated clicks refresh the existing viewer, and the redundant modeless Close button was removed in favor of the normal window X. New preference files start with **Wrap mouse** off so an outer matrix edge does not unexpectedly jump to the opposite side; existing saved choices are not migrated or overwritten.
 16. **Completed the repository cutover.** After Test 12 worked on real PCs, the portable source was promoted to the repository root. More than 8,500 unrelated PowerToys files were removed, leaving roughly 260 tracked files and about 3 MB of project content. Legacy PowerToys projects, the native module interface, service executable source, comparison-only project files, installers, build tooling, unrelated documentation, and unused legacy icon/manifest files were removed. The app project was renamed to `App/MouseWithoutBorders.csproj`, documentation moved to `docs`, and CI gained a repository-layout check that rejects the retired PowerToys paths if they return.

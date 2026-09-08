@@ -816,7 +816,12 @@ namespace MouseWithoutBorders
         {
             Setting.Values.ShareClipboard = checkBoxShareClipboard.Checked;
 
+#if PORTABLE_SINGLE_FILE
+            if (!formShown) return;
+            checkBoxTransferFile.Enabled = Setting.Values.ShareClipboard && !Setting.Values.TransferFileIsGpoConfigured;
+#else
             checkBoxTransferFile.Enabled = checkBoxTransferFile.Checked = Setting.Values.ShareClipboard;
+#endif
 
             ShowUpdateMessage();
         }
@@ -857,6 +862,10 @@ namespace MouseWithoutBorders
 
             checkBoxShareClipboard.Checked = Setting.Values.ShareClipboard;
 
+#if PORTABLE_SINGLE_FILE
+            checkBoxTransferFile.Checked = Setting.Values.TransferFile;
+            checkBoxTransferFile.Enabled = Setting.Values.ShareClipboard && !Setting.Values.TransferFileIsGpoConfigured;
+#else
             if (!Setting.Values.ShareClipboard)
             {
                 checkBoxTransferFile.Enabled = checkBoxTransferFile.Checked = false;
@@ -865,6 +874,7 @@ namespace MouseWithoutBorders
             {
                 checkBoxTransferFile.Checked = Setting.Values.TransferFile;
             }
+#endif
 
             checkBoxDisableCAD.Checked = Setting.Values.DisableCAD;
             checkBoxHideLogo.Checked = Setting.Values.HideLogonLogo;
@@ -1016,7 +1026,11 @@ namespace MouseWithoutBorders
             }
 
             Setting.Values.SaveSettings();
-
+#if PORTABLE_SINGLE_FILE
+            // Saving is asynchronous. Do not flash/disable the whole page or pump nested input.
+            UpdatePortableShortcutControlState();
+            return;
+#else
             foreach (Control c in tabPageOther.Controls)
             {
                 if (c != groupBoxShortcuts)
@@ -1055,8 +1069,6 @@ namespace MouseWithoutBorders
                 }
             }
 
-#if PORTABLE_SINGLE_FILE
-            UpdatePortableShortcutControlState();
 #endif
         }
 
@@ -1190,8 +1202,10 @@ namespace MouseWithoutBorders
                 checkBoxTwoRow.Top = groupBoxMachineMatrix.Height - (int)(checkBoxTwoRow.Height * 1.4);
                 buttonOK.Top = groupBoxMachineMatrix.Bottom + (int)(buttonOK.Height * 0.3);
                 buttonCancel.Top = groupBoxMachineMatrix.Bottom + (int)(buttonCancel.Height * 0.3);
+#if !PORTABLE_SINGLE_FILE
                 groupBoxShortcuts.Height = ClientSize.Height - groupBoxOtherOptions.Bottom - 40;
                 groupBoxDNS.Height = ClientSize.Height - pictureBoxMouseWithoutBorders.Height - textBoxDNS.Height - 70;
+#endif
             }
         }
 
@@ -1210,7 +1224,11 @@ namespace MouseWithoutBorders
 
         private void LinkLabelMiniLog_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
+#if PORTABLE_SINGLE_FILE
+            string miniLog = DiagnosticLog.Create(PortableDiagnosticControls());
+#else
             string miniLog = DiagnosticLog.Create(new[] { groupBoxOtherOptions.Controls, groupBoxShortcuts.Controls });
+#endif
             MiniLogForm.ShowOrActivate(this, miniLog);
         }
 
