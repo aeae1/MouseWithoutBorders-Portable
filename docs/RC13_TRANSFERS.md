@@ -37,7 +37,7 @@ These are the durable **drag/drop** rules, retained from RC12 unless stated othe
 | --- | --- | --- |
 | Brief network interruption or connection timeout | A sending file has up to two retries after the initial attempt, with short backoff. Saved bytes are checked before continuing. | Often nothing. If it settles on Paused/Error, reconnect and use Resume/Retry. |
 | A PC remains offline | Attempts are bounded. Outgoing files can settle on Paused; state/control acknowledgements wait for reconnection. The other window may temporarily lag behind. | Reconnect both PCs, then review and Resume/Retry or Cancel unfinished entries. Reconnection does not itself unpause recovered/paused work. |
-| Sleep or restart | Sleep causes a connection interruption; app startup loads unfinished journal entries as Paused and offers to open them, without automatically resuming. | Choose Resume or Cancel after reconnecting. |
+| Sleep or restart | Sleep can interrupt a connection and follows the retry rules; app startup loads unfinished journal entries as Paused and offers to open them, without automatically resuming. | Choose Resume or Cancel after reconnecting. |
 | Drop cannot finish preparing | Startup is acknowledged; missing/expired selections and preparation timeout leave a visible error rather than authorizing a delayed fresh copy. | Resolve the cause, then drag the selection again. |
 | Receiver runs out of space, loses folder access, or a file cannot be read | That file shows an error/reason. Other runnable files can continue. | Fix the space/access problem and Retry. |
 | Source changed since selection | File identity/size/time checks reject the old transfer. | Cancel that entry and drag the current file again. |

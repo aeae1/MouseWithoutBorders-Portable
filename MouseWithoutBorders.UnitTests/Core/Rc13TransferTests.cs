@@ -160,7 +160,7 @@ public sealed class Rc13TransferTests
                     var items = rows[0].Controls.OfType<FlowLayoutPanel>().Single();
                     Assert.IsTrue(items.Visible); Assert.AreEqual(2, items.Controls.Count);
                     foreach (Control child in items.Controls) Assert.AreEqual(child.Width, child.Controls.OfType<ProgressBar>().Single().Width);
-                    var previews = Path.Combine(Path.GetTempPath(), "mwb-ui-previews"); Directory.CreateDirectory(previews);
+                    var previews = Path.Combine(Environment.GetEnvironmentVariable("RUNNER_TEMP") ?? Path.GetTempPath(), "mwb-ui-previews"); Directory.CreateDirectory(previews);
                     using var capture = new Bitmap(form.Width, form.Height); form.DrawToBitmap(capture, new Rectangle(Point.Empty, capture.Size));
                     capture.Save(Path.Combine(previews, "transfers-" + font + ".png"));
                 }
