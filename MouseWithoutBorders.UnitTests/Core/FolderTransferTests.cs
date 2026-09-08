@@ -244,7 +244,7 @@ public sealed class FolderTransferTests
         for (int i = 0; i < 220; i++) File.WriteAllText(Path.Combine(source, $"file-{i:000}.txt"), "x");
         DurableTransfers.AcceptManifest("PEER", Manifest());
         var done = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        var thread = new Thread(() =>
+        var thread = new System.Threading.Thread(() =>
         {
             try
             {
