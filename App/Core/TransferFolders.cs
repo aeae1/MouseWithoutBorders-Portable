@@ -97,6 +97,7 @@ internal static class TransferFolders
         {
             if (!group.Directories.TryGetValue("", out string identity) || root.Identity != identity)
                 throw new IOException("The receiving folder was moved or replaced. Cancel and drag again.");
+            var expected = new List<(string Path, string Identity)> { (group.Folder, identity) };
             string current = group.Folder, partPath = "";
             foreach (string part in relative.Length == 0 ? Array.Empty<string>() : relative.Split('\\'))
             {
@@ -109,9 +110,14 @@ internal static class TransferFolders
                 }
                 using var check = DirectoryLease.Open(current);
                 if (check.Identity != group.Directories[partPath]) throw new IOException("A receiving subfolder was replaced. Cancel and drag again.");
+                expected.Add((current, check.Identity));
             }
-            // Pin every ancestor for the duration of file operations, not just during the check.
-            var result = DirectoryLease.Open(current); root.Dispose(); return result;
+            // Recheck identities after pinning the whole path, closing the gap between
+            // individual directory checks and the handles held during file operations.
+            var result = DirectoryLease.Open(current);
+            if (expected.Any(p => !result.HasIdentity(p.Path, p.Identity)))
+            { result.Dispose(); throw new IOException("A receiving subfolder was replaced. Cancel and drag again."); }
+            root.Dispose(); return result;
         }
         catch { root.Dispose(); throw; }
     }
@@ -153,7 +159,9 @@ internal static class TransferFolders
 internal sealed class DirectoryLease : IDisposable
 {
     private readonly List<SafeFileHandle> handles = new();
+    private readonly Dictionary<string, string> identities = new(StringComparer.OrdinalIgnoreCase);
     internal string Identity { get; private set; }
+    internal bool HasIdentity(string path, string identity) => identities.TryGetValue(Path.TrimEndingDirectorySeparator(Path.GetFullPath(path)), out string actual) && actual == identity;
     internal static DirectoryLease Open(string path)
     {
         if (string.IsNullOrWhiteSpace(path) || !Path.IsPathFullyQualified(path)) throw new IOException("A full folder path is required.");
@@ -171,6 +179,7 @@ internal sealed class DirectoryLease : IDisposable
                 var info = SafeTransferFile.Info(handle);
                 if ((info.Attributes & 0x410) != 0x10) throw new IOException("Linked or non-directory paths cannot be used for a transfer.");
                 result.Identity = $"{info.Volume:X8}:{info.IndexHigh:X8}{info.IndexLow:X8}";
+                result.identities.Add(Path.TrimEndingDirectorySeparator(current), result.Identity);
             }
             return result;
         }

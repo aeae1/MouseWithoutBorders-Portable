@@ -34,9 +34,9 @@ internal sealed class TransferCenter : System.Windows.Forms.Form
         Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath);
         var footer = new FlowLayoutPanel { Dock = DockStyle.Bottom, Height = 44, Padding = new Padding(8), FlowDirection = FlowDirection.RightToLeft };
         var cancel = new Button { Text = "Cancel all", AutoSize = true };
-        cancel.Click += (_, _) => { foreach (var job in DurableTransfers.Jobs.Where(j => !j.Terminal)) DurableTransfers.Change(job, "cancel"); };
+        cancel.Click += (_, _) => DurableTransfers.ChangeMany(DurableTransfers.Jobs, "cancel");
         var pause = new Button { Text = "Pause all", AutoSize = true };
-        pause.Click += (_, _) => { foreach (var job in DurableTransfers.Jobs.Where(j => !j.Terminal)) DurableTransfers.Change(job, "pause"); };
+        pause.Click += (_, _) => DurableTransfers.ChangeMany(DurableTransfers.Jobs, "pause");
         var clear = new Button { Text = "Clear finished", AutoSize = true };
         clear.Click += (_, _) => { DurableTransfers.ClearFinished(); RefreshRows(); };
         footer.Controls.Add(cancel); footer.Controls.Add(pause); footer.Controls.Add(clear);
@@ -49,7 +49,7 @@ internal sealed class TransferCenter : System.Windows.Forms.Form
         {
             if (TopMost && shown.Elapsed.TotalSeconds > 2) TopMost = false;
             RefreshRows();
-            if (closingCancelled && DurableTransfers.LocalCleanupFinished)
+            if (closingCancelled && DurableTransfers.LocalCleanupFinished && !DurableTransfers.Jobs.Any(j => !j.Hidden && !j.Terminal))
             { DurableTransfers.DismissVisible(); allowClose = true; Close(); return; }
             var jobs = DurableTransfers.Jobs.Where(j => !j.Hidden).ToArray();
             if (jobs.Length > 0 && jobs.All(j => j.State == "Completed" && !j.Running && j.PendingAction == null))
@@ -78,6 +78,8 @@ internal sealed class TransferCenter : System.Windows.Forms.Form
 
     private void Foreground()
     {
+        if (closingCancelled && DurableTransfers.Jobs.Any(j => !j.Hidden && !j.Terminal))
+        { closingCancelled = false; Text = "File transfers — Mouse Without Borders"; }
         WindowState = FormWindowState.Normal; TopMost = true; shown.Restart(); finished.Reset();
         BringToFront(); Activate(); _ = NativeMethods.SetForegroundWindow(Handle);
     }
@@ -87,21 +89,23 @@ internal sealed class TransferCenter : System.Windows.Forms.Form
         var roots = jobs.GroupBy(j => j.GroupId ?? j.Id).ToArray();
         page = Math.Clamp(page, 0, Math.Max(0, (roots.Length - 1) / 50));
         previous.Visible = next.Visible = roots.Length > 50; previous.Enabled = page > 0; next.Enabled = (page + 1) * 50 < roots.Length;
-        var displayed = roots.Skip(page * 50).Take(50).SelectMany(g => g).ToArray();
-        foreach (var id in groups.Keys.Where(id => !displayed.Any(j => j.GroupId == id)).ToArray())
+        var displayed = roots.Skip(page * 50).Take(50).ToArray();
+        foreach (var id in groups.Keys.Where(id => !displayed.Any(g => g.Key == id)).ToArray())
         { groups[id].Dispose(); groups.Remove(id); }
         var visible = new HashSet<string>();
         list.SuspendLayout();
         try
         {
-            foreach (var job in displayed)
+            foreach (var root in displayed)
             {
+                var members = root.ToArray();
+                var first = members[0];
                 GroupRow parent = null;
-                if (job.GroupId != null)
+                if (first.GroupId != null)
                 {
-                    if (!groups.TryGetValue(job.GroupId, out parent))
+                    if (!groups.TryGetValue(first.GroupId, out parent))
                     {
-                        string groupId = job.GroupId;
+                        string groupId = first.GroupId;
                         parent = new GroupRow(groupId, () =>
                         {
                             foreach (var pair in groups) if (pair.Key != groupId) pair.Value.Expanded = false;
@@ -109,16 +113,24 @@ internal sealed class TransferCenter : System.Windows.Forms.Form
                         }) { Width = Math.Max(600, list.ClientSize.Width - 28) };
                         groups.Add(groupId, parent); list.Controls.Add(parent);
                     }
-                    if (!parent.ShouldShow(job)) continue;
                 }
-                visible.Add(job.Id);
-                if (!rows.TryGetValue(job.Id, out var row) || row.IsDisposed)
-                { row = new JobRow(job) { Width = Math.Max(600, list.ClientSize.Width - 28) }; rows[job.Id] = row; (parent == null ? list.Controls : parent.Items.Controls).Add(row); }
-                row.RefreshStatus();
+                foreach (var job in parent == null ? members : parent.VisibleMembers(members))
+                {
+                    visible.Add(job.Id);
+                    if (!rows.TryGetValue(job.Id, out var row) || row.IsDisposed)
+                    { row = new JobRow(job) { Width = Math.Max(600, list.ClientSize.Width - 28) }; rows[job.Id] = row; (parent == null ? list.Controls : parent.Items.Controls).Add(row); }
+                    row.RefreshStatus();
+                }
+                // Retire old child pages before measuring the group's new height.
+                if (parent != null)
+                {
+                    foreach (var row in parent.Items.Controls.OfType<JobRow>().Where(r => !visible.Contains(r.JobId)).ToArray())
+                    { rows.Remove(row.JobId); row.Dispose(); }
+                    parent.RefreshStatus(members);
+                }
             }
             foreach (var id in rows.Keys.Where(id => !visible.Contains(id)).ToArray())
             { rows[id].Dispose(); rows.Remove(id); }
-            foreach (var group in groups.Values) group.RefreshStatus();
         }
         finally { list.ResumeLayout(); }
     }
@@ -152,15 +164,15 @@ internal sealed class TransferCenter : System.Windows.Forms.Form
             title.Click += (_, _) => { Expanded = !Expanded; changed(); };
             previous.Click += (_, _) => { page = Math.Max(0, page - 1); changed(); };
             next.Click += (_, _) => { page++; changed(); };
-            pause.Click += (_, _) => { foreach (var j in Members().Where(j => !j.Terminal)) DurableTransfers.Change(j, pause.Text == "Resume" ? "resume" : "pause"); };
-            cancel.Click += (_, _) => { foreach (var j in Members().Where(j => !j.Terminal)) DurableTransfers.Change(j, "cancel"); };
+            pause.Click += (_, _) => DurableTransfers.ChangeMany(Members(), pause.Text == "Resume" ? "resume" : "pause");
+            cancel.Click += (_, _) => DurableTransfers.ChangeMany(Members(), "cancel");
             SizeChanged += (_, _) => LayoutRows();
         }
         private TransferJob[] Members() => DurableTransfers.Jobs.Where(j => j.GroupId == id && !j.Hidden).ToArray();
-        internal bool ShouldShow(TransferJob job)
+        internal TransferJob[] VisibleMembers(TransferJob[] members)
         {
-            var members = Members(); page = Math.Clamp(page, 0, Math.Max(0, (members.Length - 1) / 100));
-            return Expanded && members.Skip(page * 100).Take(100).Any(j => j.Id == job.Id);
+            page = Math.Clamp(page, 0, Math.Max(0, (members.Length - 1) / 100));
+            return Expanded ? members.Skip(page * 100).Take(100).ToArray() : Array.Empty<TransferJob>();
         }
         private void LayoutRows()
         {
@@ -170,13 +182,15 @@ internal sealed class TransferCenter : System.Windows.Forms.Form
             Items.SetBounds(12, 96, Width - 12, Items.Height);
             foreach (Control row in Items.Controls) row.Width = Math.Max(580, Width - 24);
         }
-        internal void RefreshStatus()
+        internal void RefreshStatus(TransferJob[] jobs)
         {
-            var jobs = Members(); if (jobs.Length == 0) return;
+            if (jobs.Length == 0) return;
             var root = jobs.FirstOrDefault(j => j.RelativePath == "") ?? jobs[0];
             int complete = jobs.Count(j => j.State == "Completed"), issues = jobs.Count(j => j.State is "Error" or "Skipped");
             string text = (Expanded ? "▼ " : "▶ ") + root.Name + (root.Sending ? "  →  " : "  ←  ") + root.Peer + $"  ·  {complete}/{jobs.Length} items complete";
             if (issues > 0) text += $"  ·  {issues} need attention";
+            var group = DurableTransfers.Groups.FirstOrDefault(g => g.Id == id);
+            if (group?.CleanupPending == true) text += "  ·  " + (string.IsNullOrEmpty(group.CleanupError) ? "Cleanup pending" : group.CleanupError);
             if (title.Text != text) title.Text = text;
             decimal total = jobs.Sum(j => (decimal)j.Length), done = jobs.Sum(j => (decimal)j.Bytes);
             int value = total == 0 ? complete * 1000 / jobs.Length : (int)(done * 1000 / total);
@@ -196,6 +210,7 @@ internal sealed class TransferCenter : System.Windows.Forms.Form
     private sealed class JobRow : Panel
     {
         private readonly TransferJob job;
+        internal string JobId => job.Id;
         private readonly Label title = new() { AutoEllipsis = true };
         private readonly ProgressBar progress = new() { Maximum = 1000 };
         private readonly Button pause = new();

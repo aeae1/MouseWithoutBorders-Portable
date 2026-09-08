@@ -166,6 +166,107 @@ public sealed class FolderTransferTests
         Assert.AreEqual(DurableTransfers.Groups.Single().Directories[""], loaded.Groups.Single().Directories[""]);
     }
     [TestMethod]
+    public void SourceIsProtectedFromWritesWhileBeingRead()
+    {
+        string path = Path.Combine(source, "locked.txt"); File.WriteAllText(path, "original");
+        using (var parent = DirectoryLease.Open(source))
+        using (var file = SafeTransferFile.OpenSource(path))
+        {
+            Assert.ThrowsException<IOException>(() => File.WriteAllText(path, "changed"));
+            Assert.AreEqual("original", File.ReadAllText(path));
+        }
+        File.WriteAllText(path, "changed after copy");
+        Assert.AreEqual("changed after copy", File.ReadAllText(path));
+    }
+    [TestMethod]
+    public void FreshDropCannotMixPreviouslyAcceptedAndNewTransferIdentities()
+    {
+        var first = new TransferJob { Name = "first.txt", Length = 0 };
+        DurableTransfers.AcceptManifest("PEER", new TransferMessage { Offer = 37, Create = true, Files = new[] { first } });
+        DurableTransfers.RememberDrop(38, "PEER", destination);
+        var second = new TransferJob { Name = "second.txt", Length = 0 };
+        var mixed = new TransferMessage { Offer = 38, Create = true, Files = new[] { first, second } };
+        Assert.ThrowsException<InvalidDataException>(() => DurableTransfers.AcceptManifest("PEER", mixed));
+        Assert.AreEqual(1, DurableTransfers.Jobs.Length);
+        mixed.Files = new[] { second };
+        Assert.IsTrue(DurableTransfers.AcceptManifest("PEER", mixed));
+        Assert.AreEqual(2, DurableTransfers.Jobs.Length);
+        Assert.AreEqual(0, Directory.GetFileSystemEntries(destination).Length);
+    }
+    [TestMethod]
+    public void BatchedPeerCancellationKeepsCompletedFilesAndCannotTouchAnotherPeer()
+    {
+        var completed = new TransferJob { Peer = "PEER", Name = "done.txt", Folder = destination, Destination = Path.Combine(destination, "done.txt"), State = "Completed", Protocol = 2 };
+        var unfinished = new TransferJob { Peer = "PEER", Name = "partial.txt", Folder = destination, Length = 10, Protocol = 2 };
+        var other = new TransferJob { Peer = "OTHER", Name = "other.txt", Folder = destination, Protocol = 2 };
+        DurableTransfers.ConfigureForTests(Path.Combine(root, "journal.json"), completed, unfinished, other);
+        File.WriteAllText(completed.Destination, "keep"); File.WriteAllText(unfinished.Partial, "partial");
+        using var wire = new MemoryStream();
+        TransferWire.Write(wire, new TransferMessage { Op = "Actions", Ids = new[] { completed.Id, unfinished.Id, other.Id, Guid.NewGuid().ToString("N") }, Action = "cancel" });
+        wire.Position = 0; var request = TransferWire.Read(wire);
+        var results = DurableTransfers.ApplyPeerActions("PEER", request.Ids, request.Action);
+        Assert.AreEqual("Completed", results[0].State); Assert.AreEqual("Cancelled", results[1].State);
+        Assert.AreEqual("Unknown", results[2].Code); Assert.AreEqual("Unknown", results[3].Code);
+        Assert.AreEqual("Waiting", other.State); Assert.IsTrue(unfinished.CleanupPending);
+        DurableTransfers.RunMaintenanceForTests();
+        Assert.IsFalse(File.Exists(unfinished.Partial)); Assert.AreEqual("keep", File.ReadAllText(completed.Destination));
+        Assert.AreEqual("Cancelled", TransferJournal.Load(Path.Combine(root, "journal.json")).Jobs.Single(j => j.Id == unfinished.Id).State);
+    }
+    [TestMethod]
+    public void InvalidBatchIsRejectedBeforeAnyTransferChanges()
+    {
+        DurableTransfers.AcceptManifest("PEER", Manifest()); var job = DurableTransfers.Jobs.Single();
+        Assert.ThrowsException<InvalidDataException>(() => DurableTransfers.ApplyPeerActions("PEER", new[] { job.Id, job.Id }, "cancel"));
+        Assert.ThrowsException<InvalidDataException>(() => DurableTransfers.ApplyPeerActions("PEER", new[] { job.Id, "invalid" }, "cancel"));
+        Assert.ThrowsException<InvalidDataException>(() => DurableTransfers.ApplyPeerActions("PEER", new[] { job.Id }, "unknown"));
+        Assert.AreEqual("Waiting", job.State); Assert.IsFalse(job.CleanupPending);
+        DurableTransfers.ChangeMany(new[] { job }, "pause");
+        Assert.AreEqual("pause", TransferJournal.Load(Path.Combine(root, "journal.json")).Jobs.Single().PendingAction);
+    }
+    [TestMethod]
+    public void ReceivingLeasePinsTheWholeDirectoryPathUntilCopyFinishes()
+    {
+        Directory.CreateDirectory(Path.Combine(source, "Nested", "Child"));
+        DurableTransfers.AcceptManifest("PEER", Manifest());
+        var group = DurableTransfers.Groups.Single();
+        using (var lease = TransferFolders.EnsureDirectory(group, "Nested\\Child", () => { }))
+        {
+            Assert.IsTrue(lease.HasIdentity(group.Folder, group.Directories[""]));
+            Assert.IsTrue(lease.HasIdentity(Path.Combine(group.Folder, "Nested"), group.Directories["Nested"]));
+            Assert.ThrowsException<IOException>(() => Directory.Move(Path.Combine(group.Folder, "Nested"), Path.Combine(group.Folder, "Moved")));
+        }
+        Directory.Move(Path.Combine(group.Folder, "Nested"), Path.Combine(group.Folder, "Moved"));
+        Assert.ThrowsException<IOException>(() => TransferFolders.EnsureDirectory(group, "Nested\\Child", () => { }));
+    }
+    [TestMethod]
+    public async Task FolderWindowPagesChildrenAndDoesNotCreateThousandsOfControls()
+    {
+        for (int i = 0; i < 220; i++) File.WriteAllText(Path.Combine(source, $"file-{i:000}.txt"), "x");
+        DurableTransfers.AcceptManifest("PEER", Manifest());
+        var done = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var thread = new Thread(() =>
+        {
+            try
+            {
+                using var form = new MouseWithoutBorders.TransferCenter(() => false); form.Show();
+                var list = form.Controls.OfType<System.Windows.Forms.FlowLayoutPanel>().Single(p => p.Dock == System.Windows.Forms.DockStyle.Fill);
+                Assert.AreEqual(1, list.Controls.Count);
+                var group = list.Controls[0]; var children = group.Controls.OfType<System.Windows.Forms.FlowLayoutPanel>().Single();
+                Assert.AreEqual(0, children.Controls.Count);
+                group.Controls.OfType<System.Windows.Forms.Button>().Single(b => b.Text.StartsWith("▶")).PerformClick();
+                Assert.AreEqual(100, children.Controls.Count);
+                var next = group.Controls.OfType<System.Windows.Forms.Button>().Single(b => b.Text == "Next 100");
+                next.PerformClick(); Assert.AreEqual(100, children.Controls.Count);
+                next.PerformClick(); Assert.AreEqual(21, children.Controls.Count); Assert.IsFalse(next.Enabled);
+                form.Dispose(); done.SetResult();
+            }
+            catch (Exception error) { done.SetException(error); }
+        }) { IsBackground = true };
+        thread.SetApartmentState(ApartmentState.STA); thread.Start();
+        await done.Task.WaitAsync(TimeSpan.FromSeconds(15));
+    }
+
+    [TestMethod]
     public void ManualUpdatesRespectStableAndCandidateChannelsAndNumericOrdering()
     {
         const string json = """[{"tag_name":"mwb-v1.0.1-rc.9","draft":false,"prerelease":true},{"tag_name":"mwb-v1.0.1-rc.10","draft":false,"prerelease":true},{"tag_name":"mwb-v1.0.0","draft":false,"prerelease":false},{"tag_name":"mwb-v8.0.0","draft":true,"prerelease":false}]""";

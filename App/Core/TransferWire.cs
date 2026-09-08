@@ -8,6 +8,14 @@ using Newtonsoft.Json;
 
 namespace MouseWithoutBorders.Core;
 
+internal sealed class TransferActionResult
+{
+    public string Id { get; set; }
+    public string State { get; set; }
+    public string Code { get; set; }
+    public string Error { get; set; }
+}
+
 internal sealed class TransferMessage
 {
     public int Protocol { get; set; }
@@ -17,6 +25,8 @@ internal sealed class TransferMessage
     public string Code { get; set; }
     public string Op { get; set; }
     public string Id { get; set; }
+    public string[] Ids { get; set; }
+    public TransferActionResult[] Results { get; set; }
     public int Offer { get; set; }
     public TransferJob[] Files { get; set; }
     public string[] Names { get; set; }

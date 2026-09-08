@@ -87,7 +87,7 @@ internal static partial class DurableTransfers
             }
             Logger.Log($"Transfers: queued {added.Length} items in {manifest.Groups.Length} folders for {peer}.");
         }
-        catch (Exception error) { foreach (var job in added) Fail(job, error); }
+        catch (Exception error) { FailMany(added, error); }
         finally { lock (Sync) { foreach (var job in added) job.Declaring = false; } }
     }
 
@@ -98,18 +98,24 @@ internal static partial class DurableTransfers
         RequireOk(reply);
     }
 
-    internal static void Change(TransferJob job, string action)
+    internal static void Change(TransferJob job, string action) => ChangeMany(new[] { job }, action);
+
+    internal static void ChangeMany(IEnumerable<TransferJob> jobs, string action)
     {
         lock (Sync)
         {
-            if (job.Terminal || stopping) return;
-            ApplyAction(job, action);
-            job.PendingAction = job.Protocol == 2 ? action : null;
-            if (action == "cancel" && !job.Sending) job.CleanupPending = true;
-            if (action == "cancel" && job.GroupId != null && !job.Sending)
-            { var group = journal.Groups.FirstOrDefault(g => g.Id == job.GroupId); if (group != null) group.CleanupPending = true; }
-            TransferEvent(job, action);
-            job.Attempt?.Cancel();
+            if (stopping) return;
+            var changed = jobs.Where(j => !j.Terminal).Distinct().ToArray();
+            if (changed.Length == 0) return;
+            foreach (var job in changed)
+            {
+                ApplyAction(job, action);
+                job.PendingAction = job.Protocol == 2 ? action : null;
+                MarkGroupCleanup(job);
+                job.Attempt?.Cancel();
+            }
+            if (changed.Length == 1) TransferEvent(changed[0], action);
+            else Logger.Log($"Transfers: {action} requested for {changed.Length} items.");
             Save();
         }
     }
@@ -157,7 +163,7 @@ internal static partial class DurableTransfers
             lock (Sync)
             {
                 if (stopping) return;
-                int free = Math.Max(0, 4 - journal.Jobs.Count(j => j.CommandRunning));
+                int free = Math.Max(0, 4 - journal.Jobs.Count(j => j.CommandRunning && j.CommandCancellation != null));
                 foreach (var job in journal.Jobs.Where(j => j.PendingAction != null && !j.Declaring && !j.Running && !j.CommandRunning && j.CommandRetryAfter <= DateTime.UtcNow).Take(free))
                 {
                     job.CommandRunning = true;
@@ -184,25 +190,47 @@ internal static partial class DurableTransfers
     {
         string command = job.PendingAction;
         var token = job.CommandCancellation.Token;
+        var batch = new List<TransferJob> { job };
         try
         {
             if (command == null) return;
             if (!Common.IsConnectedTo(MachineStuff.MachinePool.ResolveID(job.Peer))) throw new IOException("The other PC is disconnected.");
             if (job.Sending && command != "cancel") EnsureDeclared(job, token);
-            var reply = Request(job.Peer, new TransferMessage { Op = "Action", Id = job.Id, Action = command, Error = job.Error }, token);
-            if (reply.Code == "Unknown" && command == "cancel") reply = new TransferMessage { Op = "Ok", State = "Cancelled" };
+            if (command != "fail") lock (Sync)
+            {
+                foreach (var other in journal.Jobs.Where(j => j != job && j.PendingAction == command && SamePeer(j.Peer, job.Peer)
+                    && !j.Declaring && !j.Running && !j.CommandRunning && j.CommandRetryAfter <= DateTime.UtcNow
+                    && (!j.Sending || j.Declared || command == "cancel")).Take(TransferFolders.MaxEntries - 1))
+                { other.CommandRunning = true; batch.Add(other); }
+            }
+            var reply = Request(job.Peer, new TransferMessage { Op = "Actions", Ids = batch.Select(j => j.Id).ToArray(), Action = command, Error = job.Error }, token);
             RequireOk(reply);
-            if (reply.State == "Completed") lock (Sync) { job.State = "Completed"; job.Bytes = job.Length; job.Error = ""; }
-
-            lock (Sync) { if (job.PendingAction == command) job.PendingAction = null; job.Detail = ""; Save(); }
+            if (reply.Results == null || reply.Results.Length != batch.Count || reply.Results.Any(r => r == null)
+                || reply.Results.Select(r => r.Id).Distinct().Count() != batch.Count || batch.Any(j => !reply.Results.Any(r => r.Id == j.Id)))
+                throw new InvalidDataException("The other PC returned an incomplete transfer acknowledgement.");
+            var results = reply.Results.ToDictionary(r => r.Id);
+            lock (Sync)
+            {
+                foreach (var item in batch)
+                {
+                    var result = results[item.Id];
+                    if (result.Code != null && !(result.Code == "Unknown" && command == "cancel"))
+                    { item.Detail = "Waiting for the other PC: " + result.Error; continue; }
+                    if (result.State == "Completed") { item.State = "Completed"; item.Bytes = item.Length; item.Error = ""; }
+                    else if (result.State == "Cancelled" && !item.Terminal) { ApplyAction(item, "cancel"); MarkGroupCleanup(item); }
+                    if (item.PendingAction == command) item.PendingAction = null;
+                    item.Detail = "";
+                }
+                Save();
+            }
         }
-        catch (Exception error) { job.Detail = "Waiting for the other PC: " + error.Message; }
+        catch (Exception error) { foreach (var item in batch) item.Detail = "Waiting for the other PC: " + error.Message; }
         finally
         {
             lock (Sync)
             {
-                job.CommandRetryAfter = DateTime.UtcNow.AddSeconds(2);
-                job.CommandRunning = false; job.CommandCancellation?.Dispose(); job.CommandCancellation = null;
+                foreach (var item in batch) { item.CommandRetryAfter = DateTime.UtcNow.AddSeconds(2); item.CommandRunning = false; }
+                job.CommandCancellation?.Dispose(); job.CommandCancellation = null;
             }
         }
     }
@@ -345,11 +373,19 @@ internal static partial class DurableTransfers
     {
         lock (Sync) { if (!job.Terminal && job.State != "Paused" && job.PendingAction == null) job.State = state; }
     }
-    private static void Fail(TransferJob job, Exception error)
+    private static void Fail(TransferJob job, Exception error) => FailMany(new[] { job }, error);
+    private static void FailMany(IEnumerable<TransferJob> jobs, Exception error)
     {
-        TransferEvent(job, "failed: " + error.Message);
-        lock (Sync) { if (job.Terminal || job.State == "Paused" || job.PendingAction != null || stopping) return;
-            job.State = "Error"; job.Error = error.Message; job.PendingAction = job.Protocol == 2 ? "fail" : null; job.Updated = DateTime.UtcNow; Save(); }
+        lock (Sync)
+        {
+            if (stopping) return;
+            var failed = jobs.Where(j => !j.Terminal && j.State != "Paused" && j.PendingAction == null).ToArray();
+            if (failed.Length == 0) return;
+            foreach (var job in failed) { job.State = "Error"; job.Error = error.Message; job.PendingAction = job.Protocol == 2 ? "fail" : null; job.Updated = DateTime.UtcNow; }
+            if (failed.Length == 1) TransferEvent(failed[0], "failed: " + error.Message);
+            else Logger.Log($"Transfers: {failed.Length} items failed: {error.Message}");
+            Save();
+        }
     }
 
     private static TransferMessage Request(string peer, TransferMessage message, CancellationToken token = default)
@@ -416,15 +452,17 @@ internal static partial class DurableTransfers
                 bool added = AcceptManifest(peer, message);
                 if (added) TransferCenter.ShowCenter(); TransferWire.Write(output, new TransferMessage { Op = "Ok" }); return;
             }
+            if (message.Op == "Actions")
+            {
+                var results = ApplyPeerActions(peer, message.Ids, message.Action, message.Error);
+                TransferWire.Write(output, new TransferMessage { Op = "Ok", Results = results }); return;
+            }
             lock (Sync) job = journal.Jobs.FirstOrDefault(j => j.Id == message.Id && SamePeer(j.Peer, peer));
             if (job == null)
             { TransferWire.Write(output, new TransferMessage { Op = "Error", Code = "Unknown", Error = "This transfer record has expired. Check received files before dragging again." }); return; }
             if (message.Op == "Action")
             {
-                lock (Sync) { if (!job.Terminal) { ApplyAction(job, message.Action); if (message.Action == "fail") job.Error = message.Error ?? "The other PC could not finish this file."; job.Attempt?.Cancel(); } Save(); }
-                if (job.State == "Cancelled" && job.GroupId != null && !job.Sending)
-                    lock (Sync) journal.Groups.Single(g => g.Id == job.GroupId).CleanupPending = true;
-                TransferEvent(job, "peer requested " + message.Action);
+                _ = ApplyPeerActions(peer, new[] { job.Id }, message.Action, message.Error);
                 TransferWire.Write(output, new TransferMessage { Op = "Ok", State = job.State }); return;
             }
             if (message.Op != "Begin" || job.Sending) throw new InvalidDataException("Invalid transfer request.");

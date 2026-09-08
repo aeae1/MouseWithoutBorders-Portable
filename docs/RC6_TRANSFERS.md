@@ -43,7 +43,7 @@ Limits: 256 selected top-level items per drag, 4096 expanded entries (including 
 
 ## Acceptance checks on two Windows PCs
 
-1. Exit MWB on both PCs and back up the EXE/preferences. Cancel obsolete RC5 jobs on both PCs before upgrading, or cancel them from RC6 and redrag; old protocol jobs cannot resume using RC6. Replace only the EXE in its existing directory and confirm About shows RC6.
+1. Exit MWB on both PCs and back up the EXE/preferences. Cancel obsolete RC5 jobs on both PCs before upgrading. If already upgraded, cancel the old entries separately on BOTH PCs and redrag; RC6 cannot resume or synchronize cancellation of old-protocol jobs. Replace only the EXE in its existing directory and confirm About shows RC6.
 2. Copy a disposable folder containing files, nested folders, and empty folders into an Explorer window. Verify the complete hierarchy and file contents. Repeat with a desktop drop and check the default MWB folder opens immediately.
 3. Pre-create a same-name destination folder containing a sentinel file. Copy the folder twice. Verify the original sentinel is unchanged and separate, numbered sibling folders contain the copies.
 4. Copy at least six files and expand folder rows. Check the four-file limit, individual Pause/Resume, Move to end, Cancel, and group Pause/Cancel. Try a folder with more than 100 entries to exercise paging.
@@ -57,6 +57,6 @@ Limits: 256 selected top-level items per drag, 4096 expanded entries (including 
 
 `TransferFolders.cs` scans a bounded tree and supplies Windows directory/file-handle checks. Incoming group roots use exclusive directory creation. Directory identities and non-reparse ancestors are checked and held through writes, preventing a checked folder from being replaced while in use. Final file moves prohibit overwrite. Empty-directory cancellation cleanup uses a verified native handle and refuses non-empty directories.
 
-`DurableTransfers.Folders.cs` validates a complete manifest before reserving receiving roots; local drop acceptance controls creation and replay. `TransferWire.cs` keeps bounded 64-byte-aligned framing inside the existing encrypted clipboard connection and adds explicit transfer protocol 2. `TransferCenter.cs` owns the close-confirmation and paged folder UI. `ManualUpdates.cs` is invoked only by the About button.
+`DurableTransfers.Folders.cs` validates a complete manifest before reserving receiving roots; local drop acceptance controls creation and replay. `TransferWire.cs` keeps bounded 64-byte-aligned framing inside the existing encrypted clipboard connection and adds explicit transfer protocol 2. `DurableTransfers.Commands.cs` validates peer-scoped batches so folder controls share a request and journal save. `TransferCenter.cs` owns the close-confirmation and paged folder UI; progress refresh scans each displayed group once rather than rescanning the journal for every child. `ManualUpdates.cs` is invoked only by the About button.
 
 Windows copy semantics informed the keep-both policy, using Microsoft's documented [rename-on-collision behavior](https://learn.microsoft.com/en-us/windows/win32/api/shobjidl_core/nf-shobjidl_core-ifileoperation-setoperationflags). This is an original network implementation using Windows/.NET APIs, not an embedded Explorer/SMB copy engine.

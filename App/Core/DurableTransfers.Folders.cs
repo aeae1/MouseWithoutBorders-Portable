@@ -63,6 +63,7 @@ internal static partial class DurableTransfers
             }
             var added = files.Where(f => !journal.Jobs.Any(j => j.Id == f.Id)).ToArray();
             if (added.Length == 0) return false;
+            if (added.Length != files.Length) throw new InvalidDataException("A new transfer cannot reuse records from another transfer. No receiving items were changed.");
             var drop = journal.Drops.LastOrDefault(d => d.Offer == message.Offer && SamePeer(d.Peer, peer));
             if (!message.Create || drop == null || drop.Accepted)
                 throw new InvalidDataException("This transfer record is no longer available. Check received files before dragging again; nothing was overwritten.");
@@ -143,7 +144,7 @@ internal static partial class DurableTransfers
 
     internal static void CancelVisible()
     {
-        foreach (var j in Jobs.Where(j => !j.Hidden && !j.Terminal)) Change(j, "cancel");
+        ChangeMany(Jobs.Where(j => !j.Hidden), "cancel");
     }
     internal static bool LocalCleanupFinished => Jobs.Where(j => !j.Hidden).All(j => !j.Declaring && !j.Running && !j.CleanupPending) && !Groups.Any(g => g.CleanupPending);
     internal static TransferGroup[] Groups { get { lock (Sync) return journal?.Groups.ToArray() ?? Array.Empty<TransferGroup>(); } }

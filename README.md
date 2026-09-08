@@ -1,6 +1,4 @@
 <p align="center">
-
-> **Testing 1.0.1-rc.6:** safe folder copies, individual transfer controls, cancellation cleanup, clearer progress, compact diagnostics, and a manual GitHub update check. Use RC6 on both PCs. [Download RC6](https://github.com/aeae1/MouseWithoutBorders-Portable/releases/tag/mwb-v1.0.1-rc.6) · [Behavior and testing guide](docs/RC6_TRANSFERS.md).
   <img src="App/ClassicGreen.svg" width="180" alt="Green Mouse Without Borders portable icon">
 </p>
 
@@ -16,6 +14,8 @@
   ·
   <a href="https://github.com/aeae1/MouseWithoutBorders-Portable/actions/workflows/build.yml">Windows build status</a>
 </p>
+
+> **Testing 1.0.1-rc.6:** safe folder copies, individual transfer controls, cancellation cleanup, clearer progress, compact diagnostics, and a manual GitHub update check. Use RC6 on both PCs. [Download RC6](https://github.com/aeae1/MouseWithoutBorders-Portable/releases/tag/mwb-v1.0.1-rc.6) · [Behavior and testing guide](docs/RC6_TRANSFERS.md).
 
 > [!IMPORTANT]
 > This is an unofficial fork, not a Microsoft release. Version 1.0.0 is the first stable portable release after the Test and Release Candidate series. It packages the maintained MWB engine as one standalone EXE and includes the completed portable setup, settings, diagnostics, shortcuts, branding, and responsive machine-matrix work.
