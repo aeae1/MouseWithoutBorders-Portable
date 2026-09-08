@@ -50,7 +50,6 @@ internal static class TransferWire
         int size = BitConverter.ToInt32(header, 4);
         if (BitConverter.ToInt32(header, 0) != 0x3542574d || size < 2 || size > 4 * 1024 * 1024 || header.Skip(8).Any(b => b != 0))
             throw new InvalidDataException("Unsupported transfer protocol. Use the same RC on both PCs.");
-        if (message.Protocol == 0) message.Protocol = 2;
         byte[] json = new byte[size]; stream.ReadExactly(json);
         FileTransferEngine.ReadPadding(stream, size);
         var result = JsonConvert.DeserializeObject<TransferMessage>(Encoding.UTF8.GetString(json)) ?? throw new InvalidDataException("Missing transfer message.");
