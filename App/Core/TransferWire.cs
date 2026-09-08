@@ -10,6 +10,11 @@ namespace MouseWithoutBorders.Core;
 
 internal sealed class TransferMessage
 {
+    public int Protocol { get; set; }
+    public bool Create { get; set; }
+    public string Version { get; set; }
+    public TransferGroup[] Groups { get; set; }
+    public string Code { get; set; }
     public string Op { get; set; }
     public string Id { get; set; }
     public int Offer { get; set; }
@@ -28,8 +33,9 @@ internal static class TransferWire
     internal const int Chunk = 4 * 1024 * 1024;
     internal static void Write(Stream stream, TransferMessage message)
     {
+        if (message.Protocol == 0) message.Protocol = 2;
         byte[] json = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(message));
-        if (json.Length > 256 * 1024) throw new InvalidDataException("Transfer message is too large.");
+        if (json.Length > 4 * 1024 * 1024) throw new InvalidDataException("Transfer message is too large.");
         byte[] header = new byte[64];
         BitConverter.GetBytes(0x3542574d).CopyTo(header, 0);
         BitConverter.GetBytes(json.Length).CopyTo(header, 4);
@@ -42,8 +48,9 @@ internal static class TransferWire
     {
         byte[] header = new byte[64]; stream.ReadExactly(header);
         int size = BitConverter.ToInt32(header, 4);
-        if (BitConverter.ToInt32(header, 0) != 0x3542574d || size < 2 || size > 256 * 1024 || header.Skip(8).Any(b => b != 0))
+        if (BitConverter.ToInt32(header, 0) != 0x3542574d || size < 2 || size > 4 * 1024 * 1024 || header.Skip(8).Any(b => b != 0))
             throw new InvalidDataException("Unsupported transfer protocol. Use the same RC on both PCs.");
+        if (message.Protocol == 0) message.Protocol = 2;
         byte[] json = new byte[size]; stream.ReadExactly(json);
         FileTransferEngine.ReadPadding(stream, size);
         var result = JsonConvert.DeserializeObject<TransferMessage>(Encoding.UTF8.GetString(json)) ?? throw new InvalidDataException("Missing transfer message.");

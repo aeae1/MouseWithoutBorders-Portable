@@ -321,7 +321,8 @@ internal static class Receiver
                 }
                 if (package.Des == Common.MachineID && package.PostAction == ClipboardPostAction.QueuedFiles)
                 {
-                    QueuedFileTransfer.SendOffer((int)package.Machine2, package.Src, package.MachineName);
+                    Logger.Log("Transfer rejected: the receiving PC uses an incompatible file protocol.");
+                    Common.ShowToolTip("File transfer versions are incompatible. Update both PCs.", 5000, System.Windows.Forms.ToolTipIcon.Error);
                     break;
                 }
 

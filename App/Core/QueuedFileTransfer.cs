@@ -62,7 +62,13 @@ internal static class QueuedFileTransfer
             throw new IOException($"Select between 1 and {MaxFiles} files per drag.");
         var files = paths.Select(path =>
         {
-            if (Directory.Exists(path)) throw new IOException("Folder transfer is not supported yet. Select the files inside it instead.");
+            if (Directory.Exists(path))
+            {
+                var directory = new DirectoryInfo(path);
+                if (directory.Attributes.HasFlag(FileAttributes.ReparsePoint)) throw new IOException("Linked folders cannot be transferred. Select the actual folder instead.");
+                if (!TransferJournal.ValidName(directory.Name)) throw new IOException("This folder name cannot be transferred safely.");
+                return new SourceFile(directory.FullName, 0, directory.LastWriteTimeUtc);
+            }
             var info = new FileInfo(path);
             if (!info.Exists) throw new FileNotFoundException("A selected file is no longer available.", path);
             // Validate names before advertising a drag, and never transmit local source paths.

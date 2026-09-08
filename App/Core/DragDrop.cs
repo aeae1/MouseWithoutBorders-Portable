@@ -332,10 +332,19 @@ internal static class DragDrop
                     var sources = MachineStuff.MachinePool.TryFindMachineByID(sourceId);
                     if (sources.Count == 0) throw new IOException("The sending PC disconnected.");
                     string folder = TransferDropDestination.ResolveAndOpen();
-                    DurableTransfers.RememberDrop(offer, sources[0].Name.Trim(), folder);
-                    Common.SkSend(new DATA { Type = PackageType.ClipboardAsk, Des = sourceId,
-                        MachineName = Common.MachineName, PostAction = ClipboardPostAction.DurableFiles,
-                        Machine2 = (ID)offer }, null, false);
+                    string peer = sources[0].Name.Trim();
+                    _ = System.Threading.Tasks.Task.Run(() =>
+                    {
+                        try
+                        {
+                            DurableTransfers.CheckPeer(peer);
+                            DurableTransfers.RememberDrop(offer, peer, folder);
+                            Common.SkSend(new DATA { Type = PackageType.ClipboardAsk, Des = sourceId,
+                                MachineName = Common.MachineName, PostAction = ClipboardPostAction.DurableFiles,
+                                Machine2 = (ID)offer }, null, false);
+                        }
+                        catch (Exception error) { Logger.Log("Transfer unavailable: " + error.Message); Common.ShowToolTip(error.Message, 5000, ToolTipIcon.Error); }
+                    });
                 }
                 catch (Exception error) { Logger.Log(error); Common.ShowToolTip(error.Message, 5000, ToolTipIcon.Error); }
             });
