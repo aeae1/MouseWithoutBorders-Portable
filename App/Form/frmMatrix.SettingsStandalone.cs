@@ -26,6 +26,7 @@ internal partial class FrmMatrix
     internal sealed class SettingsStack : TableLayoutPanel
     {
         private bool updatingWidths;
+        private int constrainedWidth = -1;
         internal SettingsStack()
         {
             AutoSize = true; AutoSizeMode = AutoSizeMode.GrowAndShrink;
@@ -46,14 +47,15 @@ internal partial class FrmMatrix
         protected override void OnControlAdded(ControlEventArgs e)
         {
             base.OnControlAdded(e);
-            UpdateChildWidths();
+            UpdateChildWidths(force: true);
         }
-        private void UpdateChildWidths()
+        private void UpdateChildWidths(bool force = false)
         {
             // Do not change layout constraints from inside OnLayout: changing a
             // MaximumSize there invalidates the layout currently being measured.
-            if (updatingWidths) return;
+            if (updatingWidths || (!force && constrainedWidth == ClientSize.Width)) return;
             updatingWidths = true;
+            constrainedWidth = ClientSize.Width;
             SuspendLayout();
             try
             {
@@ -97,7 +99,11 @@ internal partial class FrmMatrix
     private static FlowLayoutPanel Actions(params Control[] controls)
     {
         var flow = new FlowLayoutPanel { AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, WrapContents = true, Margin = new Padding(0) };
-        foreach (var control in controls) { control.Dock = DockStyle.None; control.Anchor = AnchorStyles.Top | AnchorStyles.Left; flow.Controls.Add(control); }
+        foreach (var control in controls)
+        {
+            control.Dock = DockStyle.None; control.Anchor = AnchorStyles.Top | AnchorStyles.Left;
+            control.Margin = new Padding(3, 1, 8, 1); flow.Controls.Add(control);
+        }
         return flow;
     }
     private void HostStack(TabPage tab, Control content)
@@ -202,8 +208,12 @@ internal partial class FrmMatrix
                 SetOptionTip(control, "None", "Hold Ctrl+Alt and the chosen function key or number to switch directly to a PC.");
             }
             shortcuts.Add(Actions(labelSwitchBetweenMachine, radioButtonF1, radioButtonNum, radioButtonDisable));
-            shortcuts.Add(Actions(Shortcut(labelLockMachine, "Lock PCs", comboBoxLockMachine), Shortcut(labelSwitch2AllPCMode, "All PCs", comboBoxSwitchToAllPC)));
-            shortcuts.Add(Actions(Shortcut(labelReconnect, "Reconnect", comboBoxReconnect), Shortcut(LabelToggleEasyMouse, "Toggle edge switching", comboBoxEasyMouse)));
+            ConfigureShortcut(labelLockMachine, "Lock PCs", comboBoxLockMachine);
+            ConfigureShortcut(labelSwitch2AllPCMode, "All PCs", comboBoxSwitchToAllPC);
+            ConfigureShortcut(labelReconnect, "Reconnect", comboBoxReconnect);
+            ConfigureShortcut(LabelToggleEasyMouse, "Toggle edge switching", comboBoxEasyMouse);
+            shortcuts.Add(Actions(labelLockMachine, comboBoxLockMachine, labelSwitch2AllPCMode, comboBoxSwitchToAllPC));
+            shortcuts.Add(Actions(labelReconnect, comboBoxReconnect, LabelToggleEasyMouse, comboBoxEasyMouse));
             groupBoxOtherOptions.Visible = groupBoxShortcuts.Visible = false;
             var content = new SettingsStack(); content.Add(columns); content.Add(shortcuts); HostStack(tabPageOther, content);
 
@@ -229,13 +239,12 @@ internal partial class FrmMatrix
         finally { ResumeLayout(true); }
     }
 
-    private Control Shortcut(Label label, string title, ComboBox choice)
+    private void ConfigureShortcut(Label label, string title, ComboBox choice)
     {
         label.Text = title + ", Ctrl+Alt:"; label.AutoSize = true; label.ResetFont(); choice.ResetFont();
         choice.Width = Math.Max(60, TextRenderer.MeasureText("None", choice.Font).Width + 32);
         SetOptionTip(choice, "None", toolTip.GetToolTip(choice));
         toolTip.SetToolTip(label, toolTip.GetToolTip(choice));
-        return Actions(label, choice);
     }
     private string ReceivingFolderText() => string.IsNullOrEmpty(Setting.Values.DefaultReceivingFolder)
         ? TransferReceivePreferences.DesktopFolder : Setting.Values.DefaultReceivingFolder;

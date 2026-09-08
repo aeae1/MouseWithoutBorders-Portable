@@ -122,7 +122,9 @@ public sealed class Rc8SettingsTests
                 Application.DoEvents();
                 var controls = Descendants(tabs).ToArray();
                 var tips = (ToolTip)typeof(MouseWithoutBorders.FrmMatrix).GetField("toolTip", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(settings)!;
-                Assert.IsFalse(other.VerticalScroll.Visible, "Other Options should fit the original window at the normal font size.");
+                Assert.IsFalse(other.VerticalScroll.Visible, "Other Options should fit the original window at the normal font size. "
+                    + $"Client: {other.ClientSize}; content: {other.DisplayRectangle}. "
+                    + string.Join("; ", Descendants(other).Where(c => c.Visible).Select(c => $"{c.GetType().Name}/{c.Name}: {c.Bounds}")));
                 Assert.IsFalse(Descendants(other).Any(c => c.Visible && c.Text.Contains("Default:")), "Defaults belong in tooltips, not visible option rows.");
                 var twoRows = controls.Single(c => c.Name == "checkBoxTwoRow");
                 Assert.AreEqual("Two rows", twoRows.Text);
