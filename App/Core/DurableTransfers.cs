@@ -130,7 +130,7 @@ internal static partial class DurableTransfers
 
     internal static void ClearFinished()
     {
-        lock (Sync) { foreach (var job in journal.Jobs.Where(j => j.Terminal && !j.Running && !j.CommandRunning && j.PendingAction == null)) job.Hidden = true; Save(); }
+        lock (Sync) { foreach (var job in journal.Jobs.Where(j => j.Terminal && !j.Declaring && !j.Running && !j.CommandRunning && !j.CleanupPending && j.PendingAction == null && !journal.Groups.Any(g => g.Id == j.GroupId && g.CleanupPending))) job.Hidden = true; Save(); }
         // Hide rows but retain durable receipts so a lost acknowledgement cannot create a duplicate.
     }
 
@@ -497,7 +497,8 @@ internal static partial class DurableTransfers
                     string actual = Work(output, () => { file.Flush(true); file.Position = 0; return TransferJournal.HashStream(file, job.Length, token); }, token, job.Attempt);
                     if (actual != hash) throw new InvalidDataException("Checksum mismatch. Retry will verify and replace the incomplete data.");
                     file.Dispose();
-                    if (job.ModifiedUtc != default) File.SetLastWriteTimeUtc(job.Partial, job.ModifiedUtc); (policy ?? (() => CheckPolicy(false)))(); token.ThrowIfCancellationRequested();
+                    if (job.ModifiedUtc != default) File.SetLastWriteTimeUtc(job.Partial, job.ModifiedUtc);
+                    (policy ?? (() => CheckPolicy(false)))(); token.ThrowIfCancellationRequested();
                     lock (job.Gate)
                     {
                         token.ThrowIfCancellationRequested();
@@ -514,7 +515,8 @@ internal static partial class DurableTransfers
                 file.Write(bytes); file.Flush(true); offset += bytes.Length;
                 lock (Sync) { job.Bytes = offset; job.Updated = DateTime.UtcNow; SaveProgress(); }
                 double elapsed = clock.Elapsed.TotalSeconds;
-            if (elapsed >= 0.5) { double speed = (offset - startedAt) / elapsed; job.Speed = job.Speed == 0 ? speed : job.Speed * 0.65 + speed * 0.35; clock.Restart(); startedAt = offset; } job.Detail = "";
+                if (elapsed >= 0.5) { double speed = (offset - startedAt) / elapsed; job.Speed = job.Speed == 0 ? speed : job.Speed * 0.65 + speed * 0.35; clock.Restart(); startedAt = offset; }
+                job.Detail = "";
                 TransferWire.Write(output, new TransferMessage { Op = "Ok", Offset = offset });
             }
         }

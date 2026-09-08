@@ -1,0 +1,22 @@
+name: Stop obsolete RC6 dialog test
+on:
+  push:
+    branches: ['release/1.0.1-rc.6']
+    paths: ['.github/workflows/stop-rc6-validation.yml']
+permissions:
+  contents: read
+jobs:
+  stop-obsolete-run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    permissions:
+      actions: write
+    steps:
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            const run_id = 34252722930;
+            const args = {...context.repo, run_id};
+            const {data: run} = await github.rest.actions.getWorkflowRun(args);
+            if (run.head_branch !== 'release/1.0.1-rc.6' || run.head_sha !== '727c37012a08c9e5d095bb06cf11a47c56be66ac' || run.workflow_id !== 350302355) throw new Error('Unexpected run identity');
+            if (run.status !== 'completed') await github.rest.actions.cancelWorkflowRun(args);

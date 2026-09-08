@@ -18,6 +18,7 @@ internal sealed class TransferGroup
     public string Peer { get; set; }
     public bool Sending { get; set; }
     public bool CleanupPending { get; set; }
+    public bool CleanupDone { get; set; }
     public string CleanupError { get; set; }
     public string Folder { get; set; }
     public Dictionary<string, string> Directories { get; set; } = new(StringComparer.OrdinalIgnoreCase);

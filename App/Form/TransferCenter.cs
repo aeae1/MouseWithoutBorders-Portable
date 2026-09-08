@@ -26,7 +26,7 @@ internal sealed class TransferCenter : System.Windows.Forms.Form
     private readonly Button previous = new() { Text = "Previous", AutoSize = true };
     private readonly Button next = new() { Text = "Next", AutoSize = true };
 
-    internal TransferCenter()
+    internal TransferCenter(Func<bool> confirmCancellation = null)
     {
         Text = "File transfers — Mouse Without Borders";
         AutoScaleDimensions = new SizeF(96, 96); AutoScaleMode = AutoScaleMode.Dpi;
@@ -63,8 +63,8 @@ internal sealed class TransferCenter : System.Windows.Forms.Form
             {
                 e.Cancel = true;
                 if (closingCancelled) return;
-                if (MessageBox.Show(this, "Cancel unfinished transfers and close?\n\nCompleted files will be kept. Temporary data on an offline PC will be cleaned up when it reconnects.",
-                    "Mouse Without Borders", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2) != DialogResult.Yes) return;
+                if (!(confirmCancellation?.Invoke() ?? (MessageBox.Show(this, "Cancel unfinished transfers and close?\n\nCompleted files will be kept. Temporary data on an offline PC will be cleaned up when it reconnects.",
+                    "Mouse Without Borders", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2) == DialogResult.Yes))) return;
                 try { DurableTransfers.CancelVisible(); closingCancelled = true; Text = "Cancelling and cleaning up…"; }
                 catch (Exception error) { MessageBox.Show(this, error.Message, "Could not cancel transfers"); }
             }

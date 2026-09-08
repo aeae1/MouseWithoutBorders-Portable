@@ -146,36 +146,8 @@ Unless intentionally changed, protocol constants, named IPC objects, settings mi
 
 Do **not** assume compatibility with the old Garage standalone `2.2.1.0327`; Microsoft has changed the MWB implementation/protocol since that generation. During testing, use the same fork/current-generation build on all connected machines unless mixed-version compatibility has been explicitly verified.
 
-## RC5 transfer candidate
+## RC6 transfer candidate
 
-Independent, resumable drag/drop transfers with per-file controls, restart recovery, and Explorer folder targeting. Install RC5 on BOTH PCs. This is a release candidate: automated Windows tests do not replace the two-PC checks below.
+The current transfer candidate adds safe folder copying, cancellation cleanup when closing the transfer window, disk-space checks, clearer progress and estimates, compact log events, and a manual GitHub update check in About. Use RC6 on both PCs.
 
-- One transfer window per PC, with a progress bar and Pause/Resume, Move to end, Cancel, and Retry for each file. Up to four outgoing files run concurrently; additional files wait. Each PC also accepts up to four incoming files.
-- Move to end defers that file until the other runnable work finishes; explicitly deferred files then run in order. Paused files stay paused. New drags join the same list.
-- Keep checked partial data when paused or interrupted. Verify each chunk, the resume prefix, and the complete file with SHA-256. Require a saved acknowledgement and retain completion receipts to avoid duplicate copies after a lost acknowledgement.
-- Retry transient connection interruptions twice automatically, then leave an actionable error. Pending peer commands no longer block the transfer scheduler.
-- Save transfer recovery beside the EXE. After app or PC restart, unfinished transfers are paused and a popup offers to open the list; nothing resumes automatically. Reopen the list from the File transfers tray item.
-- Drop over an Explorer folder window to target that folder. Otherwise create/open Desktop\MouseWithoutBorders immediately when dropped. Preserve existing files by choosing an unused destination name.
-- Replace the small drag indicator with a larger Windows file-type image and filename/file-count preview on the receiving screen. This is a custom preview using Windows icons, not Explorer thumbnail rendering.
-- Use full transfer speed without speed choices. Bring the transfer list forward for newly added files, avoid focus changes on progress ticks, and close it after all visible entries complete successfully.
-
-### Recovery and limits
-
-- RC5 drag/drop uses a fork-specific protocol; use RC5 on both PCs. Mouse/keyboard packets and the existing underlying encryption are unchanged.
-- Full-speed transfers can still cause Wi-Fi mouse lag. Initial source hashing, resume-prefix checks, and final verification can take time on large files.
-- No folder transfers, Explorer virtual-folder support, or native cross-PC OLE drag session. Explorer window targeting, Windows 11 tabs, focus, and cursor behavior require real-PC validation.
-- Legacy clipboard file copy/paste retains its existing single-file transport; the new list, resume, and checksums apply to drag/drop.
-- Recovery uses MouseWithoutBorders.transfers.json and its backup beside the EXE, plus hidden partial files in the destination. Do not delete these while you want to resume. Inactive partials older than 30 days are discarded during recovery; those jobs restart from zero if resumed.
-- Limits: 256 files per drag, 4096 retained job/receipt entries, and a 16 MiB recovery journal. Clear finished hides completed rows but retains receipts for duplicate protection.
-- Closing the transfer window lets copying continue; exiting MWB pauses unfinished jobs. A file already being committed may complete while cancellation is requested. No installed service or protected UAC/sign-in support.
-
-### Two-PC acceptance checks
-
-1. Exit MWB on both PCs. Back up your EXE/preferences, replace only the EXE, and confirm About shows 1.0.1-rc.5 on both. Keep the EXE in its existing folder so recovery files stay beside it.
-2. Drag six disposable files, including large files, an empty file, and a duplicate filename. Confirm one list on each PC, four active outgoing files at most, individual progress bars, preserved duplicates, and intact received contents.
-3. Pause one large file from each PC in separate attempts. Other files should continue. Resume should reuse its partial data. Move one to end and confirm it waits for the other runnable work. Cancel one and confirm the others complete.
-4. Disconnect Wi-Fi during a large copy, then reconnect. Check the automatic retries and manual Retry if needed. Confirm completion does not create a second copy after reconnect.
-5. Exit and restart MWB during a transfer. Expect the recovery popup and paused entries; no copying should start until you explicitly resume. Repeat after restarting both PCs.
-6. Drop over an Explorer folder window and verify the destination. Drop elsewhere and confirm Desktop\MouseWithoutBorders opens immediately. Check drag feedback when crossing screens quickly and slowly.
-7. Add another drag while copying and while the transfer list is minimized. Check both lists restore for new files, typing does not cause cursor flashing or repeated focus stealing, and successful lists close automatically. Check that paused/error entries remain visible.
-8. Recheck mouse/keyboard switching, text/image clipboard, single-file clipboard copy/paste, reconnect, lock/unlock, and sleep/wake.
+See [RC6 behavior, limitations, and acceptance checks](RC6_TRANSFERS.md). Source files and existing destination contents are preserved; cancelled partial data is cleaned up, while interruptions remain recoverable until you Resume or Cancel. The earlier RC4 design document is historical.

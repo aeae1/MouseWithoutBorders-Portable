@@ -156,31 +156,45 @@ internal static partial class DurableTransfers
     internal static void RunMaintenanceForTests() => Maintenance();
     private static void Maintenance()
     {
+        bool changed = false;
         foreach (var job in Jobs.Where(j => j.CleanupPending && !j.Running && !j.Sending))
         {
-            try { DeletePartial(job); lock (Sync) { job.CleanupPending = false; Save(); } }
-            catch (Exception error) { job.Detail = "Cleanup pending: " + error.Message; }
+            try
+            {
+                DeletePartial(job);
+                lock (Sync) { job.CleanupPending = false; job.Detail = ""; changed = true; }
+                TransferEvent(job, "temporary data removed");
+            }
+            catch (Exception error)
+            {
+                string detail = "Cleanup pending: " + error.Message;
+                if (job.Detail != detail) TransferEvent(job, detail);
+                job.Detail = detail;
+            }
         }
         lock (Sync)
         {
             foreach (var group in journal.Groups.Where(g => !g.Sending).ToArray())
             {
                 var items = journal.Jobs.Where(j => j.GroupId == group.Id).ToArray();
-                if (items.Length == 0 || items.All(j => j.Terminal && !j.Running && !j.CleanupPending))
+                if (items.All(j => j.Terminal && !j.Running && !j.CleanupPending)
+                    && (group.CleanupPending || (!group.CleanupDone && items.Any(j => j.State is "Cancelled" or "Skipped"))))
                 {
-                    // Preserve successfully transferred empty folders. Only abandoned groups are pruned.
-                    if (items.Any(j => j.State is "Cancelled" or "Skipped"))
+                    try { TransferFolders.CleanupEmptyDirectories(group); group.CleanupPending = false; group.CleanupDone = true; group.CleanupError = ""; changed = true; }
+                    catch (Exception error)
                     {
-                        try { TransferFolders.CleanupEmptyDirectories(group); group.CleanupPending = false; group.CleanupError = ""; }
-                        catch (Exception error) { group.CleanupPending = true; if (group.CleanupError != error.Message) Logger.Log("Transfers: folder cleanup pending: " + error.Message); group.CleanupError = error.Message; continue; }
+                        group.CleanupPending = true;
+                        if (group.CleanupError != error.Message) { Logger.Log("Transfers: folder cleanup pending: " + error.Message); changed = true; }
+                        group.CleanupError = error.Message;
                     }
                 }
             }
-            journal.Jobs.RemoveAll(j => j.Hidden && j.Terminal && !j.Running && !j.CommandRunning && !j.CleanupPending && j.PendingAction == null
-                && DateTime.UtcNow - j.Updated > TimeSpan.FromMinutes(10));
-            journal.Groups.RemoveAll(g => !g.CleanupPending && !journal.Jobs.Any(j => j.GroupId == g.Id));
-            journal.Drops.RemoveAll(d => DateTime.UtcNow - d.Created > TimeSpan.FromDays(1));
-            Save();
+            changed |= journal.Jobs.RemoveAll(j => j.Hidden && j.Terminal && !j.Declaring && !j.Running && !j.CommandRunning && !j.CleanupPending && j.PendingAction == null
+                && !journal.Groups.Any(g => g.Id == j.GroupId && g.CleanupPending)
+                && DateTime.UtcNow - j.Updated > TimeSpan.FromMinutes(10)) > 0;
+            changed |= journal.Groups.RemoveAll(g => !g.CleanupPending && !journal.Jobs.Any(j => j.GroupId == g.Id)) > 0;
+            changed |= journal.Drops.RemoveAll(d => DateTime.UtcNow - d.Created > TimeSpan.FromDays(1)) > 0;
+            if (changed) Save();
         }
     }
     private static void SaveProgress() { if (DateTime.UtcNow - lastProgressSave > TimeSpan.FromSeconds(1)) { Save(); lastProgressSave = DateTime.UtcNow; } }
