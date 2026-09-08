@@ -19,6 +19,7 @@ jobs:
   build-x64:
     name: Build and test MWB (x64)
     runs-on: windows-2025
+    timeout-minutes: 15
 
     steps:
       - name: Checkout

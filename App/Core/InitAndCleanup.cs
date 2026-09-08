@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Linq;
 using System.Globalization;
 using System.Net.NetworkInformation;
 using System.Security.Cryptography;
@@ -148,6 +149,12 @@ internal static class InitAndCleanup
         if (e.Mode is PowerModes.Resume or PowerModes.Suspend)
         {
             Logger.TelemetryLogTrace($"{nameof(SystemEvents_PowerModeChanged)}: {e.Mode}", SeverityLevel.Information);
+            try
+            {
+                if (e.Mode == PowerModes.Suspend) DurableTransfers.Stop();
+                else { DurableTransfers.ResumeService(); if (DurableTransfers.Jobs.Any(j => !j.Terminal)) TransferCenter.ShowCenter(); }
+            }
+            catch (Exception error) { Logger.Log("Transfers: sleep recovery: " + error.Message); }
             LastResumeSuspendTime = DateTime.UtcNow;
             MachineStuff.SwitchToMultipleMode(false, true);
         }

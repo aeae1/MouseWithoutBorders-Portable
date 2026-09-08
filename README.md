@@ -1,6 +1,4 @@
 <p align="center">
-
-> **Testing 1.0.1-rc.4:** queued multi-file drag/drop, one progress window, Cancel all, and automatic close on success. Use RC4 on both PCs. Transfers run at full speed. [Design and testing scope](docs/RC4_FILE_QUEUE.md).
   <img src="App/ClassicGreen.svg" width="180" alt="Green Mouse Without Borders portable icon">
 </p>
 
@@ -17,6 +15,8 @@
   <a href="https://github.com/aeae1/MouseWithoutBorders-Portable/actions/workflows/build.yml">Windows build status</a>
 </p>
 
+> **Testing 1.0.1-rc.6:** safe folder copies, individual transfer controls, cancellation cleanup, clearer progress, compact diagnostics, and a manual GitHub update check. Use RC6 on both PCs. [Download RC6](https://github.com/aeae1/MouseWithoutBorders-Portable/releases/tag/mwb-v1.0.1-rc.6) · [Behavior and testing guide](docs/RC6_TRANSFERS.md).
+
 > [!IMPORTANT]
 > This is an unofficial fork, not a Microsoft release. Version 1.0.0 is the first stable portable release after the Test and Release Candidate series. It packages the maintained MWB engine as one standalone EXE and includes the completed portable setup, settings, diagnostics, shortcuts, branding, and responsive machine-matrix work.
 
@@ -27,7 +27,7 @@ This fork keeps the maintained PowerToys-era Mouse Without Borders engine while 
 The finished product is deliberately small from a user's perspective:
 
 - one self-contained `MouseWithoutBorders.exe`;
-- one adjacent `MouseWithoutBorders.prefs.json` settings file;
+- adjacent `MouseWithoutBorders.prefs.json` settings, plus a small transfer-recovery journal in the RC builds;
 - no installer package and no required PowerToys installation;
 - optional per-user self-install, Start with Windows, Start Menu, and desktop-shortcut support;
 - the classic MWB identity recolored green so this fork is easy to recognize.

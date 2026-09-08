@@ -209,7 +209,8 @@ public sealed class DurableTransferTests
         {
             try
             {
-                using var form = new MouseWithoutBorders.TransferCenter(); form.Show();
+                bool confirm = false;
+                using var form = new MouseWithoutBorders.TransferCenter(() => confirm); form.Show();
                 var panel = form.Controls.OfType<System.Windows.Forms.FlowLayoutPanel>().Single(p => p.Dock == System.Windows.Forms.DockStyle.Fill);
                 Assert.AreEqual(2, panel.Controls.Count);
                 var rows = panel.Controls.Cast<System.Windows.Forms.Control>().ToArray();
@@ -217,11 +218,15 @@ public sealed class DurableTransferTests
                 Assert.AreEqual(1, rows[1].Controls.OfType<System.Windows.Forms.ProgressBar>().Count());
                 rows[0].Controls.OfType<System.Windows.Forms.Button>().Single(b => b.Text == "Pause").PerformClick();
                 Assert.AreEqual("Paused", first.State); Assert.AreEqual("Transferring", second.State);
-                form.Close(); done.SetResult();
+                form.Close(); Assert.IsFalse(form.IsDisposed, "Declining cancellation must leave the transfer window open.");
+                Assert.AreEqual("Transferring", second.State);
+                confirm = true; form.Close();
+                Assert.AreEqual("Cancelled", first.State); Assert.AreEqual("Cancelled", second.State);
+                form.Dispose(); done.SetResult();
             }
             catch (Exception error) { done.SetException(error); }
         });
-        thread.SetApartmentState(System.Threading.ApartmentState.STA); thread.Start();
+        thread.IsBackground = true; thread.SetApartmentState(System.Threading.ApartmentState.STA); thread.Start();
         await done.Task.WaitAsync(TimeSpan.FromSeconds(10));
     }
 

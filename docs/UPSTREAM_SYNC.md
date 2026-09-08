@@ -58,3 +58,7 @@ Do not overwrite these choices during a future sync:
 5. Add or retain upstream tests and add fork-specific tests where packaging or behavior differs.
 6. Build and test from the cleaned MWB-only repository, then publish and inspect the single-EXE artifact.
 7. For input, networking, clipboard, or file-transfer changes, complete physical two-computer tests before calling the sync fully validated.
+
+## Intentional RC6 transfer divergence
+
+The portable release candidate uses its own versioned drag/drop protocol for resumable per-file/folder jobs, bounded tree manifests, safe destination reservation, and cancellation cleanup. It preserves the underlying MWB input packets, clipboard text/image behavior, encryption, and separate legacy clipboard file-copy path. See [RC6_TRANSFERS.md](RC6_TRANSFERS.md). Do not replace these semantics with upstream's single-file transfer behavior during a later sync. No new upstream audit is claimed by this feature work.

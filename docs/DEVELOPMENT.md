@@ -190,3 +190,7 @@ Keep intentional product changes separate from extraction plumbing when practica
 4. packaging/UI polish.
 
 This makes upstream merges and regressions much easier to reason about.
+
+## RC6 transfer extension
+
+See [RC6_TRANSFERS.md](RC6_TRANSFERS.md) for the current fork protocol, bounded folder traversal and UI, directory identity checks, cancellation ownership, recovery/receipt retirement, and manual-update behavior. `TransferFolders.cs`, `DurableTransfers.Folders.cs`, `TransferCenter.cs`, and `ManualUpdates.cs` contain these additions. Retain negative tests for destination replacement, traversal/case collisions, cancellation cleanup, and replay after receipt expiration. The old queued-transfer implementations remain only for prior regression coverage/legacy paths; current drag/drop requires protocol 2.
