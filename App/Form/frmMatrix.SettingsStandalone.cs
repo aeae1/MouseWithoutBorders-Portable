@@ -15,37 +15,94 @@ namespace MouseWithoutBorders;
 
 internal partial class FrmMatrix
 {
-    private Label transferDescription;
     private Label receivingFolderPath;
     private CheckBox automaticTransferClose;
     private CheckBox installationStartup;
     private bool refreshingInstallation;
     private bool refreshingTransferPreference;
 
-    // Each stack measures wrapped text at its actual width. No fixed row heights.
-    internal sealed class SettingsStack : TableLayoutPanel
+    // Keep options directly in each section. Nested, autosizing tables for every
+    // option multiply preferred-size passes when a hidden tab becomes visible.
+    internal sealed class SettingsStack : Panel
     {
-        internal SettingsStack()
+        private bool updatingWidths, arranging;
+        private int constrainedWidth = -1;
+        private readonly bool sideBySide;
+        internal SettingsStack(bool sideBySide = false)
         {
+            this.sideBySide = sideBySide;
             AutoSize = true; AutoSizeMode = AutoSizeMode.GrowAndShrink;
-            ColumnCount = 1; ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-            Dock = DockStyle.Top; Margin = new Padding(0); Padding = new Padding(6);
+            Dock = DockStyle.Top; Margin = new Padding(0); Padding = new Padding(2);
         }
         internal void Add(Control control)
         {
-            control.Dock = DockStyle.Top; control.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
-            control.Margin = new Padding(3, 3, 3, 5);
-            Controls.Add(control, 0, RowCount++); RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            control.Dock = DockStyle.None; control.Anchor = AnchorStyles.Top | AnchorStyles.Left;
+            control.Margin = new Padding(3, 1, 3, 1);
+            Controls.Add(control);
+        }
+        private int ColumnWidth(int width) => Math.Max(1, (width - Padding.Horizontal) /
+            (sideBySide ? Math.Max(1, Controls.Count) : 1));
+        private int ChildWidth(Control child, int width) => Math.Max(40, ColumnWidth(width) - child.Margin.Horizontal);
+        private int Measure(Control child, int width) => child.AutoSize ? child.GetPreferredSize(
+            new Size(ChildWidth(child, width), 0)).Height : child.Height;
+        public override Size GetPreferredSize(Size proposedSize)
+        {
+            int width = proposedSize.Width > 0 && proposedSize.Width < int.MaxValue ? proposedSize.Width : Width;
+            int height = 0;
+            foreach (Control child in Controls)
+            {
+                int rowHeight = Measure(child, width) + child.Margin.Vertical;
+                height = sideBySide ? Math.Max(height, rowHeight) : height + rowHeight;
+            }
+            return new Size(width, height + Padding.Vertical);
         }
         protected override void OnLayout(LayoutEventArgs e)
         {
-            foreach (Control child in Controls)
-                if (child is Label or CheckBox)
+            if (arranging) return;
+            arranging = true;
+            try
+            {
+                int y = Padding.Top, x = Padding.Left, bottom = Padding.Top;
+                foreach (Control child in Controls)
                 {
-                    var maximum = new Size(Math.Max(40, ClientSize.Width - Padding.Horizontal - child.Margin.Horizontal), 0);
-                    if (child.MaximumSize != maximum) child.MaximumSize = maximum;
+                    int height = Measure(child, ClientSize.Width);
+                    child.SetBounds(x + child.Margin.Left, y + child.Margin.Top,
+                        ChildWidth(child, ClientSize.Width), height);
+                    bottom = Math.Max(bottom, y + child.Margin.Vertical + height);
+                    if (sideBySide) x += ColumnWidth(ClientSize.Width);
+                    else y = bottom;
                 }
-            base.OnLayout(e);
+                int needed = bottom + Padding.Bottom;
+                if (Height != needed) Height = needed;
+            }
+            finally { arranging = false; }
+        }
+        protected override void OnSizeChanged(EventArgs e)
+        {
+            base.OnSizeChanged(e);
+            UpdateChildWidths();
+        }
+        protected override void OnControlAdded(ControlEventArgs e)
+        {
+            base.OnControlAdded(e);
+            UpdateChildWidths(force: true);
+        }
+        private void UpdateChildWidths(bool force = false)
+        {
+            // Changing height alone must not invalidate every child's measurement.
+            if (updatingWidths || (!force && constrainedWidth == ClientSize.Width)) return;
+            updatingWidths = true; constrainedWidth = ClientSize.Width;
+            SuspendLayout();
+            try
+            {
+                foreach (Control child in Controls)
+                    if (child is Label or CheckBox or FlowLayoutPanel)
+                    {
+                        var maximum = new Size(ChildWidth(child, ClientSize.Width), 0);
+                        if (child.MaximumSize != maximum) child.MaximumSize = maximum;
+                    }
+            }
+            finally { ResumeLayout(true); updatingWidths = false; }
         }
     }
 
@@ -56,14 +113,17 @@ internal partial class FrmMatrix
         stack.Add(new Label { Text = title, AutoSize = true, ForeColor = Color.DarkGreen, UseMnemonic = false });
         return stack;
     }
-    private static Label AddOption(SettingsStack parent, CheckBox option, string defaults, string explanation = null)
+    private void SetOptionTip(Control option, string defaults, string explanation)
+    {
+        string text = explanation ?? toolTip.GetToolTip(option);
+        if (defaults != null) text = (string.IsNullOrWhiteSpace(text) ? "" : text + "\n\n") + "Default: " + defaults + ".";
+        toolTip.SetToolTip(option, text);
+    }
+    private void AddOption(SettingsStack parent, CheckBox option, string defaults, string explanation = null)
     {
         option.AutoSize = true; option.ResetFont();
-        var row = new SettingsStack { Padding = new Padding(0) };
-        row.Add(option);
-        var hint = Explanation("Default: " + defaults + (explanation == null ? "" : " · " + explanation));
-        hint.Margin = new Padding(23, 0, 3, 7);
-        row.Add(hint); parent.Add(row); return hint;
+        SetOptionTip(option, defaults, explanation);
+        parent.Add(option);
     }
     private static Button SettingsButton(string text, EventHandler click)
     {
@@ -73,13 +133,49 @@ internal partial class FrmMatrix
     private static FlowLayoutPanel Actions(params Control[] controls)
     {
         var flow = new FlowLayoutPanel { AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, WrapContents = true, Margin = new Padding(0) };
-        foreach (var control in controls) { control.Dock = DockStyle.None; control.Anchor = AnchorStyles.Top | AnchorStyles.Left; flow.Controls.Add(control); }
+        foreach (var control in controls)
+        {
+            control.Dock = DockStyle.None; control.Anchor = AnchorStyles.Top | AnchorStyles.Left;
+            control.Margin = new Padding(3, 1, 8, 1); flow.Controls.Add(control);
+        }
         return flow;
     }
-    private static void HostStack(TabPage tab, Control content)
+    private void HostStack(TabPage tab, Control content)
     {
-        tab.AutoScroll = true; tab.Padding = new Padding(8);
+        tab.AutoScroll = true; tab.Padding = new Padding(4);
         tab.Controls.Add(content); content.Dock = DockStyle.Top;
+        RegisterDisabledOptionTips(content);
+    }
+
+    private Control disabledOptionTipTarget;
+    private ToolTip disabledOptionTip;
+    private void RegisterDisabledOptionTips(Control host)
+    {
+        // Disabled WinForms controls cannot receive hover events. Their enabled
+        // parent provides the same help, so dependencies need no extra text row.
+        host.MouseMove += (_, e) =>
+        {
+            var child = host.GetChildAtPoint(e.Location, GetChildAtPointSkip.Invisible);
+            if (child?.Enabled != false || string.IsNullOrEmpty(toolTip.GetToolTip(child)))
+            {
+                if (disabledOptionTipTarget != null) disabledOptionTip?.Hide(disabledOptionTipTarget.Parent);
+                disabledOptionTipTarget = null;
+                return;
+            }
+            if (child == disabledOptionTipTarget) return;
+            disabledOptionTip ??= new ToolTip(components) { ShowAlways = true };
+            if (disabledOptionTipTarget != null) disabledOptionTip.Hide(disabledOptionTipTarget.Parent);
+            disabledOptionTipTarget = child;
+            disabledOptionTip.Show(toolTip.GetToolTip(child), host, child.Left, child.Bottom + 4, 10000);
+        };
+        host.MouseLeave += (_, _) =>
+        {
+            if (disabledOptionTipTarget?.Parent != host) return;
+            disabledOptionTip?.Hide(host);
+            disabledOptionTipTarget = null;
+        };
+        foreach (Control child in host.Controls)
+            if (child.HasChildren) RegisterDisabledOptionTips(child);
     }
 
     private void LayoutPortableSettingsPages()
@@ -90,13 +186,15 @@ internal partial class FrmMatrix
         {
             var mouse = Section("Mouse and screen switching");
             AddOption(mouse, checkBoxMouseEdgeSwitching, "On");
-            labelEasyMouse.Text = "Activation (Default: Always):"; labelEasyMouse.AutoSize = true;
+            labelEasyMouse.Text = "Activation:"; labelEasyMouse.AutoSize = true;
             comboBoxEasyMouseOption.ResetFont();
+            SetOptionTip(comboBoxEasyMouseOption, "Always", "Switch at a screen edge immediately, or only while holding Ctrl or Shift.");
+            toolTip.SetToolTip(labelEasyMouse, toolTip.GetToolTip(comboBoxEasyMouseOption));
             mouse.Add(Actions(labelEasyMouse, comboBoxEasyMouseOption));
             AddOption(mouse, checkBoxCircle, "Off", "Wrap across the outside edges of your computer layout.");
             AddOption(mouse, checkBoxHideMouse, "On", "Hide the pointer on this PC while controlling another.");
             checkBoxDrawMouse.Text = "Show a fallback cursor";
-            AddOption(mouse, checkBoxDrawMouse, "On", "Draw a replacement pointer when Windows reports that its cursor is invisible.");
+            AddOption(mouse, checkBoxDrawMouse, "On", "Draw a replacement pointer when Windows reports that its cursor is invisible. Turn off if it conflicts with intentional cursor hiding.");
             checkBoxMouseMoveRelatively.Text = "Use relative mouse movement";
             AddOption(mouse, checkBoxMouseMoveRelatively, "Off", "Try this if pointer movement feels uneven between different screens.");
             checkBoxBlockMouseAtCorners.Text = "Block switching at screen corners";
@@ -105,14 +203,16 @@ internal partial class FrmMatrix
 
             var sharing = Section("Clipboard and file transfers");
             AddOption(sharing, checkBoxShareClipboard, "On", "Share copied text and images between PCs.");
-            transferDescription = AddOption(sharing, checkBoxTransferFile, "On");
+            AddOption(sharing, checkBoxTransferFile, "On");
             UpdatePortableTransferFileText();
-            toolTip.SetToolTip(checkBoxTransferFile, "Allow both drag/drop and clipboard file transfers. Requires Share Clipboard.");
-            sharing.Add(new Label { Text = "Default receiving folder on this PC", AutoSize = true });
+            var receivingLabel = new Label { Text = "Receiving folder on this PC", AutoSize = true };
+            sharing.Add(receivingLabel);
             receivingFolderPath = Explanation(ReceivingFolderText());
             receivingFolderPath.Name = "receivingFolderPath";
             sharing.Add(receivingFolderPath);
-            sharing.Add(Explanation("Default: Desktop \\ MouseWithoutBorders. Used for new drag/drop transfers when you aren't dropping into an Explorer folder."));
+            const string receivingHelp = "Used for new drag/drop transfers when you aren't dropping into an Explorer folder. Existing transfers keep their destination.\n\nDefault: Desktop \\ MouseWithoutBorders.";
+            toolTip.SetToolTip(receivingLabel, receivingHelp);
+            toolTip.SetToolTip(receivingFolderPath, receivingHelp);
             sharing.Add(Actions(SettingsButton("Choose folder…", ChooseReceivingFolder), SettingsButton("Use default", ResetReceivingFolder)));
             automaticTransferClose = new CheckBox { Name = "automaticTransferClose", Text = "Automatically close finished transfers", Checked = Setting.Values.AutoCloseTransferWindow };
             AddOption(sharing, automaticTransferClose, "On", "Close this PC's completed or cancelled list after cleanup. Errors stay visible.");
@@ -129,19 +229,24 @@ internal partial class FrmMatrix
                 }
             };
 
-            var columns = new TableLayoutPanel { AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, ColumnCount = 2, RowCount = 1, Dock = DockStyle.Top };
-            columns.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50)); columns.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
-            columns.RowStyles.Add(new RowStyle(SizeType.AutoSize)); columns.Controls.Add(mouse, 0, 0); columns.Controls.Add(sharing, 1, 0);
+            var columns = new SettingsStack(sideBySide: true) { Padding = new Padding(0) };
+            columns.Add(mouse); columns.Add(sharing);
 
-            var shortcuts = Section("Keyboard shortcuts");
+            var shortcuts = new SettingsStack();
             AddOption(shortcuts, checkBoxEnableKeyboardShortcuts, "Off", "Assignments below are preserved while shortcuts are disabled.");
-            labelSwitchBetweenMachine.Text = "Switch between PCs, Ctrl+Alt (Default: None):"; labelSwitchBetweenMachine.AutoSize = true;
-            shortcuts.Add(labelSwitchBetweenMachine);
-            shortcuts.Add(Actions(radioButtonF1, radioButtonNum, radioButtonDisable));
-            AddShortcut(shortcuts, labelLockMachine, "Lock PCs", comboBoxLockMachine);
-            AddShortcut(shortcuts, labelReconnect, "Reconnect to PCs", comboBoxReconnect);
-            AddShortcut(shortcuts, labelSwitch2AllPCMode, "Switch to ALL PC mode", comboBoxSwitchToAllPC);
-            AddShortcut(shortcuts, LabelToggleEasyMouse, "Toggle screen-edge switching", comboBoxEasyMouse);
+            labelSwitchBetweenMachine.Text = "Switch PCs, Ctrl+Alt:"; labelSwitchBetweenMachine.AutoSize = true; labelSwitchBetweenMachine.ResetFont();
+            foreach (var control in new Control[] { labelSwitchBetweenMachine, radioButtonF1, radioButtonNum, radioButtonDisable })
+            {
+                control.ResetFont();
+                SetOptionTip(control, "None", "Hold Ctrl+Alt and the chosen function key or number to switch directly to a PC.");
+            }
+            shortcuts.Add(Actions(labelSwitchBetweenMachine, radioButtonF1, radioButtonNum, radioButtonDisable));
+            ConfigureShortcut(labelLockMachine, "Lock PCs", comboBoxLockMachine);
+            ConfigureShortcut(labelSwitch2AllPCMode, "All PCs", comboBoxSwitchToAllPC);
+            ConfigureShortcut(labelReconnect, "Reconnect", comboBoxReconnect);
+            ConfigureShortcut(LabelToggleEasyMouse, "Toggle edge switching", comboBoxEasyMouse);
+            shortcuts.Add(Actions(labelLockMachine, comboBoxLockMachine, labelSwitch2AllPCMode, comboBoxSwitchToAllPC));
+            shortcuts.Add(Actions(labelReconnect, comboBoxReconnect, LabelToggleEasyMouse, comboBoxEasyMouse));
             groupBoxOtherOptions.Visible = groupBoxShortcuts.Visible = false;
             var content = new SettingsStack(); content.Add(columns); content.Add(shortcuts); HostStack(tabPageOther, content);
 
@@ -149,7 +254,9 @@ internal partial class FrmMatrix
             checkBoxReverseLookup.Text = "Check computer names against DNS" + (Setting.Values.ReverseLookupIsGpoConfigured ? " [Managed]" : "");
             AddOption(network, checkBoxReverseLookup, "Off", "Check that an IP address resolves back to the expected computer name. Missing or incorrect DNS records can prevent a connection.");
             network.Add(new Label { Text = "Machine name to IP address mappings", AutoSize = true });
-            network.Add(Explanation("Default: None (automatic lookup). Use one computer name and IP address per line, separated by a space; for example: OFFICE-PC 192.168.1.20"));
+            const string mappingHelp = "Use this when MWB cannot find a computer by name, or you want it to connect to a specific IP address. Enter the name shown in Machine Setup, a space, then that PC's IP address. Use one computer per line; leave this empty to use automatic lookup.\n\nExample: OFFICE-PC 192.168.1.20\n\nKeep the address current if it changes; a DHCP reservation on your router can keep it consistent.";
+            network.Add(Explanation(mappingHelp));
+            toolTip.SetToolTip(textBoxMachineName2IP, mappingHelp);
             textBoxMachineName2IP.Height = Math.Max(150, Font.Height * 8); network.Add(textBoxMachineName2IP);
             if (Setting.Values.Name2IpPolicyListIsGpoConfigured)
             {
@@ -158,18 +265,19 @@ internal partial class FrmMatrix
             }
             groupBoxDNS.Visible = groupBoxName2IPPolicyList.Visible = pictureBoxMouseWithoutBorders.Visible = textBoxDNS.Visible = false;
             HostStack(tabPageAdvancedSettings, network);
-            checkBoxTwoRow.Text = "Two rows (Default: Off)";
-            toolTip.SetToolTip(checkBoxDrawMouse, "Optional replacement cursor for PCs where Windows hides the pointer. Turn off if it conflicts with intentional cursor hiding.");
+            checkBoxTwoRow.Text = "Two rows";
+            toolTip.SetToolTip(checkBoxTwoRow, "Arrange the computers in two rows to match screens above and below each other.");
             UpdatePortableShortcutControlState();
         }
         finally { ResumeLayout(true); }
     }
 
-    private static void AddShortcut(SettingsStack stack, Label label, string title, ComboBox choice)
+    private void ConfigureShortcut(Label label, string title, ComboBox choice)
     {
-        label.Text = title + ", Ctrl+Alt (Default: None):"; label.AutoSize = true; label.ResetFont(); choice.ResetFont();
-        choice.Width = Math.Max(90, TextRenderer.MeasureText("None", choice.Font).Width + 32);
-        stack.Add(Actions(label, choice));
+        label.Text = title + ", Ctrl+Alt:"; label.AutoSize = true; label.ResetFont(); choice.ResetFont();
+        choice.Width = Math.Max(60, TextRenderer.MeasureText("None", choice.Font).Width + 32);
+        SetOptionTip(choice, "None", toolTip.GetToolTip(choice));
+        toolTip.SetToolTip(label, toolTip.GetToolTip(choice));
     }
     private string ReceivingFolderText() => string.IsNullOrEmpty(Setting.Values.DefaultReceivingFolder)
         ? TransferReceivePreferences.DesktopFolder : Setting.Values.DefaultReceivingFolder;
@@ -215,7 +323,7 @@ internal partial class FrmMatrix
         if (PortableApplication.IsInstalledCopy)
         {
             installationStartup = new CheckBox { Text = "Start with Windows", Name = "installationStartup" };
-            AddOption(content, installationStartup, "Off", "Start this installed copy when you sign in.");
+            AddOption(content, installationStartup, null, "Start this installed copy when you sign in to Windows.");
             installationStartup.CheckedChanged += (_, _) =>
             {
                 if (refreshingInstallation) return;

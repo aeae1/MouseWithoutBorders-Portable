@@ -1,26 +1,21 @@
 {
-  "tag": "mwb-v1.0.1-rc.8",
-  "title": "Mouse Without Borders Portable 1.0.1-rc.8",
+  "tag": "mwb-v1.0.1-rc.9",
+  "title": "Mouse Without Borders Portable 1.0.1-rc.9",
   "prerelease": true,
-  "summary": "Settings cleanup with inline default labels, Installation controls, a selectable receiving folder, and optional automatic transfer-window closing. RC7 installer and transfer fixes are retained; existing supported preferences and protocol-2 recovery remain compatible.",
+  "summary": "Restore compact Other Options with hover help and reduce tab-opening layout work. Keep RC8 transfer preferences and installation controls.",
   "changes": [
-    "Group mouse, sharing/transfers, and shortcuts into measured, wrapping settings rows with clear default labels and explanations. Move DNS validation into IP Mappings.",
-    "Remove service-only controls and the misleading subnet checkbox. Disable optional clipboard/network status popups; keep actual failures and Mini Log. Explicit managed network policy remains enforced.",
-    "Clarify that Allow file transfers covers drag/drop and clipboard file copying. Preserve its saved choice when opening Settings or toggling Share Clipboard. Remove page flashing during preference saves.",
-    "Rename Portable to Installation. Move Start with Windows and Uninstall from the tray into that tab, alongside current paths, Open folder, and Install for me for portable copies.",
-    "Choose a default receiving folder on each PC for new drag/drop transfers. Explorer folder targets still take precedence. Unavailable custom folders fail clearly rather than redirecting files.",
-    "Add Automatically close finished transfers, enabled by default. Turning it off keeps finished/cancelled rows visible; explicit close still waits for cleanup and errors stay visible.",
-    "Preserve existing supported preferences, key, and layout. Add tests for migration, install copying, failed preference saves, unavailable destinations, settings layout, and automatic closing. Update documentation."
+    "Remove the separate description/default row and nested table for every option. Move option help and defaults into tooltips, and compact the keyboard-shortcut rows.",
+    "Update wrapping constraints on size changes instead of inside the layout pass, reducing repeated work when Other Options becomes visible.",
+    "Remove default text entirely from Two rows, Start with Windows, and machine-to-IP mappings. Keep expanded mapping instructions visible, including an example and advice for changing IP addresses.",
+    "Keep hover help available for disabled options through their parent controls. Preserve all saved values, transfer behavior, installation controls, and keyboard assignments.",
+    "Check compact layout at the original window size, repeated tab-opening responsiveness, disabled-option help, and larger text in Windows UI tests."
   ],
   "testing": [
-    "Install RC8 over RC7 on both PCs. Check About, automatic launch, key/layout, and your existing supported checkbox/shortcut choices.",
-    "Open Other Options at your usual display scale, resize Settings, and scroll through all controls. Check defaults, explanations, dropdowns, and absence of service/subnet/status-message options.",
-    "Disable Allow file transfers, close/reopen Settings, then turn Share Clipboard off/on. The saved file-transfer choice must stay off. Re-enable it before transfer tests.",
-    "Choose a new receiving folder on the receiver. Drop to its desktop, then separately into an Explorer folder. Check the destination and immediate folder opening. Restart and verify the saved choice; Use default should restore Desktop/MouseWithoutBorders.",
-    "Choose a temporary custom folder, rename it, then drop to the desktop. Expect an error and no copy to another folder. Restore the folder or choose a valid destination afterward.",
-    "Turn automatic closing off on one PC. Complete or cancel transfers: its list should remain visible while the other PC follows its own setting. Turn it back on and check automatic closing. Closing active work still asks to cancel.",
-    "In Installation, toggle Start with Windows and reopen Settings to verify it. Check Open folder. If testing uninstall, use a disposable installation and choose No to keep preferences; Cancel must exit the uninstall flow.",
-    "Recheck ordinary mouse/keyboard/clipboard use, transfer pause/cancel/recovery, duplicate-name protection, and sleep/reconnect."
+    "Open Other Options repeatedly and confirm the opening lag is gone. Check the compact page at your normal display scale, then resize it.",
+    "Hover over options for descriptions and defaults. Two rows and Start with Windows should have descriptions but no default text.",
+    "Disable Share Clipboard and hover over the disabled Allow file transfers option; its tooltip should explain the dependency. Restore clipboard sharing and confirm your saved transfer choice is preserved.",
+    "Open IP Mappings and check the visible instructions and example, with no default label for the mappings field.",
+    "Confirm RC8 receiving-folder, automatic transfer-window closing, shortcuts, and Installation settings still retain your choices."
   ],
   "known_limitations": [
     "Real Windows Explorer, physical display scaling, startup/uninstall, and two-PC behavior still need the manual checks above; automated tests cannot replace them.",

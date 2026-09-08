@@ -139,8 +139,8 @@ internal partial class FrmMatrix
 
     private void ConfigurePortableOtherOptions()
     {
-        // Disabled WinForms controls cannot show their tooltips. Explain permanent
-        // limitations inline, and remove the deprecated mapping switch altogether.
+        // Remove unsupported settings. The settings layout supplies hover help
+        // through enabled parents when an option is temporarily disabled.
         checkBoxDisableCAD.Visible = checkBoxHideLogo.Visible = false;
         checkBoxSameSubNet.Visible = checkBoxClipNetStatus.Visible = false;
         int mouseEdgeSwitchingTop = checkBoxClipNetStatus.Top;
@@ -255,9 +255,8 @@ internal partial class FrmMatrix
     private void UpdatePortableTransferFileText()
     {
         checkBoxTransferFile.Text = "Allow file transfers" + (Setting.Values.TransferFileIsGpoConfigured ? " [Managed]" : "");
-        if (transferDescription != null)
-            transferDescription.Text = "Default: On · Copy files between PCs using drag/drop or copy and paste."
-                + (checkBoxShareClipboard.Checked ? "" : " Requires Share Clipboard to be enabled.");
+        toolTip.SetToolTip(checkBoxTransferFile,
+            "Copy files between PCs using drag/drop or copy and paste. Requires Share Clipboard to be enabled.\n\nDefault: On.");
     }
 
     private void ConfigurePortableShortcutControls()

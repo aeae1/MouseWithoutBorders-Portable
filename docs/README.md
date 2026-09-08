@@ -159,3 +159,7 @@ RC7 fixes installation over a running copy and automatic relaunch, keeps the tra
 ## RC8 settings cleanup
 
 [RC8_SETTINGS.md](RC8_SETTINGS.md) documents the current settings layout, inline defaults, receiving-folder selection, automatic transfer-window closing, installation controls, and real-PC checks. RC6/RC7 guides describe their historical transfer and installer baselines.
+
+## RC9 compact settings
+
+[RC9_SETTINGS.md](RC9_SETTINGS.md) documents the compact layout and hover help that replace RC8's inline default/description rows. Transfer preferences and installation controls remain as described in RC8.

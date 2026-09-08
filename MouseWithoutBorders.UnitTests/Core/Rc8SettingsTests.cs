@@ -114,11 +114,33 @@ public sealed class Rc8SettingsTests
                 typeof(MouseWithoutBorders.FrmMatrix).GetMethod("OnLoad", BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(settings, new object[] { EventArgs.Empty });
                 typeof(MouseWithoutBorders.FrmMatrix).GetField("formShown", BindingFlags.Instance | BindingFlags.NonPublic)!.SetValue(settings, true);
                 var tabs = settings.Controls.OfType<TabControl>().Single();
-                using var host = new System.Windows.Forms.Form { ClientSize = new Size(900, 760) };
+                using var host = new System.Windows.Forms.Form { ClientSize = settings.ClientSize };
+                tabs.Dock = DockStyle.Fill;
                 host.Controls.Add(tabs); host.Show();
-                tabs.SelectedTab = tabs.TabPages.Cast<TabPage>().Single(t => t.Text == "Other Options");
+                var other = tabs.TabPages.Cast<TabPage>().Single(t => t.Text == "Other Options");
+                tabs.SelectedTab = other;
                 Application.DoEvents();
                 var controls = Descendants(tabs).ToArray();
+                var tips = (ToolTip)typeof(MouseWithoutBorders.FrmMatrix).GetField("toolTip", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(settings)!;
+                Assert.IsFalse(other.VerticalScroll.Visible, "Other Options should fit the original window at the normal font size. "
+                    + $"Client: {other.ClientSize}; content: {other.DisplayRectangle}. "
+                    + string.Join("; ", Descendants(other).Where(c => c.Visible).Select(c => $"{c.GetType().Name}/{c.Name}: {c.Bounds}")));
+                Assert.IsFalse(Descendants(other).Any(c => c.Visible && c.Text.Contains("Default:")), "Defaults belong in tooltips, not visible option rows.");
+                var twoRows = controls.Single(c => c.Name == "checkBoxTwoRow");
+                Assert.AreEqual("Two rows", twoRows.Text);
+                Assert.IsFalse(tips.GetToolTip(twoRows).Contains("Default", StringComparison.OrdinalIgnoreCase));
+                var mappings = controls.Single(c => c.Name == "textBoxMachineName2IP");
+                Assert.IsFalse(tips.GetToolTip(mappings).Contains("Default:", StringComparison.OrdinalIgnoreCase));
+                Assert.IsTrue(tips.GetToolTip(mappings).Contains("OFFICE-PC 192.168.1.20"));
+                // Exercise real hide/show layout, not only control construction.
+                // The generous bound catches multi-second layout stalls per visit.
+                var switchTime = Stopwatch.StartNew();
+                for (int visit = 0; visit < 6; visit++)
+                {
+                    tabs.SelectedIndex = 0; Application.DoEvents();
+                    tabs.SelectedTab = other; Application.DoEvents();
+                }
+                Assert.IsTrue(switchTime.Elapsed < TimeSpan.FromSeconds(3), $"Six tab visits took {switchTime.Elapsed}.");
                 var share = controls.OfType<CheckBox>().Single(c => c.Name == "checkBoxShareClipboard");
                 var transfer = controls.OfType<CheckBox>().Single(c => c.Name == "checkBoxTransferFile");
                 Assert.IsFalse(Setting.Values.TransferFile, "Opening settings must preserve a disabled transfer choice.");
@@ -126,11 +148,17 @@ public sealed class Rc8SettingsTests
                 Assert.IsFalse(transfer.Checked); Assert.IsFalse(Setting.Values.TransferFile);
                 transfer.Checked = true; share.Checked = false;
                 Assert.IsTrue(Setting.Values.TransferFile); Assert.IsFalse(transfer.Enabled);
-                Assert.IsTrue(controls.OfType<Label>().Any(c => c.Text.Contains("Requires Share Clipboard")));
+                Assert.IsTrue(tips.GetToolTip(transfer).Contains("Requires Share Clipboard"));
+                Assert.IsTrue(tips.GetToolTip(transfer).Contains("Default: On"));
+                // A disabled checkbox's parent must still expose its hover help.
+                var hover = new MouseEventArgs(MouseButtons.None, 0, transfer.Left + 5, transfer.Top + 5, 0);
+                typeof(Control).GetMethod("OnMouseMove", BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(transfer.Parent, new object[] { hover });
+                Assert.AreSame(transfer, typeof(MouseWithoutBorders.FrmMatrix).GetField("disabledOptionTipTarget", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(settings));
                 share.Checked = true; Assert.IsTrue(transfer.Enabled); Assert.IsTrue(transfer.Checked);
                 foreach (var name in new[] { "checkBoxSameSubNet", "checkBoxClipNetStatus", "checkBoxDisableCAD", "checkBoxHideLogo" })
                     Assert.IsFalse(controls.Single(c => c.Name == name).Visible);
                 Assert.IsTrue(tabs.TabPages.Cast<TabPage>().Any(t => t.Text == "Installation"));
+                host.ClientSize = new Size(900, 760);
                 using var bigger = new Font(SystemFonts.MessageBoxFont.FontFamily, 14);
                 host.Font = bigger; tabs.Font = bigger; host.PerformLayout(); Application.DoEvents();
                 foreach (var page in tabs.TabPages.Cast<TabPage>().Where(t => t.Text != "Machine Setup"))
