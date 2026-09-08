@@ -15,9 +15,9 @@
   <a href="https://github.com/aeae1/MouseWithoutBorders-Portable/actions/workflows/build.yml">Windows build status</a>
 </p>
 
-## New file transfers — available in RC8
+## New file transfers — available in RC9
 
-The new transfer system is a major upgrade over the original file-copy feature. **[Download RC8](https://github.com/aeae1/MouseWithoutBorders-Portable/releases/tag/mwb-v1.0.1-rc.8)** and use it on both PCs. This remains a release candidate while real-PC testing continues.
+The new transfer system is a major upgrade over the original file-copy feature. **[Download RC9](https://github.com/aeae1/MouseWithoutBorders-Portable/releases/tag/mwb-v1.0.1-rc.9)** and use it on both PCs. This remains a release candidate while real-PC testing continues.
 
 - **Copy files and folders between PCs:** drop into an open Explorer folder, or use the desktop MouseWithoutBorders folder, which opens immediately.
 - **One compact transfer window:** immediate “Preparing transfer…” feedback, expandable folder groups, a progress bar for each file, and up to four outgoing transfers at once per PC.
@@ -29,13 +29,13 @@ The new transfer system is a major upgrade over the original file-copy feature. 
 
 Minimize to keep copying. Closing unfinished work asks whether to cancel it. Completed or cancelled lists close after local cleanup by default; you can turn automatic closing off in Settings. Full-speed copying can still cause mouse lag on busy Wi-Fi. The new controls apply to **drag/drop**; clipboard file copy/paste retains its separate transport.
 
-[RC8 settings and test guide](https://github.com/aeae1/MouseWithoutBorders-Portable/blob/release/1.0.1-rc.8/docs/RC8_SETTINGS.md) · [Folder-copy behavior and recovery guide](https://github.com/aeae1/MouseWithoutBorders-Portable/blob/release/1.0.1-rc.8/docs/RC6_TRANSFERS.md)
+[RC9 settings and test guide](https://github.com/aeae1/MouseWithoutBorders-Portable/blob/release/1.0.1-rc.9/docs/RC9_SETTINGS.md) · [Folder-copy behavior and recovery guide](https://github.com/aeae1/MouseWithoutBorders-Portable/blob/release/1.0.1-rc.9/docs/RC6_TRANSFERS.md)
 
 
 > [!IMPORTANT]
 > This is an unofficial fork, not a Microsoft release. Version 1.0.0 is the first stable portable release after the Test and Release Candidate series. It packages the maintained MWB engine as one standalone EXE and includes the completed portable setup, settings, diagnostics, shortcuts, branding, and responsive machine-matrix work.
 
-RC8 also reorganizes Settings, shows each option’s default, removes service-only controls and optional status popups, and moves startup/uninstall into **Installation**. Existing supported preferences are preserved.
+RC9 restores compact **Other Options**, moves descriptions and defaults into tooltips, and reduces repeated layout work when opening the page. **Two rows**, **Start with Windows**, and machine-to-IP mappings have no default labels. Mapping instructions remain visible. RC8’s transfer preferences and **Installation** controls are retained; existing supported preferences are preserved.
 
 ## What this project is
 
