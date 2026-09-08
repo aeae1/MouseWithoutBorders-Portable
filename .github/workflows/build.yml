@@ -44,6 +44,15 @@ jobs:
         shell: pwsh
         run: .\build.ps1 -Configuration Release -Platform x64 -RunTests
 
+      - name: Record settings rendering
+        if: always()
+        shell: pwsh
+        run: |
+          $preview = Join-Path $env:RUNNER_TEMP 'mwb-ui-previews/settings-150.png'
+          if (Test-Path $preview) {
+            Write-Output ('MWB_UI_PREVIEW settings-150.png ' + [Convert]::ToBase64String([IO.File]::ReadAllBytes($preview)))
+          }
+
       - name: Publish single-file portable app
         shell: pwsh
         run: |

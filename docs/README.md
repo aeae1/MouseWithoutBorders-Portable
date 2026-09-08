@@ -167,3 +167,7 @@ RC7 fixes installation over a running copy and automatic relaunch, keeps the tra
 ## RC10 settings polish
 
 [RC10_SETTINGS.md](RC10_SETTINGS.md) records the restored shortcut divider, multiline mapping editor, clearer connection help, and focused validation. RC9’s compact layout and RC8’s saved preferences remain intact.
+
+## RC11 divider and scroll range
+
+[RC11_SETTINGS.md](RC11_SETTINGS.md) documents the visible separator, row-measurement fix, real-form rendering checks, and manual validation.

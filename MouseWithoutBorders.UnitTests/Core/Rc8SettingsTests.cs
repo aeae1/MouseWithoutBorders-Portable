@@ -128,7 +128,7 @@ public sealed class Rc8SettingsTests
                 Assert.IsFalse(Descendants(other).Any(c => c.Visible && c.Text.Contains("Default:")), "Defaults belong in tooltips, not visible option rows.");
                 var divider = controls.OfType<Panel>().Single(c => c.Name == "keyboardShortcutDivider");
                 var shortcuts = controls.Single(c => c.Name == "checkBoxEnableKeyboardShortcuts").Parent!;
-                Assert.IsTrue(divider.Visible && divider.Height >= 2 && divider.BorderStyle == BorderStyle.Fixed3D);
+                Assert.IsTrue(divider.Visible && divider.Height >= 2);
                 Assert.IsTrue(divider.Bottom <= shortcuts.Top, "The divider must separate options from shortcuts.");
                 var twoRows = controls.Single(c => c.Name == "checkBoxTwoRow");
                 Assert.AreEqual("Two rows", twoRows.Text);
@@ -188,6 +188,88 @@ public sealed class Rc8SettingsTests
                     }
                 }
                 Setting.Values.SaveSettingsSynchronously(); host.Close();
+            }
+            finally { Setting.Values = original; }
+        });
+    }
+
+    private sealed class SettingsWindowWithoutNetworkTimer : MouseWithoutBorders.FrmMatrix
+    {
+        protected override void OnShown(EventArgs e)
+        {
+            // Use the real form, Load, machine setup and layout initialization.
+            // Omit only the Shown handler's network/input polling timer.
+            foreach (var name in new[] { "InitAll", "ConfigurePortableMachineTiles" })
+                typeof(MouseWithoutBorders.FrmMatrix).GetMethod(name, BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(this, null);
+            typeof(MouseWithoutBorders.FrmMatrix).GetField("formShown", BindingFlags.Instance | BindingFlags.NonPublic)!.SetValue(this, true);
+        }
+    }
+
+    [DataTestMethod]
+    [DataRow(100)]
+    [DataRow(150)]
+    [DataRow(200)]
+    public async Task SettingsDividerRendersAndScrollRangeTracksContent(int scalePercent)
+    {
+        await OnSta(() =>
+        {
+            var original = Setting.Values;
+            try
+            {
+                Setting.Values = Settings();
+                using var settings = new SettingsWindowWithoutNetworkTimer();
+                float scale = scalePercent / 100f;
+                // Exercise scaled geometry and text, including controls built in Load.
+                // Physical per-monitor DPI changes remain a real-PC check.
+                settings.Scale(new SizeF(scale, scale));
+                using var font = new Font(settings.Font.FontFamily, settings.Font.SizeInPoints * scale);
+                settings.Font = font;
+                settings.Show(); Application.DoEvents();
+                var originalSize = settings.ClientSize;
+                var tabs = settings.Controls.OfType<TabControl>().Single();
+                var other = tabs.TabPages.Cast<TabPage>().Single(t => t.Text == "Other Options");
+                var content = other.Controls.OfType<MouseWithoutBorders.FrmMatrix.SettingsStack>().Single();
+                var divider = Descendants(other).Single(c => c.Name == "keyboardShortcutDivider");
+                foreach (var width in new[] { originalSize.Width, originalSize.Width + 240, originalSize.Width * 2 / 3, originalSize.Width })
+                {
+                    settings.ClientSize = new Size(width, originalSize.Height);
+                    foreach (var page in tabs.TabPages.Cast<TabPage>())
+                    {
+                        tabs.SelectedTab = page; Application.DoEvents();
+                        tabs.SelectedTab = other; Application.DoEvents();
+                        string bounds = $"Scale {scalePercent}; client {other.ClientSize}; display {other.DisplayRectangle}; root {content.Bounds}. "
+                            + string.Join("; ", Descendants(other).Where(c => c.Visible).Select(c => $"{c.GetType().Name}/{c.Name}: {c.Bounds}"));
+                        foreach (var stack in Descendants(other).OfType<MouseWithoutBorders.FrmMatrix.SettingsStack>().Where(c => c.Visible))
+                        {
+                            int bottom = stack.Controls.Cast<Control>().Where(c => c.Visible).Max(c => c.Bottom + c.Margin.Bottom) + stack.Padding.Bottom;
+                            Assert.IsTrue(stack.Height <= bottom + 2, "No unused rows below a settings section. " + bounds);
+                        }
+                        int required = content.Bottom - other.AutoScrollPosition.Y + other.Padding.Bottom;
+                        Assert.IsTrue(other.DisplayRectangle.Height <= Math.Max(required, other.ClientSize.Height) + 8,
+                            "The scrollbar must not include empty space beyond the content. " + bounds);
+                        if (width >= originalSize.Width)
+                            Assert.IsFalse(other.VerticalScroll.Visible, "The original-size page should not need a scrollbar. " + bounds);
+                    }
+                }
+                using var pixels = new Bitmap(other.ClientSize.Width, other.ClientSize.Height);
+                other.DrawToBitmap(pixels, other.ClientRectangle);
+                var line = other.RectangleToClient(divider.RectangleToScreen(divider.ClientRectangle));
+                Assert.IsTrue(line.Width >= other.ClientSize.Width * 0.85 && line.Height >= 1 && other.ClientRectangle.Contains(line),
+                    "The divider must span the visible options page.");
+                int contrasting = 0, samples = 0;
+                for (int x = line.Left + 4; x < line.Right - 4; x++)
+                {
+                    if (Math.Abs(pixels.GetPixel(x, line.Top + line.Height / 2).GetBrightness() - other.BackColor.GetBrightness()) >= 0.2f)
+                        contrasting++;
+                    samples++;
+                }
+                Assert.IsTrue(contrasting >= samples * 0.95, "The rendered divider must visibly contrast with the page, not just exist as a control.");
+                if (scalePercent == 150 && Environment.GetEnvironmentVariable("RUNNER_TEMP") is string runnerTemp)
+                {
+                    string previews = Path.Combine(runnerTemp, "mwb-ui-previews"); Directory.CreateDirectory(previews);
+                    pixels.Save(Path.Combine(previews, "settings-150.png"), System.Drawing.Imaging.ImageFormat.Png);
+                }
+                Setting.Values.SaveSettingsSynchronously(); settings.Close();
             }
             finally { Setting.Values = original; }
         });

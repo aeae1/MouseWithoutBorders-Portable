@@ -15,9 +15,9 @@
   <a href="https://github.com/aeae1/MouseWithoutBorders-Portable/actions/workflows/build.yml">Windows build status</a>
 </p>
 
-## New file transfers — available in RC10
+## New file transfers — available in RC11
 
-The new transfer system is a major upgrade over the original file-copy feature. **[Download RC10](https://github.com/aeae1/MouseWithoutBorders-Portable/releases/tag/mwb-v1.0.1-rc.10)** and use it on both PCs. This remains a release candidate while real-PC testing continues.
+The new transfer system is a major upgrade over the original file-copy feature. **[Download RC11](https://github.com/aeae1/MouseWithoutBorders-Portable/releases/tag/mwb-v1.0.1-rc.11)** and use it on both PCs. This remains a release candidate while real-PC testing continues.
 
 - **Copy files and folders between PCs:** drop into an open Explorer folder, or use the desktop MouseWithoutBorders folder, which opens immediately.
 - **One compact transfer window:** immediate “Preparing transfer…” feedback, expandable folder groups, a progress bar for each file, and up to four outgoing transfers at once per PC.
@@ -29,13 +29,13 @@ The new transfer system is a major upgrade over the original file-copy feature. 
 
 Minimize to keep copying. Closing unfinished work asks whether to cancel it. Completed or cancelled lists close after local cleanup by default; you can turn automatic closing off in Settings. Full-speed copying can still cause mouse lag on busy Wi-Fi. The new controls apply to **drag/drop**; clipboard file copy/paste retains its separate transport.
 
-[RC10 settings and test guide](docs/RC10_SETTINGS.md) · [Folder-copy behavior and recovery guide](docs/RC6_TRANSFERS.md)
+[RC11 settings and test guide](docs/RC11_SETTINGS.md) · [Folder-copy behavior and recovery guide](docs/RC6_TRANSFERS.md)
 
 
 > [!IMPORTANT]
 > This is an unofficial fork, not a Microsoft release. Version 1.0.0 is the first stable portable release after the Test and Release Candidate series. It packages the maintained MWB engine as one standalone EXE and includes the completed portable setup, settings, diagnostics, shortcuts, branding, and responsive machine-matrix work.
 
-RC10 restores the divider above keyboard shortcuts, a large multiline **IP Mappings** box, and clearer connection help. It keeps RC9’s compact **Other Options**, with descriptions and defaults in tooltips and less repeated layout work when opening the page. **Two rows**, **Start with Windows**, and machine-to-IP mappings have no default labels. Mapping instructions remain visible. RC8’s transfer preferences and **Installation** controls are retained; existing supported preferences are preserved.
+RC11 makes the keyboard-shortcut divider visible and corrects stale row heights that can create empty scrolling space. It retains RC10’s large multiline **IP Mappings** box and clearer connection help. It keeps RC9’s compact **Other Options**, with descriptions and defaults in tooltips and less repeated layout work when opening the page. **Two rows**, **Start with Windows**, and machine-to-IP mappings have no default labels. Mapping instructions remain visible. RC8’s transfer preferences and **Installation** controls are retained; existing supported preferences are preserved.
 
 ## What this project is
 

@@ -65,10 +65,14 @@ internal partial class FrmMatrix
                 int y = Padding.Top, x = Padding.Left, bottom = Padding.Top;
                 foreach (Control child in Controls)
                 {
+                    // Resolve wrapping at the new width before measuring height.
+                    // SetBounds can relayout a nested section; using its old height
+                    // afterwards leaves empty rows and an inflated scroll range.
+                    child.Width = ChildWidth(child, ClientSize.Width);
                     int height = Measure(child, ClientSize.Width);
                     child.SetBounds(x + child.Margin.Left, y + child.Margin.Top,
                         ChildWidth(child, ClientSize.Width), height);
-                    bottom = Math.Max(bottom, y + child.Margin.Vertical + height);
+                    bottom = Math.Max(bottom, child.Bottom + child.Margin.Bottom);
                     if (sideBySide) x += ColumnWidth(ClientSize.Width);
                     else y = bottom;
                 }
@@ -250,7 +254,7 @@ internal partial class FrmMatrix
             groupBoxOtherOptions.Visible = groupBoxShortcuts.Visible = false;
             var content = new SettingsStack();
             content.Add(columns);
-            content.Add(new Panel { Name = "keyboardShortcutDivider", Height = 2, BorderStyle = BorderStyle.Fixed3D });
+            content.Add(new Panel { Name = "keyboardShortcutDivider", Height = 2, BackColor = SystemColors.ControlDark });
             content.Add(shortcuts);
             HostStack(tabPageOther, content);
 

@@ -1,19 +1,19 @@
 {
-  "tag": "mwb-v1.0.1-rc.10",
-  "title": "Mouse Without Borders Portable 1.0.1-rc.10",
+  "tag": "mwb-v1.0.1-rc.11",
+  "title": "Mouse Without Borders Portable 1.0.1-rc.11",
   "prerelease": true,
-  "summary": "Restore the keyboard-shortcut divider and a large multiline IP mappings editor, with clearer help. Keep RC9’s fast, compact settings layout.",
+  "summary": "Make the settings divider visible and correct stale row heights that can leave empty scrolling space.",
   "changes": [
-    "Restore the visual divider above keyboard shortcuts without adding nested layout tables.",
-    "Keep the IP mappings editor large enough for multiple computer entries, including when empty. Apply the same minimum-height protection to administrator-provided mappings.",
-    "Rewrite mapping help to explain when entries are needed, the name/address format, where to find the local IPv4 address, and how a router DHCP reservation helps. Keep the explanation visible.",
-    "Clarify DNS hover help and Installation descriptions. Preserve tooltip defaults and their existing exceptions, saved preferences, and transfer behavior."
+    "Use a solid grey separator above keyboard shortcuts instead of a two-pixel 3D border.",
+    "Apply each row’s current width before measuring its wrapped height, and position subsequent rows from the actual resulting bounds.",
+    "Add rendered-pixel checks and real-settings-form layout coverage at scaled geometry/text sizes, after tab switches and narrow/wide window transitions. Record a CI rendering for visual inspection.",
+    "Preserve RC10’s multiline mapping editor, clearer help, saved preferences, and compact settings layout."
   ],
   "testing": [
-    "Open Other Options repeatedly: it should still open promptly, with a horizontal divider above keyboard shortcuts and no new scrolling at the usual window size.",
-    "Open IP Mappings: the empty box should show several lines. If you use mappings, confirm multiple entries remain visible when editing and after switching tabs. Do not add example addresses unless they match your PCs.",
-    "Check that the visible mapping instructions and DNS tooltip are clear. Resize the window or use your normal Windows display scaling to check the editor and text.",
-    "Confirm receiving-folder, automatic transfer-window closing, shortcuts, and Installation settings retain your choices."
+    "Open Other Options and confirm a visible grey line separates keyboard shortcuts from the options above.",
+    "Switch among all settings tabs several times. Other Options should fit at the usual size without a scrollbar through empty space.",
+    "Check at your normal Windows display scaling; if a genuinely small window requires scrolling, it should stop at the final setting.",
+    "Confirm the IP Mappings box still shows multiple lines and your saved preferences remain intact."
   ],
   "known_limitations": [
     "Real Windows Explorer, physical display scaling, startup/uninstall, and two-PC behavior still need the manual checks above; automated tests cannot replace them.",
