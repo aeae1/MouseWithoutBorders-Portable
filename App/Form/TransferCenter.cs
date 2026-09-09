@@ -47,6 +47,8 @@ internal sealed class TransferCenter : System.Windows.Forms.Form
         previous.Click += (_, _) => { page = Math.Max(0, page - 1); RefreshRows(); };
         next.Click += (_, _) => { page++; RefreshRows(); };
         Controls.Add(list); Controls.Add(preparation); Controls.Add(footer);
+        preparation.MaximumSize = new Size(ClientSize.Width, 0);
+        SizeChanged += (_, _) => preparation.MaximumSize = new Size(ClientSize.Width, 0);
         list.SizeChanged += (_, _) => { foreach (var row in rows.Values.Cast<Control>().Concat(groups.Values)) row.Width = Math.Max(100, list.ClientSize.Width - SystemInformation.VerticalScrollBarWidth - 20); };
         timer.Tick += (_, _) =>
         {
@@ -87,7 +89,8 @@ internal sealed class TransferCenter : System.Windows.Forms.Form
     }
     private void RefreshRows()
     {
-        string preparing = DurableTransfers.PreparationText;
+        string preparing = DurableTransfers.RecoveryError;
+        if (preparing.Length == 0) preparing = DurableTransfers.PreparationText;
         if (preparation.Text != preparing) preparation.Text = preparing;
         preparation.Visible = preparing.Length != 0;
         var jobs = DurableTransfers.OrderedJobs(DurableTransfers.Jobs.Where(j => !j.Hidden));

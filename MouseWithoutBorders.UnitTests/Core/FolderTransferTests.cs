@@ -145,10 +145,10 @@ public sealed class FolderTransferTests
         finally { Directory.Delete(link); }
     }
     [TestMethod]
-    public void DiskSpaceBudgetIncludesOtherQueuedFilesAndSubtractsPartialBytes()
+    public void DiskSpaceBudgetIncludesOtherActiveFilesAndSubtractsPartialBytes()
     {
         var first = new TransferJob { Name = "one", Folder = destination, Length = 100, Bytes = 25 };
-        var second = new TransferJob { Name = "two", Folder = destination, Length = 200, Bytes = 50 };
+        var second = new TransferJob { Name = "two", Folder = destination, Length = 200, Bytes = 50, Running = true };
         DurableTransfers.ConfigureForTests(Path.Combine(root, "journal.json"), first, second);
         Assert.AreEqual(225L, DurableTransfers.RequiredSpace(DurableTransfers.Jobs, Path.GetPathRoot(destination)));
         Assert.ThrowsException<IOException>(() => DurableTransfers.CheckSpace(first, 224));

@@ -28,7 +28,12 @@ internal static partial class DurableTransfers
             var known = journal.Jobs.Where(j => SamePeer(j.Peer, peer)).ToDictionary(j => j.Id);
             var results = ids.Select(id =>
             {
-                if (!known.TryGetValue(id, out var job)) return new TransferActionResult { Id = id, Code = "Unknown", Error = "This transfer record has expired. Check received files before dragging again." };
+                if (!known.TryGetValue(id, out var job))
+                {
+                    var receipt = journal.Receipts.FirstOrDefault(r => r.Id == id && SamePeer(r.Peer, peer));
+                    return receipt != null ? new TransferActionResult { Id = id, State = receipt.State }
+                        : new TransferActionResult { Id = id, Code = "Unknown", Error = "This transfer record has expired. Check received files before dragging again." };
+                }
                 if (!job.Terminal)
                 {
                     ApplyAction(job, action);

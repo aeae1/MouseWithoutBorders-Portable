@@ -140,3 +140,5 @@ This section records how the PowerToys module became this portable product. It i
 23. **Corrected machine-tile transparency and responsive layout.** RC8 replaces RC7's accidentally flattened white image backgrounds with true-alpha 360×288 PNGs, changes the image control from distortion-prone stretching to aspect-preserving zoom, and sizes each tile from the matrix's actual scaled bounds. One-row mode uses the otherwise available height, while two-row mode calculates both row heights and spacing so the lower monitors remain fully visible. The portable tile condenses its two rare split status phrases onto one line to leave more room for the art; machine order, state reporting, naming, connection behavior, and the classic green product icon are otherwise unchanged.
 
 </details>
+
+Current candidate: [1.1.1 RC1 recovery and matrix-drag fixes](docs/RC_1.1.1.md).

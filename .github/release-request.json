@@ -1,26 +1,25 @@
 {
-  "tag": "mwb-v1.1.0",
-  "title": "Mouse Without Borders Portable 1.1.0",
-  "prerelease": false,
-  "summary": "The new drag-and-drop file-transfer system is now stable: whole folders, per-file progress, queue controls, checked recovery, clearer previews, and compact settings. Version 1.1.0 promotes the RC14 application code with version and documentation updates.",
+  "tag": "mwb-v1.1.1-rc.1",
+  "title": "Mouse Without Borders Portable 1.1.1 RC1",
+  "prerelease": true,
+  "summary": "Transfer recovery and folder edge-case fixes, plus a clean bitmap preview when rearranging computer tiles.",
   "changes": [
-    "Copy files and whole folders directly into an Explorer folder or your chosen receiving folder, with immediate Preparing feedback.",
-    "Use one transfer window with individual progress, overall speed/ETA, pause/resume/retry/cancel, and up/down queue controls from either PC.",
-    "Keep existing destination files: name collisions create separate copies. Resume uses checked saved progress; cancelled partial data is cleaned up.",
-    "Show sharper file-type drag previews with clean transparency, up to three representative types and a total count. Right-click cancels a cross-PC drag.",
-    "Use compact, responsive settings with tooltip explanations, a multiline IP mapping editor, receiving-folder and automatic-closing preferences, and Installation controls.",
-    "Retain the installer update/relaunch fixes, plain tray icon, bounded diagnostics, and strictly manual GitHub update checking."
+    "Recover paused transfers after recovery-file write failures, and recover a missing journal from its backup.",
+    "Verify loose-file destination identities before resuming or cleaning up.",
+    "Retry temporarily unreadable scanned files using safely refreshed metadata.",
+    "Compact finished rows into bounded completion receipts and budget space for admitted transfers.",
+    "Reuse receiving buffers and avoid redundant completion checkpoints.",
+    "Replace live computer-tile dragging with a painted preview to prevent trails and clipped child controls."
   ],
   "testing": [
-    "RC14 passed 138 automated Windows checks with one existing skip. The owner reports good operation on real PCs; exhaustive hardware and network edge cases have not been claimed.",
-    "The stable EXE is rebuilt and retested by Windows CI, with an executable-version check and a SHA-256 checksum.",
-    "Update every connected PC to 1.1.0. Finish or cancel active transfers first; keep the adjacent preferences and recovery files when replacing the EXE.",
-    "Existing RC14 preferences and recovery data keep the same formats. Release notes and the current transfer guide are in docs/RELEASE_1.1.0.md and docs/FILE_TRANSFERS.md."
+    "Windows Release x64 build and automated regression suite must pass before publication.",
+    "Use this candidate on both PCs. Test paused/resumed folder copies, cancellation, a locked source file, and rearranging the matrix in one and two rows.",
+    "Hardware sleep/wake, network interruption and real Explorer interaction still require owner validation."
   ],
   "known_limitations": [
-    "Normal interactive Windows desktops only; no service or protected UAC/sign-in-screen control. Published builds are Windows x64 and unsigned.",
-    "The new transfer controls and recovery apply to drag-and-drop. Clipboard file copy/paste retains its separate transport.",
-    "Full-speed transfers can still cause mouse lag on busy Wi-Fi. Offline peers can only synchronize cancellation and cleanup when reachable again.",
-    "Folder copies can partially complete. A failed child does not undo finished files; review and retry individual failures."
+    "One self-contained, unsigned Windows x64 EXE; no Windows service or protected-desktop support.",
+    "Full-speed copies can still compete with mouse sharing on busy Wi-Fi.",
+    "Folder copies can partially complete. Unsupported links and unreadable directories require a fresh drag.",
+    "Recovery records now include compact receipts; keep backups and avoid downgrading while transfers are unfinished."
   ]
 }

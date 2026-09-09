@@ -28,6 +28,7 @@ internal sealed class TransferMessage
     public bool Create { get; set; }
     public string Version { get; set; }
     public bool StartOfferSupported { get; set; }
+    public bool SourceInfoSupported { get; set; }
     public bool QueueSupported { get; set; }
     public TransferQueuePosition[] Queue { get; set; }
     public string TargetId { get; set; }

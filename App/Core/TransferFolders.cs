@@ -39,6 +39,7 @@ internal static class TransferFolders
             if (jobs.Count >= MaxEntries) throw new InvalidOperationException($"A drag can contain at most {MaxEntries} files and folders. Send smaller groups.");
             string name = Path.GetFileName(Path.TrimEndingDirectorySeparator(source));
             if (!TransferJournal.ValidName(name) || (group != null && !ValidRelative(relative))) throw new IOException("A selected name or folder path cannot be transferred safely.");
+            bool unsupported = false;
             var job = new TransferJob { Sending = true, Peer = peer, Offer = offer, Source = source, Name = name,
                 GroupId = group?.Id, RelativePath = group == null ? null : relative, State = "Preparing" };
             jobs.Add(job);
@@ -46,7 +47,7 @@ internal static class TransferFolders
             {
                 var attributes = File.GetAttributes(source);
                 job.IsDirectory = attributes.HasFlag(FileAttributes.Directory);
-                if (attributes.HasFlag(FileAttributes.ReparsePoint)) throw new IOException("Links and cloud placeholders are not copied. Make a regular local copy first.");
+                if (attributes.HasFlag(FileAttributes.ReparsePoint)) { unsupported = true; throw new IOException("Links and cloud placeholders are not copied. Make a regular local copy first."); }
                 using var parent = DirectoryLease.Open(Path.GetDirectoryName(source));
                 if (!job.IsDirectory)
                 {
@@ -59,7 +60,10 @@ internal static class TransferFolders
                     Visit(child, group, relative.Length == 0 ? Path.GetFileName(child) : relative + "\\" + Path.GetFileName(child));
             }
             catch (Exception error) when (error is IOException or UnauthorizedAccessException)
-            { job.Skipped = true; job.Error = error.Message; }
+            {
+                job.NeedsSourceScan = !unsupported && !job.IsDirectory && !(group != null && relative == "");
+                job.Skipped = !job.NeedsSourceScan; job.Error = error.Message;
+            }
         }
         foreach (string raw in paths)
         {

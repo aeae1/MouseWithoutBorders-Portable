@@ -640,7 +640,13 @@ namespace MouseWithoutBorders
             dragDropMachineOrgX = dragDropMachine.Left;
             dragDropMachineOrgY = dragDropMachine.Top;
             dragDropMachine.BringToFront();
+            #if PORTABLE_SINGLE_FILE
+            BeginMatrixDragPreview();
+            try { _ = DoDragDrop(dragDropMachine, DragDropEffects.Move); }
+            finally { Form_DragDrop(this, null); EndMatrixDragPreview(); }
+#else
             _ = DoDragDrop(dragDropMachine, DragDropEffects.Move);
+#endif
         }
 
         private int startX;
@@ -678,6 +684,9 @@ namespace MouseWithoutBorders
 
             dragDropMachine.Left = dragDropMachineOrgX + (e.X - startX);
             dragDropMachine.Top = dragDropMachineOrgY + (e.Y - startY);
+#if PORTABLE_SINGLE_FILE
+            MoveMatrixDragPreview();
+#endif
 
             /*
             dragDropMachine.Left = e.X - dragDropMachine.MouseDownPos.X - Left - 3

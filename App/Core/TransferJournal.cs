@@ -25,6 +25,8 @@ internal sealed class TransferJob
     public int Protocol { get; set; }
     public string Source { get; set; }
     public string Folder { get; set; }
+    public string FolderIdentity { get; set; }
+    public bool NeedsSourceScan { get; set; }
     public string Destination { get; set; }
     public long Length { get; set; }
     public long Bytes { get; set; }
@@ -67,12 +69,19 @@ internal sealed class TransferJournal
     public List<TransferJob> Jobs { get; set; } = new();
     public List<TransferDrop> Drops { get; set; } = new();
     public List<TransferGroup> Groups { get; set; } = new();
+    public List<TransferReceipt> Receipts { get; set; } = new();
 
+    [JsonIgnore] private bool replacingCorruptPrimary;
     internal static TransferJournal Load(string path)
     {
-        if (!File.Exists(path)) return new();
+        if (!File.Exists(path))
+        {
+            if (!File.Exists(path + ".bak")) return new();
+            Logger.Log("Transfers: recovering missing journal from backup.");
+            return Read(path + ".bak");
+        }
         try { return Read(path); }
-        catch (Exception) when (File.Exists(path + ".bak")) { return Read(path + ".bak"); }
+        catch (Exception) when (File.Exists(path + ".bak")) { var recovered = Read(path + ".bak"); recovered.replacingCorruptPrimary = true; Logger.Log("Transfers: recovered damaged journal from backup."); return recovered; }
     }
 
     private static TransferJournal Read(string path)
@@ -82,6 +91,10 @@ internal sealed class TransferJournal
         if (journal.Jobs == null || journal.Drops == null || journal.Jobs.Count > 8192 || journal.Drops.Count > 256)
             throw new InvalidDataException("Invalid transfer recovery list.");
         if (journal.Groups == null || journal.Groups.Count > 4096) throw new InvalidDataException("Invalid folder recovery list.");
+        if (journal.Receipts == null || journal.Receipts.Count > 32768 || journal.Receipts.Any(r => r == null || !ValidId(r.Id)
+            || string.IsNullOrWhiteSpace(r.Peer) || r.Length < 0 || r.State is not ("Completed" or "Cancelled" or "Skipped")
+            || r.Signature?.Length != 64) || journal.Receipts.Select(r => r.Id).Distinct().Count() != journal.Receipts.Count)
+            throw new InvalidDataException("Invalid completion receipts.");
         var groupIds = new HashSet<string>();
         foreach (var group in journal.Groups)
         {
@@ -92,7 +105,7 @@ internal sealed class TransferJournal
         var ids = new HashSet<string>();
         foreach (var job in journal.Jobs)
         {
-            if ((!Guid.TryParseExact(job.Id, "N", out var parsedId) || parsedId.ToString("N") != job.Id) || !ids.Add(job.Id) || job.Length < 0 || job.Bytes < 0 || job.Bytes > job.Length
+            if ((!Guid.TryParseExact(job.Id, "N", out var parsedId) || parsedId.ToString("N") != job.Id) || !ids.Add(job.Id) || journal.Receipts.Any(r => r.Id == job.Id) || job.Length < 0 || job.Bytes < 0 || job.Bytes > job.Length
                 || job.Order < 0 || job.RootOrder < 0 || job.Order > DateTime.MaxValue.Ticks || job.RootOrder > DateTime.MaxValue.Ticks
                 || string.IsNullOrWhiteSpace(job.Peer) || !ValidName(job.Name)
                 || (!job.Sending && (!Path.IsPathFullyQualified(job.Folder ?? "") || (job.Destination != null
@@ -116,7 +129,11 @@ internal sealed class TransferJournal
         if (json.Length > 16 * 1024 * 1024) throw new IOException("Transfer recovery history has reached its storage limit.");
         using (var file = new FileStream(temp, FileMode.Create, FileAccess.Write, FileShare.None))
         { file.Write(json); file.Flush(true); }
-        if (File.Exists(path)) File.Replace(temp, path, path + ".bak");
+        if (File.Exists(path))
+        {
+            File.Replace(temp, path, replacingCorruptPrimary ? path + ".corrupt" : path + ".bak");
+            replacingCorruptPrimary = false;
+        }
         else File.Move(temp, path);
     }
 

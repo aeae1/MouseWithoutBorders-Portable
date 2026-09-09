@@ -14,7 +14,7 @@ internal static partial class DurableTransfers
     private static DateTime lastMaintenance, lastProgressSave;
     private static TransferJob WireJob(TransferJob j) => new() { Id = j.Id, Name = j.Name, Length = j.Length,
         GroupId = j.GroupId, RelativePath = j.RelativePath, IsDirectory = j.IsDirectory, Skipped = j.Skipped,
-        Order = j.Order, RootOrder = j.RootOrder, Error = j.Skipped ? j.Error : "", ModifiedUtc = j.ModifiedUtc, Protocol = 2 };
+        Order = j.Order, RootOrder = j.RootOrder, NeedsSourceScan = j.NeedsSourceScan, Error = j.Skipped || j.NeedsSourceScan ? j.Error : "", ModifiedUtc = j.ModifiedUtc, Protocol = 2 };
 
     internal static void CheckPeer(string peer, bool requireStartOffer = false, CancellationToken token = default)
     {
@@ -50,6 +50,7 @@ internal static partial class DurableTransfers
     {
         lock (Sync)
         {
+            CompactHistory();
             var files = message.Files;
             if (files == null || files.Length == 0 || files.Length > TransferFolders.MaxEntries) throw new InvalidDataException("Invalid file list.");
             var ids = new HashSet<string>(); var paths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -63,20 +64,23 @@ internal static partial class DurableTransfers
                     || (f.IsDirectory && f.Length != 0) || (f.GroupId == null && (f.RelativePath != null || f.IsDirectory))
                     || (f.GroupId != null && (!TransferJournal.ValidId(f.GroupId) || !TransferFolders.ValidRelative(f.RelativePath))))
                     throw new InvalidDataException("Invalid transfer entry.");
+                var receipt = journal.Receipts.FirstOrDefault(r => r.Id == f.Id);
+                if (receipt != null && (receipt.Sending || !SamePeer(receipt.Peer, peer) || receipt.Signature != TransferReceipt.Identity(f)))
+                    throw new InvalidDataException("Transfer receipt identity mismatch.");
                 var existing = journal.Jobs.FirstOrDefault(j => j.Id == f.Id);
                 if (existing != null && (existing.Sending || !SamePeer(existing.Peer, peer) || existing.Name != f.Name || existing.Length != f.Length
                     || existing.GroupId != f.GroupId || existing.RelativePath != f.RelativePath || existing.IsDirectory != f.IsDirectory))
                     throw new InvalidDataException("Transfer identity mismatch.");
                 if (f.GroupId != null && !paths.Add(f.GroupId + "/" + f.RelativePath)) throw new InvalidDataException("Duplicate receiving path.");
             }
-            var added = files.Where(f => !journal.Jobs.Any(j => j.Id == f.Id)).ToArray();
+            var added = files.Where(f => !journal.Jobs.Any(j => j.Id == f.Id) && !journal.Receipts.Any(r => r.Id == f.Id)).ToArray();
             if (added.Length == 0) return false;
             if (added.Length != files.Length) throw new InvalidDataException("A new transfer cannot reuse records from another transfer. No receiving items were changed.");
             var drop = journal.Drops.LastOrDefault(d => d.Offer == message.Offer && SamePeer(d.Peer, peer));
             if (!message.Create || drop == null || drop.Accepted)
                 throw new InvalidDataException("This transfer record is no longer available. Check received files before dragging again; nothing was overwritten.");
             if (journal.Jobs.Count(j => !j.Terminal) + files.Length > TransferFolders.MaxEntries || journal.Jobs.Count + files.Length > 8192)
-                throw new IOException("Too many unfinished transfers. Finish or cancel some items first.");
+                throw new IOException("Transfer list capacity reached. Clear finished entries, or finish/cancel unfinished items first.");
             foreach (var group in groups)
             {
                 if (journal.Groups.Any(g => g.Id == group.Id)) throw new InvalidDataException("Folder identity already in use.");
@@ -104,7 +108,8 @@ internal static partial class DurableTransfers
                 var newJobs = files.Select(f =>
                 {
                     var j = WireJob(f); j.Sending = false; j.Peer = peer; j.Offer = message.Offer; j.Declared = true;
-                    j.State = j.Skipped ? "Skipped" : "Waiting";
+                    j.State = j.Skipped ? "Skipped" : j.NeedsSourceScan ? "Error" : "Waiting";
+                    if (f.GroupId == null) j.FolderIdentity = destination.Identity;
                     j.Folder = f.GroupId == null ? drop.Folder : Path.GetDirectoryName(f.RelativePath == "" ? created.Single(g => g.Id == f.GroupId).Folder
                         : Path.Combine(created.Single(g => g.Id == f.GroupId).Folder, f.RelativePath));
                     return j;
@@ -127,7 +132,15 @@ internal static partial class DurableTransfers
     {
         lock (Sync)
         {
-            if (job.GroupId == null) return DirectoryLease.Open(job.Folder);
+            if (job.GroupId == null)
+            {
+                var lease = DirectoryLease.Open(job.Folder);
+                if (job.FolderIdentity != null && lease.Identity != job.FolderIdentity)
+                { lease.Dispose(); throw new IOException("The receiving folder was moved or replaced. Cancel and drag again."); }
+                // Old journals have no identity; adopt it before any new writes.
+                if (job.FolderIdentity == null) { job.FolderIdentity = lease.Identity; Save(); }
+                return lease;
+            }
             var group = journal.Groups.Single(g => g.Id == job.GroupId && !g.Sending && SamePeer(g.Peer, job.Peer));
             string relative = job.IsDirectory ? job.RelativePath : Path.GetDirectoryName(job.RelativePath) ?? "";
             var lease = TransferFolders.EnsureDirectory(group, relative, Save);
@@ -146,7 +159,7 @@ internal static partial class DurableTransfers
         string volume = Path.GetPathRoot(job.Folder);
         long free = available ?? new DriveInfo(volume).AvailableFreeSpace;
         long required;
-        lock (Sync) required = Math.Max(immediateBytes, RequiredSpace(journal.Jobs, volume));
+        lock (Sync) required = Math.Max(immediateBytes, RequiredSpace(journal.Jobs.Where(j => j == job || (j.Running && j.State is not ("Paused" or "Error"))), volume));
         if (free < required) throw new IOException($"Not enough space on the receiving drive: {required / 1048576d:0.0} MB needed, {free / 1048576d:0.0} MB available. Free space, then Retry.");
     }
 
@@ -211,9 +224,9 @@ internal static partial class DurableTransfers
                     }
                 }
             }
-            changed |= journal.Jobs.RemoveAll(j => j.Hidden && j.Terminal && !j.Declaring && !j.Running && !j.CommandRunning && !j.CleanupPending && j.PendingAction == null
-                && !journal.Groups.Any(g => g.Id == j.GroupId && g.CleanupPending)
-                && DateTime.UtcNow - j.Updated > TimeSpan.FromMinutes(10)) > 0;
+            int previousJobs = journal.Jobs.Count, previousReceipts = journal.Receipts.Count;
+            CompactHistory();
+            changed |= previousJobs != journal.Jobs.Count || previousReceipts != journal.Receipts.Count;
             changed |= journal.Groups.RemoveAll(g => !g.CleanupPending && !journal.Jobs.Any(j => j.GroupId == g.Id)) > 0;
             changed |= journal.Drops.RemoveAll(d => DateTime.UtcNow - d.Created > TimeSpan.FromDays(1)) > 0;
             if (changed) Save();

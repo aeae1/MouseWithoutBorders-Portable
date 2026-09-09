@@ -1,4 +1,4 @@
-# File transfers — 1.1.0
+# File transfers — 1.1.1 candidate
 
 Use the same release on every PC. The controls below apply to **drag-and-drop**; clipboard file copy/paste retains its separate transport.
 
@@ -62,3 +62,5 @@ Minimize the window to keep copying. Closing unfinished work asks whether to can
 Open **Mini Log** on both PCs as soon as practical. Include which PC was sending, the versions, what you dragged, the error, and whether either PC slept or disconnected. Logs contain names, addresses and paths, so review them before sharing publicly.
 
 Busy Wi-Fi can still make mouse movement lag during full-speed transfers. Relative mouse movement changes pointer behavior, not network capacity.
+
+Temporarily unreadable regular files can be rescanned with Retry in 1.1.1. Links and unreadable directory trees remain skipped. Paused transfers do not reserve the receiving drive’s free space; space is checked again when resumed. Recovery storage errors pause work visibly until storage is writable and Resume/Retry is requested.
