@@ -198,6 +198,51 @@ public sealed class Rc8SettingsTests
         });
     }
 
+    [DataTestMethod]
+    [DataRow(false)]
+    [DataRow(true)]
+    public async Task MatrixDragPreviewDoesNotLeaveStaleScreenPixels(bool twoRows)
+    {
+        await OnSta(() =>
+        {
+            var original = Setting.Values;
+            string name = Common.MachineName;
+            try
+            {
+                Setting.Values = Settings(); Common.MachineName = "LOCAL-PC";
+                Setting.Values.Username = "matrix-drag-test";
+                using var form = new SettingsWindowWithoutNetworkTimer();
+                form.Show(); Application.DoEvents();
+                var controls = Descendants(form).ToArray();
+                ((CheckBox)controls.Single(c => c.Name == "checkBoxTwoRow")).Checked = twoRows;
+                Application.DoEvents();
+                var tile = controls.OfType<MouseWithoutBorders.Machine>().First();
+                var matrix = tile.Parent!;
+                var originalLocation = tile.Location;
+                typeof(MouseWithoutBorders.FrmMatrix).GetField("dragDropMachine", BindingFlags.Instance | BindingFlags.NonPublic)!.SetValue(form, tile);
+                form.BeginMatrixDragPreview();
+                var move = typeof(MouseWithoutBorders.FrmMatrix).GetMethod("MoveMatrixDragPreview", BindingFlags.Instance | BindingFlags.NonPublic)!;
+                for (int i = 0; i < 30; i++)
+                {
+                    tile.Location = new Point(originalLocation.X + i * 3, originalLocation.Y + i % 6);
+                    move.Invoke(form, null); Application.DoEvents();
+                }
+                tile.Location = originalLocation; form.EndMatrixDragPreview(); Application.DoEvents();
+                using var before = new Bitmap(matrix.Width, matrix.Height);
+                using (var g = Graphics.FromImage(before)) g.CopyFromScreen(matrix.PointToScreen(Point.Empty), Point.Empty, before.Size);
+                matrix.Invalidate(true); matrix.Update(); Application.DoEvents();
+                using var after = new Bitmap(matrix.Width, matrix.Height);
+                using (var g = Graphics.FromImage(after)) g.CopyFromScreen(matrix.PointToScreen(Point.Empty), Point.Empty, after.Size);
+                int changed = 0;
+                for (int y = 0; y < before.Height; y++) for (int x = 0; x < before.Width; x++)
+                    if (before.GetPixel(x, y) != after.GetPixel(x, y)) changed++;
+                Assert.IsTrue(changed < 100, $"{changed} stale pixels remained after dragging");
+                Assert.IsTrue(tile.Visible);
+            }
+            finally { Common.MachineName = name; Setting.Values = original; }
+        });
+    }
+
     private sealed class SettingsWindowWithoutNetworkTimer : MouseWithoutBorders.FrmMatrix
     {
         internal Action<string> TraceStep = _ => { };

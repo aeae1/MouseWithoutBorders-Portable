@@ -134,18 +134,18 @@ internal static partial class DurableTransfers
         {
             if (job.GroupId == null)
             {
-                var lease = DirectoryLease.Open(job.Folder);
-                if (job.FolderIdentity != null && lease.Identity != job.FolderIdentity)
-                { lease.Dispose(); throw new IOException("The receiving folder was moved or replaced. Cancel and drag again."); }
+                var looseLease = DirectoryLease.Open(job.Folder);
+                if (job.FolderIdentity != null && looseLease.Identity != job.FolderIdentity)
+                { looseLease.Dispose(); throw new IOException("The receiving folder was moved or replaced. Cancel and drag again."); }
                 // Old journals have no identity; adopt it before any new writes.
-                if (job.FolderIdentity == null) { job.FolderIdentity = lease.Identity; Save(); }
-                return lease;
+                if (job.FolderIdentity == null) { try { job.FolderIdentity = looseLease.Identity; Save(); } catch { looseLease.Dispose(); throw; } }
+                return looseLease;
             }
             var group = journal.Groups.Single(g => g.Id == job.GroupId && !g.Sending && SamePeer(g.Peer, job.Peer));
             string relative = job.IsDirectory ? job.RelativePath : Path.GetDirectoryName(job.RelativePath) ?? "";
             var lease = TransferFolders.EnsureDirectory(group, relative, Save);
             if (job.IsDirectory) job.Destination = job.RelativePath == "" ? group.Folder : Path.Combine(group.Folder, job.RelativePath);
-            Save(); return lease;
+            try { Save(); return lease; } catch { lease.Dispose(); throw; }
         }
     }
 

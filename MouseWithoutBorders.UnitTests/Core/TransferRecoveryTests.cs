@@ -109,6 +109,24 @@ public sealed class TransferRecoveryTests
     }
 
     [TestMethod]
+    public void RecordCheckpointCostBeforeAndAfterHistoryCompaction()
+    {
+        var jobs = Enumerable.Range(0, 2048).Select(i => new TransferJob { Name = "small-" + i + ".txt", Peer = "PEER",
+            Sending = true, Source = Path.Combine(folder, "source", "small-" + i + ".txt"), State = "Completed", Hidden = true }).ToArray();
+        var path = Path.Combine(folder, "journal.json");
+        DurableTransfers.ConfigureForTests(path, jobs);
+        var clock = System.Diagnostics.Stopwatch.StartNew();
+        DurableTransfers.ClearFinished();
+        long beforeTime = clock.ElapsedMilliseconds, beforeBytes = new FileInfo(path).Length;
+        DurableTransfers.RunMaintenanceForTests();
+        clock.Restart(); DurableTransfers.ClearFinished();
+        long afterTime = clock.ElapsedMilliseconds, afterBytes = new FileInfo(path).Length;
+        Console.WriteLine($"Recovery checkpoint: full rows {beforeTime} ms / {beforeBytes} bytes; compact receipts {afterTime} ms / {afterBytes} bytes.");
+        Assert.IsTrue(afterBytes < beforeBytes, "Completed history should use less durable storage.");
+        Assert.AreEqual(jobs.Length, TransferJournal.Load(path).Receipts.Count);
+    }
+
+    [TestMethod]
     public async Task RealSocketDisconnectResumesAndLostFinalReceiptDoesNotDuplicate()
     {
         byte[] bytes = RandomNumberGenerator.GetBytes(70000);
@@ -149,7 +167,7 @@ public sealed class TransferRecoveryTests
             TransferWire.Write(s, new TransferMessage { Op = "Finish", Id = job.Id });
             Assert.AreEqual("Completed", DurableTransfers.ReadReply(r).State); return Task.CompletedTask; });
         // Sender never persisted the receipt: replay Begin after receiver compaction and restart.
-        job.Hidden = true; DurableTransfers.RunMaintenanceForTests();
+        job.Hidden = true; DurableTransfers.RunMaintenanceForTests(); DurableTransfers.ReloadJournalForTests();
         await Exchange((s, r) => { Begin(s); Assert.AreEqual("Completed", DurableTransfers.ReadReply(r).State); return Task.CompletedTask; });
         CollectionAssert.AreEqual(bytes, File.ReadAllBytes(Path.Combine(folder, job.Name)));
         Assert.AreEqual(1, Directory.GetFiles(folder, "*.bin").Length);

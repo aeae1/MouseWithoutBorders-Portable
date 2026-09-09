@@ -29,7 +29,8 @@ internal static partial class DurableTransfers
         journalOverride = path;
         journal = new TransferJournal(); journal.Jobs.AddRange(jobs); stopping = false;
     }
-    internal static void ResetAfterTests() { foreach (var p in Preparations) p.Dispose(); preparations.Clear(); queuePeers.Clear(); journalOverride = null; journal = null; }
+    internal static void ReloadJournalForTests() { lock (Sync) journal = TransferJournal.Load(JournalPath); }
+    internal static void ResetAfterTests() { timer?.Dispose(); timer = null; recoveryError = ""; foreach (var p in Preparations) p.Dispose(); preparations.Clear(); queuePeers.Clear(); journalOverride = null; journal = null; }
     internal static TransferJob[] Jobs { get { lock (Sync) return journal?.Jobs.ToArray() ?? Array.Empty<TransferJob>(); } }
 
     internal static void Initialize()
@@ -560,6 +561,7 @@ internal static partial class DurableTransfers
                 if (stopping || job.Running || journal.Jobs.Count(j => !j.Sending && j.Running) >= 4
                     || (job.Deferred && journal.Jobs.Any(j => !j.Sending && j.Running)))
                 { TransferWire.Write(output, new TransferMessage { Op = "Busy" }); return; }
+                CheckSpace(job); // Admit against already-running reservations atomically.
                 job.Running = true; job.Attempt = CancellationTokenSource.CreateLinkedTokenSource(session.Token);
             }
             using var closeOnCancel = job.Attempt.Token.Register(session.Cancel);
@@ -706,7 +708,12 @@ internal static partial class DurableTransfers
     {
         lock (job.Gate)
         {
-            if (job.Sending || job.IsDirectory || !Directory.Exists(job.Folder)) return;
+            if (job.Sending || job.IsDirectory) return;
+            if (!Directory.Exists(job.Folder))
+            {
+                if (job.Bytes > 0) throw new IOException("The receiving folder is unavailable. Restore it or reconnect its drive to finish cleanup.");
+                return;
+            }
             using var parent = DirectoryLease.Open(job.Folder);
             if (job.FolderIdentity != null && parent.Identity != job.FolderIdentity) throw new IOException("The receiving folder was replaced. Temporary data remains in its original folder; restore that folder to finish cleanup.");
             if (File.Exists(job.Partial)) File.Delete(job.Partial);

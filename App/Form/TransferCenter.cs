@@ -37,11 +37,11 @@ internal sealed class TransferCenter : System.Windows.Forms.Form
         Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath);
         var footer = new FlowLayoutPanel { Dock = DockStyle.Bottom, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, Padding = new Padding(8), FlowDirection = FlowDirection.RightToLeft, WrapContents = true };
         var cancel = new Button { Text = "Cancel all", AutoSize = true };
-        cancel.Click += (_, _) => DurableTransfers.CancelVisible();
+        cancel.Click += (_, _) => TransferAction(DurableTransfers.CancelVisible);
         var pause = new Button { Text = "Pause all", AutoSize = true };
-        pause.Click += (_, _) => DurableTransfers.ChangeMany(DurableTransfers.Jobs, "pause");
+        pause.Click += (_, _) => TransferAction(() => DurableTransfers.ChangeMany(DurableTransfers.Jobs, "pause"));
         var clear = new Button { Text = "Clear finished", AutoSize = true };
-        clear.Click += (_, _) => { DurableTransfers.ClearFinished(); RefreshRows(); };
+        clear.Click += (_, _) => { TransferAction(DurableTransfers.ClearFinished); RefreshRows(); };
         footer.Controls.Add(cancel); footer.Controls.Add(pause); footer.Controls.Add(clear);
         footer.Controls.Add(next); footer.Controls.Add(previous);
         previous.Click += (_, _) => { page = Math.Max(0, page - 1); RefreshRows(); };
@@ -80,6 +80,11 @@ internal sealed class TransferCenter : System.Windows.Forms.Form
         RefreshRows();
     }
 
+    private static void TransferAction(Action action)
+    {
+        try { action(); }
+        catch (Exception error) { Logger.Log(error); if (DurableTransfers.RecoveryError.Length == 0) MessageBox.Show(error.Message, "Transfer unavailable"); }
+    }
     private void Foreground()
     {
         if (closingCancelled && (DurableTransfers.Preparing || DurableTransfers.Jobs.Any(j => !j.Hidden && !j.Terminal)))
@@ -258,8 +263,8 @@ internal sealed class TransferCenter : System.Windows.Forms.Form
             expand.Click += (_, _) => title.PerformClick(); icon.Click += (_, _) => title.PerformClick();
             previous.Click += (_, _) => { page = Math.Max(0, page - 1); changed(); };
             next.Click += (_, _) => { page++; changed(); };
-            pause.Click += (_, _) => DurableTransfers.ChangeMany(Members(), pause.Text == "Resume" ? "resume" : "pause");
-            cancel.Click += (_, _) => DurableTransfers.ChangeMany(Members(), "cancel");
+            pause.Click += (_, _) => TransferAction(() => DurableTransfers.ChangeMany(Members(), pause.Text == "Resume" ? "resume" : "pause"));
+            cancel.Click += (_, _) => TransferAction(() => DurableTransfers.ChangeMany(Members(), "cancel"));
             tips.SetToolTip(cancel, "Cancel the unfinished items in this folder");
             SizeChanged += (_, _) => LayoutRows();
             DpiChangedAfterParent += (_, _) => LayoutRows();
@@ -355,9 +360,9 @@ internal sealed class TransferCenter : System.Windows.Forms.Form
             title.Text = (job.RelativePath?.Length > 0 ? job.RelativePath : job.Name) + (job.Sending ? " → " : " ← ") + job.Peer;
             tips.SetToolTip(title, title.Text);
             Controls.AddRange(new Control[] { title, icon, progress, pause, up, down, cancel, status, detail });
-            pause.Click += (_, _) => DurableTransfers.Change(job, job.State is "Paused" or "Error" ? "resume" : "pause");
+            pause.Click += (_, _) => TransferAction(() => DurableTransfers.Change(job, job.State is "Paused" or "Error" ? "resume" : "pause"));
             up.Click += (_, _) => Move(true); down.Click += (_, _) => Move(false);
-            cancel.Click += (_, _) => DurableTransfers.Change(job, "cancel");
+            cancel.Click += (_, _) => TransferAction(() => DurableTransfers.Change(job, "cancel"));
             SizeChanged += (_, _) => LayoutRow();
             DpiChangedAfterParent += (_, _) => LayoutRow();
             FontChanged += (_, _) => LayoutRow();

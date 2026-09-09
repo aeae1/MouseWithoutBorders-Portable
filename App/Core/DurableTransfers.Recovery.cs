@@ -58,7 +58,6 @@ internal static partial class DurableTransfers
             && !journal.Groups.Any(g => g.Id == j.GroupId && g.CleanupPending)).ToArray();
         foreach (var job in finished)
         {
-            journal.Receipts.RemoveAll(r => r.Id == job.Id);
             journal.Receipts.Add(TransferReceipt.From(job));
             journal.Jobs.Remove(job);
         }
