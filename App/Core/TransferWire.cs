@@ -16,6 +16,12 @@ internal sealed class TransferActionResult
     public string Error { get; set; }
 }
 
+internal sealed class TransferPreviewItem
+{
+    public string Name { get; set; }
+    public bool IsDirectory { get; set; }
+}
+
 internal sealed class TransferMessage
 {
     public int Protocol { get; set; }
@@ -36,6 +42,7 @@ internal sealed class TransferMessage
     public int Offer { get; set; }
     public TransferJob[] Files { get; set; }
     public string[] Names { get; set; }
+    public TransferPreviewItem[] PreviewItems { get; set; }
     public long Offset { get; set; }
     public int Size { get; set; }
     public string Hash { get; set; }

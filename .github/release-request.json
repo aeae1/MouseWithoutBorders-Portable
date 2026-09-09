@@ -1,25 +1,25 @@
 {
-  "tag": "mwb-v1.0.1-rc.13",
-  "title": "Mouse Without Borders Portable 1.0.1-rc.13",
+  "tag": "mwb-v1.0.1-rc.14",
+  "title": "Mouse Without Borders Portable 1.0.1-rc.14",
   "prerelease": true,
-  "summary": "A clearer transfer window with glossy queue arrows, file/folder icons, full-width progress bars and title-bar totals.",
+  "summary": "Sharper drag previews with clean transparent edges, up to three file-type icons, and right-click cancellation across PCs.",
   "changes": [
-    "Move queued files and folder groups up or down from either PC. The sender confirms order; already-copying files finish and paused files stay paused.",
-    "Use consistent full-width progress bars, compact row separators, and cached Windows file-type/folder icons.",
-    "Move overall percentage, combined speed and ETA into the title bar, with clear Preparing, Paused and needs-attention states.",
-    "Keep the compact RC11 settings and RC12 acknowledged startup and connection-timeout retries. Simplify the README introduction."
+    "Use larger Windows file-type artwork and per-pixel transparency to remove the magenta cutout and avoid enlarging small icons.",
+    "Show up to three distinct selection types, including a folder icon when folders are selected, plus the total item count. Same-type selections use a small repeated-icon stack.",
+    "Right-click during a cross-PC drag cancels it on both PCs, clears the preview and suppresses the context menu and following drop. Delayed cancellation cannot dismiss a different offer.",
+    "Keep RC13 transfer progress, queue arrows, recovery, settings and installation behavior."
   ],
   "testing": [
-    "Install RC13 on BOTH PCs. Send two folders and a large loose file; check icons, row separators, full-width bars and title-bar progress.",
-    "Move a started folder below another entry on either PC. Current files should finish; the higher entry should take the next available slots. Check the other window agrees within a few seconds.",
-    "Pause one file, wait for it to stop, move it, and verify it stays paused. Reorder children within an expanded folder, then collapse/reopen it.",
-    "Cancel while reordering, then disconnect/reconnect during a disposable transfer. Completed files must remain intact; resume/retry unfinished work explicitly when paused.",
-    "Check window resizing and your Windows display scaling. Recheck mouse/keyboard sharing, clipboard, sleep/wake and settings."
+    "Install RC14 on BOTH PCs. Drag one file, several files of one type, and a mixture of folders and file types. Check the type icons and total count.",
+    "Check previews over light and dark backgrounds and at your Windows display scaling. Move between monitors; the preview should follow the cursor without taking keyboard focus.",
+    "While holding a cross-PC drag, right-click, then release the buttons. The preview should disappear on both PCs, no context menu should open and no copying should start.",
+    "Immediately try another drag and complete it. Also test cancelling while moving between PCs. Ordinary right-click outside a cross-PC drag should still open menus.",
+    "Recheck mouse/keyboard sharing, clipboard, completed transfers, disconnect/reconnect and sleep/wake."
   ],
   "known_limitations": [
-    "Queue arrows on the receiving PC need RC13 or newer on the sender. Use the same RC on both PCs.",
-    "Each sender/destination pair has its own order; four outgoing file workers are shared across destinations. Arrows do not interrupt files currently copying.",
-    "ETA is an estimate of remaining copying, not a promise about verification time. Wi-Fi saturation can still cause mouse lag.",
-    "Automated Windows tests do not replace real two-PC validation, including disconnect and sleep/wake behavior."
+    "Use the same RC on both PCs for folder/type previews and coordinated cancellation. Older senders provide names only, so folders cannot always be identified.",
+    "Icons come from the receiving PC’s installed file associations, not file contents or thumbnails. Windows may only provide small artwork for some types; those icons remain small rather than being blurred by enlargement.",
+    "The count is the number of selected top-level files and folders, not every file inside selected folders.",
+    "Automated Windows checks do not replace real two-PC testing. Full-speed transfers can still cause lag on busy Wi-Fi."
   ]
 }

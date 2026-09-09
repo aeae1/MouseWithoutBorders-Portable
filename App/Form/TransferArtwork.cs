@@ -63,8 +63,11 @@ internal sealed class TransferIconCache : IDisposable
     private readonly BlockingCollection<string> pending = new(128);
     private readonly Image file = Fallback(false), folder = Fallback(true);
     private bool disposed;
-    internal TransferIconCache()
+    private readonly bool highResolution;
+    internal event Action Changed;
+    internal TransferIconCache(bool highResolution = false)
     {
+        this.highResolution = highResolution;
         var worker = new Thread(Load) { IsBackground = true, Name = "MWB file type icons" };
         worker.SetApartmentState(ApartmentState.STA); worker.Start();
     }
@@ -100,12 +103,14 @@ internal sealed class TransferIconCache : IDisposable
             try
             {
                 string name = key == "folder" ? "folder" : key == "file" ? "file.mwb-unknown" : "file" + key;
-                if (SHGetFileInfo(name, key == "folder" ? 0x10u : 0x80u, ref info, (uint)Marshal.SizeOf<FileInfoNative>(), 0x100 | 0x10) != IntPtr.Zero && info.Icon != IntPtr.Zero)
+                if (highResolution) image = DragPreviewIcons.Load(name, key == "folder");
+                if (image == null && SHGetFileInfo(name, key == "folder" ? 0x10u : 0x80u, ref info, (uint)Marshal.SizeOf<FileInfoNative>(), 0x100 | 0x10) != IntPtr.Zero && info.Icon != IntPtr.Zero)
                 { using var borrowed = Icon.FromHandle(info.Icon); image = borrowed.ToBitmap(); }
             }
             catch (Exception) { /* A generic icon remains usable if a shell handler fails. */ }
             finally { if (info.Icon != IntPtr.Zero) DestroyIcon(info.Icon); }
             lock (sync) { if (disposed) image?.Dispose(); else images[key] = image; }
+            try { Changed?.Invoke(); } catch (Exception) { /* A closed preview has no work to refresh. */ }
         }
     }
     private static Image Fallback(bool folder)

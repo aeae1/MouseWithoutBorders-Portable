@@ -255,6 +255,9 @@ namespace MouseWithoutBorders.Class
                             return rv;
                         }
 
+                        // A cancel click must not reach Explorer or the remote mouse stream.
+                        if (DragDrop.HandleCancelMouse(wParam)) return 1;
+
                         mouseHookStruct = LParamToMouseLLHookStruct(lParam);
                         hookCallbackMouseData.dwFlags = wParam;
 

@@ -52,7 +52,7 @@ internal static class QueuedFileTransfer
     private static readonly Dictionary<int, OfferData> Offers = new();
     private static readonly TransferQueue Sends = new();
     private static readonly TransferQueue Receives = new();
-    private sealed record SourceFile(string Path, long Length, DateTime Modified);
+    private sealed record SourceFile(string Path, long Length, DateTime Modified, bool IsDirectory = false);
     private sealed record OfferData(SourceFile[] Files, DateTime Created);
 
     internal static int Offer(string[] paths)
@@ -67,7 +67,7 @@ internal static class QueuedFileTransfer
                 var directory = new DirectoryInfo(path);
                 if (directory.Attributes.HasFlag(FileAttributes.ReparsePoint)) throw new IOException("Linked folders cannot be transferred. Select the actual folder instead.");
                 if (!TransferJournal.ValidName(directory.Name)) throw new IOException("This folder name cannot be transferred safely.");
-                return new SourceFile(directory.FullName, 0, directory.LastWriteTimeUtc);
+                return new SourceFile(directory.FullName, 0, directory.LastWriteTimeUtc, true);
             }
             var info = new FileInfo(path);
             if (!info.Exists) throw new FileNotFoundException("A selected file is no longer available.", path);
@@ -85,6 +85,15 @@ internal static class QueuedFileTransfer
             return id;
         }
     }
+
+    internal static TransferPreviewItem[] PreviewItems(int id)
+    {
+        lock (Sync) return Offers.TryGetValue(id, out var offer)
+            ? offer.Files.Select(f => new TransferPreviewItem { Name = Path.GetFileName(f.Path), IsDirectory = f.IsDirectory }).ToArray()
+            : Array.Empty<TransferPreviewItem>();
+    }
+
+    internal static void RevokeOffer(int id) { lock (Sync) Offers.Remove(id); }
 
     internal static string[] Preview(int id)
     {

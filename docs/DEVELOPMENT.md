@@ -208,3 +208,7 @@ See [RC12_TRANSFERS.md](RC12_TRANSFERS.md) for acknowledged startup, bounded pre
 ## RC13 transfer window and queue
 
 See [RC13_TRANSFERS.md](RC13_TRANSFERS.md) for sender-controlled queue ordering, full-width rows, cached icons, title-bar progress, failure behavior and two-PC acceptance checks. RC11 settings and RC12 startup/retry fixes are retained.
+
+## RC14 drag previews and cancellation
+
+See [RC14_DRAG_PREVIEW.md](RC14_DRAG_PREVIEW.md) for sharper Windows file-type artwork, transparent edges, three-type selection previews and right-click cancellation. The RC13 transfer window, queue controls and recovery behavior are retained.

@@ -144,6 +144,8 @@ internal static class Receiver
                         return;
                     }
 
+                    if (DragDrop.HandleCancelMouse(package.Md.dwFlags)) return;
+
                     if (Math.Abs(package.Md.X) >= Event.MOVE_MOUSE_RELATIVE && Math.Abs(package.Md.Y) >= Event.MOVE_MOUSE_RELATIVE)
                     {
                         if (package.Md.dwFlags == WM.WM_MOUSEMOVE)
@@ -366,7 +368,7 @@ internal static class Receiver
 
             case PackageType.ClipboardDragDropEnd:
                 Package.PackageReceived.ClipboardDragDropEnd++;
-                DragDrop.DragDropStep12();
+                if (!DragDrop.ReceiveDragCancellation(package)) DragDrop.DragDropStep12();
                 break;
 
             case PackageType.ClipboardText:

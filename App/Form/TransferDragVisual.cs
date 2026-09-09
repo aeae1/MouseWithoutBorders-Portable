@@ -4,6 +4,7 @@ using System;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using MouseWithoutBorders.Core;
@@ -14,59 +15,77 @@ namespace MouseWithoutBorders;
 internal sealed class TransferDragVisual : System.Windows.Forms.Form
 {
     private static TransferDragVisual current;
-    private Icon fileIcon = (Icon)SystemIcons.Application.Clone();
-    private string caption = "Copy files";
-    private int count = 1;
-    private TransferDragVisual()
+    private readonly TransferIconCache icons = new(highResolution: true);
+    private TransferPreviewItem[] items = Array.Empty<TransferPreviewItem>();
+    private string caption = "files";
+    private bool drawing;
+    private bool renderFailed;
+    internal TransferDragVisual()
     {
         FormBorderStyle = FormBorderStyle.None; ShowInTaskbar = false; TopMost = true;
-        BackColor = Color.Magenta; TransparencyKey = Color.Magenta; Opacity = 0.82;
-        ClientSize = new Size(180, 106); DoubleBuffered = true;
+        AutoScaleMode = AutoScaleMode.None;
+        // Do not set Opacity or TransparencyKey: they conflict with per-pixel alpha.
+        ClientSize = new Size(180, 122);
+        icons.Changed += IconLoaded;
+        DpiChanged += (_, _) => PaintLayer();
     }
     protected override bool ShowWithoutActivation => true;
     protected override CreateParams CreateParams
-    { get { var p = base.CreateParams; p.ExStyle |= 0x08000000 | 0x20 | 0x80; return p; } }
+    { get { var p = base.CreateParams; p.ExStyle |= 0x08000000 | 0x20 | 0x80 | 0x80000; return p; } }
     internal static void MoveImage()
     {
-        if (!MouseWithoutBorders.Core.DragDrop.IsDropping) return;
+        if (!MouseWithoutBorders.Core.DragDrop.IsDropping) { HideImage(); return; }
         current ??= new TransferDragVisual();
-        current.Location = new Point(Cursor.Position.X + 14, Cursor.Position.Y + 18);
-        if (!current.Visible) current.Show();
+        current.ShowAt(Cursor.Position);
     }
-    internal static void HideImage() { current?.Hide(); }
-    internal static void SetFiles(string[] names)
+    internal void ShowAt(Point cursor)
     {
-        if (!MouseWithoutBorders.Core.DragDrop.IsDropping || names.Length == 0) return;
+        if (renderFailed) return;
+        float scale = DeviceDpi / 96f;
+        Location = new Point(cursor.X + (int)(14 * scale), cursor.Y + (int)(18 * scale));
+        if (!Visible) { PaintLayer(); if (!renderFailed) Show(); }
+    }
+    internal static void HideImage()
+    {
+        if (current == null) return;
+        current.Hide(); current.items = Array.Empty<TransferPreviewItem>(); current.caption = "files";
+        current.renderFailed = false;
+    }
+    internal static void SetFiles(TransferPreviewItem[] selection)
+    {
+        if (!MouseWithoutBorders.Core.DragDrop.IsDropping || selection == null || selection.Length == 0) return;
+        if (selection.Length > QueuedFileTransfer.MaxFiles || selection.Any(p => p == null || !TransferJournal.ValidName(p.Name))) return;
         current ??= new TransferDragVisual();
-        current.count = names.Length;
-        current.caption = names.Length == 1 ? names[0] : names.Length + " files";
-        var info = new FileInfoNative();
-        if (SHGetFileInfo(names[0], 0x80, ref info, (uint)Marshal.SizeOf<FileInfoNative>(), 0x100 | 0x10) != IntPtr.Zero && info.Icon != IntPtr.Zero)
+        current.items = DragPreviewSelection.Representatives(selection);
+        current.caption = selection.Length == 1 ? selection[0].Name : selection.Length + " items";
+        current.PaintLayer();
+    }
+    private void IconLoaded()
+    {
+        if (IsDisposed || !IsHandleCreated) return;
+        try { BeginInvoke(new Action(() => { if (!IsDisposed && Visible) PaintLayer(); })); }
+        catch (InvalidOperationException) { }
+    }
+    private void PaintLayer()
+    {
+        if (drawing || IsDisposed || renderFailed) return;
+        drawing = true;
+        try
         {
-            using var borrowed = Icon.FromHandle(info.Icon);
-            var clone = (Icon)borrowed.Clone(); DestroyIcon(info.Icon);
-            current.fileIcon.Dispose(); current.fileIcon = clone;
+            var artwork = items.Length == 0 ? new[] { icons.Get("", false) } : items.Select(p => icons.Get(p.Name, p.IsDirectory)).ToArray();
+            using var bitmap = DragPreviewRendering.Draw(artwork, caption, DeviceDpi);
+            LayeredDragWindow.Update(Handle, Location, bitmap);
         }
-        current.Invalidate();
+        catch (Exception error)
+        {
+            renderFailed = true; Hide();
+            Logger.Log("Drag preview could not be drawn: " + error.Message);
+        }
+        finally { drawing = false; }
     }
-    protected override void OnPaint(PaintEventArgs e)
-    {
-        base.OnPaint(e);
-        if (count > 1) { e.Graphics.FillRectangle(Brushes.WhiteSmoke, 15, 5, 52, 60); e.Graphics.DrawRectangle(Pens.Silver, 15, 5, 52, 60); }
-        e.Graphics.DrawIcon(fileIcon, new Rectangle(4, 10, 60, 60));
-        e.Graphics.FillRectangle(Brushes.White, 0, 73, Width, 32);
-        TextRenderer.DrawText(e.Graphics, "+ Copy " + caption, Font, new Rectangle(3, 76, Width - 6, 25), Color.Black,
-            TextFormatFlags.EndEllipsis | TextFormatFlags.SingleLine | TextFormatFlags.NoPrefix);
-    }
-    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
-    private struct FileInfoNative
-    {
-        public IntPtr Icon; public int Index; public uint Attributes;
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 260)] public string Display;
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 80)] public string Type;
-    }
-    [DllImport("shell32.dll", CharSet = CharSet.Unicode)] private static extern IntPtr SHGetFileInfo(string path, uint attributes, ref FileInfoNative info, uint size, uint flags);
-    [DllImport("user32.dll")] private static extern bool DestroyIcon(IntPtr icon);
+    protected override void OnPaintBackground(PaintEventArgs e) { }
+    protected override void Dispose(bool disposing)
+    { if (disposing) { icons.Changed -= IconLoaded; icons.Dispose(); } base.Dispose(disposing); }
 }
 
 internal static class TransferDropDestination

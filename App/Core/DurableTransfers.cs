@@ -497,7 +497,8 @@ internal static partial class DurableTransfers
             }
             if (message.Op == "Preview")
             {
-                TransferWire.Write(output, new TransferMessage { Op = "Ok", Names = QueuedFileTransfer.Preview(message.Offer) }); return;
+                var preview = QueuedFileTransfer.PreviewItems(message.Offer);
+                TransferWire.Write(output, new TransferMessage { Op = "Ok", Names = preview.Select(p => p.Name).ToArray(), PreviewItems = preview }); return;
             }
             if (message.Op == "Declare")
             {
@@ -694,7 +695,7 @@ internal static partial class DurableTransfers
             try
             {
                 var reply = Request(peer, new TransferMessage { Op = "Preview", Offer = offer });
-                Common.DoSomethingInUIThread(() => { if (DragDrop.IsIncomingOffer(offer)) TransferDragVisual.SetFiles(reply.Names ?? Array.Empty<string>()); });
+                Common.DoSomethingInUIThread(() => { if (DragDrop.IsIncomingOffer(offer)) TransferDragVisual.SetFiles(reply.PreviewItems ?? (reply.Names ?? Array.Empty<string>()).Select(name => new TransferPreviewItem { Name = name }).ToArray()); });
             }
             catch (Exception error) { Logger.LogDebug("Drag preview unavailable: " + error.Message); }
         });
