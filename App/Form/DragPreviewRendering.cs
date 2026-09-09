@@ -71,11 +71,17 @@ internal static class DragPreviewIcons
         Bitmap best = null;
         foreach (int size in new[] { 4, 2 }) // 256-pixel jumbo, then extra-large fallback.
         {
-            IImageList list = null; IntPtr handle = IntPtr.Zero;
+            IntPtr list = IntPtr.Zero, handle = IntPtr.Zero;
             try
             {
-                Guid iid = typeof(IImageList).GUID;
-                if (SHGetImageList(size, ref iid, out list) < 0 || list == null || list.GetIcon(info.Index, 1, out handle) < 0 || handle == IntPtr.Zero) continue;
+                Guid iid = new("46EB5926-582E-4017-9FDF-E8998DAA0950");
+                if (SHGetImageList(size, ref iid, out list) < 0 || list == IntPtr.Zero) continue;
+                // Own precisely the native reference returned by the shell. A
+                // shared system list must not become an RCW released by another
+                // icon-cache worker on a different apartment.
+                IntPtr method = Marshal.ReadIntPtr(Marshal.ReadIntPtr(list), 10 * IntPtr.Size);
+                var getIcon = Marshal.GetDelegateForFunctionPointer<GetIcon>(method);
+                if (getIcon(list, info.Index, 1, out handle) < 0 || handle == IntPtr.Zero) continue;
                 using var icon = Icon.FromHandle(handle);
                 using var bitmap = icon.ToBitmap();
                 var cropped = CropVisible(bitmap);
@@ -85,7 +91,7 @@ internal static class DragPreviewIcons
                 if (best.Width >= 200 || best.Height >= 200) break;
             }
             catch (COMException) { }
-            finally { if (handle != IntPtr.Zero) DestroyIcon(handle); if (list != null) Marshal.ReleaseComObject(list); }
+            finally { if (handle != IntPtr.Zero) DestroyIcon(handle); if (list != IntPtr.Zero) Marshal.Release(list); }
         }
         return best;
     }
@@ -105,20 +111,12 @@ internal static class DragPreviewIcons
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 260)] internal string Name;
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 80)] internal string Type;
     }
-    [ComImport, Guid("46EB5926-582E-4017-9FDF-E8998DAA0950"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
-    private interface IImageList
-    {
-        [PreserveSig] int Add(IntPtr bitmap, IntPtr mask, out int index);
-        [PreserveSig] int ReplaceIcon(int index, IntPtr icon, out int result);
-        [PreserveSig] int SetOverlayImage(int image, int overlay);
-        [PreserveSig] int Replace(int index, IntPtr bitmap, IntPtr mask);
-        [PreserveSig] int AddMasked(IntPtr bitmap, uint mask, out int index);
-        [PreserveSig] int Draw(IntPtr parameters);
-        [PreserveSig] int Remove(int index);
-        [PreserveSig] int GetIcon(int index, uint flags, out IntPtr icon);
-    }
+    // IUnknown's 3 slots, then Add/ReplaceIcon/SetOverlayImage/Replace/
+    // AddMasked/Draw/Remove: IImageList.GetIcon is slot 10.
+    [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+    private delegate int GetIcon(IntPtr list, int index, uint flags, out IntPtr icon);
     [DllImport("shell32.dll", CharSet = CharSet.Unicode)] private static extern IntPtr SHGetFileInfo(string path, uint attributes, ref FileInfoNative info, uint size, uint flags);
-    [DllImport("shell32.dll")] private static extern int SHGetImageList(int size, ref Guid iid, out IImageList list);
+    [DllImport("shell32.dll")] private static extern int SHGetImageList(int size, ref Guid iid, out IntPtr list);
     [DllImport("user32.dll")] private static extern bool DestroyIcon(IntPtr icon);
 }
 

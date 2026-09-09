@@ -244,7 +244,8 @@ public sealed class Rc14DragTests
     {
         Exception? error = null; var thread = new System.Threading.Thread(() => { try { action(); } catch (Exception e) { error = e; } });
         thread.SetApartmentState(ApartmentState.STA); thread.IsBackground = true; thread.Start();
-        Assert.IsTrue(thread.Join(TimeSpan.FromSeconds(20)), "Drag UI test stalled"); if (error != null) throw error;
+        Assert.IsTrue(thread.Join(TimeSpan.FromSeconds(20)), "Drag UI test stalled");
+        if (error != null) System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(error).Throw();
     }
     [DllImport("user32.dll")] private static extern IntPtr GetForegroundWindow();
     [DllImport("dwmapi.dll")] private static extern int DwmFlush();
