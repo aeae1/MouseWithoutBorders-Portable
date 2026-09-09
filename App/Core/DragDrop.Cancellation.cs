@@ -80,6 +80,8 @@ internal static partial class DragDrop
                 // Avoid a late UI callback hiding a fresh drag.
                 if (IsDragging || IsDropping) return;
                 TransferDragVisual.HideImage();
+                // A fresh physical press must not receive the old drag's release.
+                if (!dragCancelledUntilPress) return;
                 InputSimulation.MouseUp();
                 NativeMethods.PostMessage(form.Handle, NativeMethods.WM_HIDE_DRAG_DROP, IntPtr.Zero, IntPtr.Zero);
                 NativeMethods.PostMessage(form.Handle, NativeMethods.WM_HIDE_DD_HELPER, IntPtr.Zero, IntPtr.Zero);

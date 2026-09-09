@@ -14,7 +14,22 @@ namespace MouseWithoutBorders.UnitTests.Core;
 [DoNotParallelize]
 public sealed class Rc14DragTests
 {
-    [TestCleanup] public void Cleanup() => Drag.ResetDragForTests();
+    private ID previousDropMachine, previousClipboardMachine, previousDragMachine;
+    private string? previousDragFile;
+    [TestInitialize]
+    public void Initialize()
+    {
+        previousDropMachine = MachineStuff.dropMachineID; previousDragMachine = Drag.DragMachine;
+        previousClipboardMachine = MouseWithoutBorders.Core.Clipboard.LastIDWithClipboardData;
+        previousDragFile = MouseWithoutBorders.Core.Clipboard.LastDragDropFile;
+    }
+    [TestCleanup]
+    public void Cleanup()
+    {
+        Drag.ResetDragForTests(); MachineStuff.dropMachineID = previousDropMachine; Drag.DragMachine = previousDragMachine;
+        MouseWithoutBorders.Core.Clipboard.LastIDWithClipboardData = previousClipboardMachine;
+        MouseWithoutBorders.Core.Clipboard.LastDragDropFile = previousDragFile;
+    }
 
     [TestMethod]
     public void RightClickCancelsPreviewAndConsumesBothButtonReleases()
@@ -26,6 +41,10 @@ public sealed class Rc14DragTests
         Assert.IsFalse(Drag.IsDropping); Assert.IsFalse(Drag.IsDragging);
         Assert.IsTrue(Drag.WasDragCancelled((ID)12, 44));
         Assert.AreEqual((ID)44, packet.Machine2);
+        var decoded = new DATA(packet.Bytes);
+        Assert.AreEqual(packet.Machine1, decoded.Machine1);
+        Assert.AreEqual(packet.Machine2, decoded.Machine2);
+        Assert.AreEqual((ID)Drag.CancelDragMarker, decoded.Machine3);
         Assert.IsTrue(Drag.HandleCancelMouse(WM.WM_RBUTTONUP));
         Assert.IsTrue(Drag.HandleCancelMouse(WM.WM_LBUTTONUP));
         Assert.IsFalse(Drag.HandleCancelMouse(WM.WM_RBUTTONDOWN));
@@ -166,13 +185,13 @@ public sealed class Rc14DragTests
             using var overlay = new TransferDragVisual();
             overlay.ShowAt(new Point(250, 180)); Application.DoEvents();
             Assert.IsTrue(overlay.Visible, "Per-pixel layered window failed to show");
-            Assert.AreEqual(before, GetForegroundWindow(), "Drag preview stole keyboard focus");
+            Assert.AreEqual(before, GetForegroundWindow(), $"Drag preview stole keyboard focus (owner {owner.Handle}, preview {overlay.Handle})");
             long styles = GetWindowLongPtr(overlay.Handle, -20).ToInt64();
-            Assert.AreEqual(0x080800A0L, styles & 0x080800A0L, "Preview must be layered, nonactivating and click-through");
+            Assert.AreEqual(0x080800A8L, styles & 0x080800A8L, "Preview must be layered, topmost, nonactivating and click-through");
+            SavePreview(icon);
             for (int i = 0; i < 20; i++) overlay.ShowAt(new Point(250 + i, 180));
             CheckNativeAlpha(overlay, owner.BackColor);
             overlay.Hide(); Assert.IsFalse(overlay.Visible);
-            SavePreview(icon);
         });
     }
     private static void SavePreview(Image icon)
@@ -202,7 +221,14 @@ public sealed class Rc14DragTests
         var position = new Point(150, 150);
         LayeredDragWindow.Update(overlay.Handle, position, frame); DwmFlush();
         using var screen = new Bitmap(100, 80);
-        using (var g = Graphics.FromImage(screen)) g.CopyFromScreen(position, Point.Empty, screen.Size, CopyPixelOperation.SourceCopy | CopyPixelOperation.CaptureBlt);
+        using (var g = Graphics.FromImage(screen))
+        {
+            // Graphics.CopyFromScreen rejects combined raster flags. CAPTUREBLT
+            // is needed here to include the layered window in the screen read.
+            IntPtr source = GetDC(IntPtr.Zero), target = g.GetHdc();
+            try { Assert.IsTrue(BitBlt(target, 0, 0, screen.Width, screen.Height, source, position.X, position.Y, 0x40CC0020), "Screen capture failed"); }
+            finally { g.ReleaseHdc(target); ReleaseDC(IntPtr.Zero, source); }
+        }
         Assert.AreEqual(background.ToArgb(), screen.GetPixel(5, 5).ToArgb(), "Transparent pixels must show the window underneath");
         var pixel = screen.GetPixel(40, 40);
         Assert.IsTrue(Math.Abs(pixel.R - (20 * 128 + background.R * 127) / 255) <= 3 &&
@@ -222,5 +248,8 @@ public sealed class Rc14DragTests
     }
     [DllImport("user32.dll")] private static extern IntPtr GetForegroundWindow();
     [DllImport("dwmapi.dll")] private static extern int DwmFlush();
+    [DllImport("user32.dll")] private static extern IntPtr GetDC(IntPtr window);
+    [DllImport("user32.dll")] private static extern int ReleaseDC(IntPtr window, IntPtr dc);
+    [DllImport("gdi32.dll")] private static extern bool BitBlt(IntPtr destination, int x, int y, int width, int height, IntPtr source, int sourceX, int sourceY, uint operation);
     [DllImport("user32.dll", EntryPoint = "GetWindowLongPtrW")] private static extern IntPtr GetWindowLongPtr(IntPtr window, int index);
 }

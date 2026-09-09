@@ -22,7 +22,10 @@ internal sealed class TransferDragVisual : System.Windows.Forms.Form
     private bool renderFailed;
     internal TransferDragVisual()
     {
-        FormBorderStyle = FormBorderStyle.None; ShowInTaskbar = false; TopMost = true;
+        FormBorderStyle = FormBorderStyle.None; ShowInTaskbar = false;
+        StartPosition = FormStartPosition.Manual;
+        // WinForms forces FocusActiveControl when its TopMost property is true,
+        // even with ShowWithoutActivation. Use the native topmost style instead.
         AutoScaleMode = AutoScaleMode.None;
         // Do not set Opacity or TransparencyKey: they conflict with per-pixel alpha.
         ClientSize = new Size(180, 122);
@@ -31,7 +34,7 @@ internal sealed class TransferDragVisual : System.Windows.Forms.Form
     }
     protected override bool ShowWithoutActivation => true;
     protected override CreateParams CreateParams
-    { get { var p = base.CreateParams; p.ExStyle |= 0x08000000 | 0x20 | 0x80 | 0x80000; return p; } }
+    { get { var p = base.CreateParams; p.ExStyle |= 0x08000000 | 0x20 | 0x80 | 0x80000 | 0x8; return p; } }
     internal static void MoveImage()
     {
         if (!MouseWithoutBorders.Core.DragDrop.IsDropping) { HideImage(); return; }
