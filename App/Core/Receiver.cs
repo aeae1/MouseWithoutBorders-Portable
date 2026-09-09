@@ -144,6 +144,8 @@ internal static class Receiver
                         return;
                     }
 
+                    if (DragDrop.HandleCancelMouse(package.Md.dwFlags)) return;
+
                     if (Math.Abs(package.Md.X) >= Event.MOVE_MOUSE_RELATIVE && Math.Abs(package.Md.Y) >= Event.MOVE_MOUSE_RELATIVE)
                     {
                         if (package.Md.dwFlags == WM.WM_MOUSEMOVE)
@@ -314,6 +316,17 @@ internal static class Receiver
 
             case PackageType.ClipboardAsk:
                 Package.PackageReceived.ClipboardAsk++;
+                if (package.Des == Common.MachineID && package.PostAction == ClipboardPostAction.DurableFiles)
+                {
+                    QueuedFileTransfer.SendDurableOffer((int)package.Machine2, package.Src, package.MachineName);
+                    break;
+                }
+                if (package.Des == Common.MachineID && package.PostAction == ClipboardPostAction.QueuedFiles)
+                {
+                    Logger.Log("Transfer rejected: the receiving PC uses an incompatible file protocol.");
+                    Common.ShowToolTip("File transfer versions are incompatible. Update both PCs.", 5000, System.Windows.Forms.ToolTipIcon.Error);
+                    break;
+                }
 
                 if (package.Des == Common.MachineID)
                 {
@@ -326,7 +339,7 @@ internal static class Receiver
                             Thread.UpdateThreads(thread);
 
                             string remoteMachine = package.MachineName;
-                            System.Net.Sockets.TcpClient client = Clipboard.ConnectToRemoteClipboardSocket(remoteMachine);
+                            using System.Net.Sockets.TcpClient client = Clipboard.ConnectToRemoteClipboardSocket(remoteMachine);
                             bool clientPushData = true;
 
                             if (Clipboard.ShakeHand(ref remoteMachine, client.Client, out Stream enStream, out Stream deStream, ref clientPushData, ref package.PostAction))
@@ -355,7 +368,7 @@ internal static class Receiver
 
             case PackageType.ClipboardDragDropEnd:
                 Package.PackageReceived.ClipboardDragDropEnd++;
-                DragDrop.DragDropStep12();
+                if (!DragDrop.ReceiveDragCancellation(package)) DragDrop.DragDropStep12();
                 break;
 
             case PackageType.ClipboardText:

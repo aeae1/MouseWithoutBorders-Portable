@@ -2,6 +2,10 @@
 
 This file is the working map for modification of the `main` product branch. A few imported source filenames and the `STANDALONE` build symbol remain internal compatibility identifiers; public documentation and release titles call the product **Portable**.
 
+## Current stable baseline
+
+Version **1.1.0** promotes `mwb-v1.0.1-rc.14` without application-code or dependency changes. Preferences and recovery-journal formats are retained. See [RELEASE_1.1.0.md](RELEASE_1.1.0.md) for upgrade/validation scope and [FILE_TRANSFERS.md](FILE_TRANSFERS.md) for current user-facing transfer behavior. RC-numbered documents remain historical implementation records.
+
 ## Branch convention
 
 - `main`: portable extraction plus intentional MWB behavior changes.
@@ -71,7 +75,10 @@ The underlying modern MWB AES/PBKDF2 implementation remains intact.
 ### Clipboard / file transfer
 
 - `App/Core/Clipboard.cs` — clipboard serialization/transport.
-- `App/Core/DragDrop.cs` — drag/drop transfer behavior.
+- `App/Core/DragDrop.cs` and `DragDrop.Cancellation.cs` — cross-screen drag offers and right-click cancellation.
+- `App/Core/DurableTransfers*.cs`, `TransferWire.cs`, `TransferFolders.cs`, and `TransferJournal.cs` — authenticated jobs, queueing, safe destinations, progress and recovery.
+- `App/Form/TransferCenter.cs` — shared transfer window and controls.
+- `App/Form/TransferDragVisual.cs`, `DragPreviewRendering.cs`, and `TransferArtwork.cs` — alpha drag previews, Windows type icons and queue artwork.
 - `App/Class/IClipboardHelper.cs` — helper IPC contract.
 
 Treat these files as compatibility-sensitive.
@@ -102,19 +109,19 @@ If the prefs file is absent, first launch offers a portable mode or a per-user s
 
 After that choice, portable builds bypass the legacy `SetupPage` wizard and open `FrmMatrix` directly. The first matrix view reveals the generated key. Applying the matrix validates every checked tile before changing the key or settings: checked names must be nonblank and unique, including the local computer. A changed key must update `Setting.Values.MyKey` as well as `Encryption.MyKey`, must be compared case-sensitively, and must be saved synchronously before sockets reopen; otherwise the UI can appear to apply a key while a restart restores the old JSON value. Machine tiles summarize connection state in plain language while the form is open. The removed reconfigure link must not be restored unless it leads to a maintained portable flow.
 
-The first-launch install flow creates a Start Menu shortcut, offers a desktop shortcut checked by default, and optionally enables Start with Windows. A portable user may install later from the **Portable** tab in `FrmMatrix`. That path must synchronously save current settings, write a validated installed-mode copy in the destination, defer removal of the source prefs until the old process exits, then restart the installed EXE. Never delete or overwrite the only valid preferences copy before the destination write succeeds. Because `FrmMatrix` is always on top, its modal configured-copy installer must use `CenterParent`, remain topmost while open, and avoid a redundant taskbar button; otherwise the disabled Settings owner can cover the only usable dialog.
+The first-launch install flow creates a Start Menu shortcut, offers a desktop shortcut checked by default, and optionally enables Start with Windows. A portable user may install later from the **Installation** tab in `FrmMatrix`. That path must synchronously save current settings, write a validated installed-mode copy in the destination, retain the source prefs for recovery, then restart the installed EXE. Never delete or overwrite the only valid preferences copy before the destination write succeeds. Because `FrmMatrix` is always on top, its modal configured-copy installer must use `CenterParent`, remain topmost while open, and avoid a redundant taskbar button; otherwise the disabled Settings owner can cover the only usable dialog.
 
-The portable build deliberately reconstructs the tray context menu in `frmScreen.Portable.cs`. A portable copy exposes Settings, About, and Exit. An installed copy inserts Start with Windows and Uninstall between Settings and About. Do not restore the legacy screen-capture, all-computers broadcast, live machine-switching, generated-log, or empty Help entries without an explicit product decision; their supporting engine code remains available even though the commands are not shown.
+The portable build deliberately reconstructs the tray context menu in `frmScreen.Portable.cs`. Both modes expose Settings, File transfers, About, and Exit. Startup and uninstall controls belong in Settings → Installation; portable mode offers Install for me there. Do not restore the legacy screen-capture, all-computers broadcast, live machine-switching, generated-log, or empty Help entries without an explicit product decision; their supporting engine code remains available even though the commands are not shown.
 
 The **Mini Log** link remains available in the Settings window as a support aid and opens one reusable, resizable/maximizable modeless `MiniLogForm`; do not use `ShowDialog`, because a modal owned form disables the main Settings window and looks like a hang even though connection and tray processing continue. `DiagnosticLog.Create` combines the existing configuration/connection snapshot with version, portable mode, paths, OS/runtime/process facts, key length/checksum, and at most the latest 96 KiB of the on-disk log. The report must redact the actual current key and warn that names, IP addresses, and paths can appear. Its read-only multiline text box supports scrolling, selection, Ctrl+C, and an explicit **Copy all** action. Repeated clicks refresh and activate the existing viewer rather than stacking windows. Opening the report must not overwrite the clipboard. The modeless Close button was deliberately removed because `DialogResult` does not close a modeless form; use the normal title-bar X.
 
 `MouseWithoutBordersProperties` defaults `WrapMouse` to `false` for newly created preferences. This affects only new JSON files: loading or upgrading an existing preferences file must preserve its saved value.
 
-Keyboard shortcuts are opt-in through the persisted `KeyboardShortcutsEnabled` master flag, which defaults to false when creating or loading preferences that predate the flag. Individual direct F-key/number switching and lock, reconnect, all-PC, and Easy Mouse toggle assignments remain stored while the master switch is off. Both local `InputHook` handling and the remotely injected lock-hotkey path must check the master flag; do not implement global disable by erasing assignments. The portable `FrmMatrix` owns these supported controls directly; do not restore the stale PowerToys Settings tooltip or blanket-disable loop. Letter selections represent `Ctrl+Alt+letter` and must save through the local settings model. The obsolete Show Settings, Exit, and custom screen-capture shortcut rows are hidden because their backing settings/actions are not active in this build. The visible shortcut panel uses None for an unassigned individual command and forms four responsive rows: the master switch followed by three assignment rows. Their vertical positions must be recalculated from the shortcut group's current scaled height so resizing or DPI scaling cannot bunch them at the top, while maximum spacing is capped for readable maximized windows.
+Keyboard shortcuts are opt-in through the persisted `KeyboardShortcutsEnabled` master flag, which defaults to false when creating or loading preferences that predate the flag. Individual direct F-key/number switching and lock, reconnect, all-PC, and Easy Mouse toggle assignments remain stored while the master switch is off. Both local `InputHook` handling and the remotely injected lock-hotkey path must check the master flag; do not implement global disable by erasing assignments. The portable `FrmMatrix` owns these supported controls directly; do not restore the stale PowerToys Settings tooltip or blanket-disable loop. Letter selections represent `Ctrl+Alt+letter` and must save through the local settings model. The obsolete Show Settings, Exit, and custom screen-capture shortcut rows are hidden because their backing settings/actions are not active in this build. The visible shortcut panel uses None for an unassigned individual command. RC9 and later use compact, wrapping rows in frmMatrix.SettingsStandalone.cs. Descriptions and initial values belong in tooltips; Two rows, Start with Windows, and machine-to-IP mappings must not show default text. Mapping instructions stay visible. RC11 uses a solid filled divider above shortcuts; a two-pixel 3D border was not visibly rendered. SettingsStack applies a child’s width before measuring its height, then uses its actual bottom edge for the next row. Test the actual settings form’s startup layout and tab/width transitions, not only tabs reparented into a test host. Verify the divider’s rendered pixels and the scroll range as well as control bounds. Multiline mapping editors must use AutoSize=false and a minimum height; an empty TextBox can otherwise report a one-line preferred size and collapse inside SettingsStack. Keep options directly in their sections and update width constraints on size changes, never inside OnLayout. The old fixed group-height positioning is not active after layout. Keep radio-button alternatives in the same parent.
 
 Easy Mouse is not itself a keyboard shortcut. The portable UI presents it in Other Options as **Switch computers at screen edge**, enabled by default, with Always, Hold Ctrl, and Hold Shift activation choices. Its optional toggle hotkey remains in Keyboard Shortcuts and is subject to the master switch. Preserve the engine's `EasyMouseOption.Enable`, `Ctrl`, `Shift`, and `Disable` values when translating between the checkbox/activation selector and persisted settings.
 
-Do not depend on tooltips to explain disabled WinForms controls; disabled controls do not normally receive the hover events needed to show them. The portable form hides the deprecated `Use Key Mappings` checkbox because its setting and handler are disconnected. The unavailable sign-in/Ctrl+Alt+Del controls name their omitted-service requirement inline. When Share Clipboard is off, the disabled Transfer File label names that dependency and returns to its normal text when sharing is restored.
+Do not depend on tooltips to explain disabled WinForms controls; disabled controls do not normally receive the hover events needed to show them. The portable form hides the deprecated `Use Key Mappings` checkbox because its setting and handler are disconnected. The unavailable sign-in/Ctrl+Alt+Del controls are hidden entirely. The removed optional clipboard/network status popups are disabled by the portable getter. The removed legacy subnet-prefix checkbox no longer affects unmanaged portable connections; explicit managed policy remains enforced. Allow file transfers has a tooltip explaining drag/drop, clipboard file copying, and its dependency. Enabled parent controls provide hover help for disabled options. Disabling Share Clipboard disables that control while preserving its saved choice. Opening Settings must not alter it.
 
 The portable build intentionally excludes the legacy one-minute security-key enforcement block. User-chosen keys are valid indefinitely; the app must not reopen Settings, close sockets, or display expiry/regeneration nags merely because a key is old or manually chosen.
 
@@ -136,9 +143,9 @@ It is triggered by relevant pushes to `main` and is intended to build/test only 
 
 ### GitHub release publishing
 
-Tags beginning with `mwb-v` run the focused build and then attach the tested `MouseWithoutBorders.exe` and its SHA-256 checksum to the matching GitHub release. A branch commit whose message contains `[release]` does the same using the reviewed metadata in `.github/release-request.json`; this lets a coding session request a release without asking the repository owner to build or upload files manually. The release job has `contents: write`; ordinary branch and pull-request builds retain read-only repository access and never publish releases.
+Tags beginning with `mwb-v` run the focused build and then attach the tested `MouseWithoutBorders.exe` and its SHA-256 checksum to the matching GitHub release. A `main` commit whose message contains `[release]` does the same using the reviewed metadata in `.github/release-request.json`; this lets a coding session request a release without asking the repository owner to build or upload files manually. Matching `release/X.Y.Z-rc.N` branches can request candidates with `[prerelease]`; a stable release is promoted to `main` with `[release]` only after the intended tree passes validation. The release job has `contents: write`; ordinary branch and pull-request builds retain read-only repository access and never publish releases.
 
-Public versions use semantic versioning. The `0.1.0-test.*` series recorded exploratory hardware tests, `1.0.0-rc.*` identified feature-complete release candidates undergoing final real-PC validation, and `1.0.0` is the first stable portable release. Keep `Directory.Build.props`, the Git tag, release title, and release notes aligned so About, diagnostics, Explorer metadata, and GitHub all identify the same build.
+Public versions use semantic versioning. The `0.1.0-test.*` series recorded exploratory hardware tests, `1.0.0-rc.*` identified feature-complete release candidates undergoing final real-PC validation, and `1.0.0` was the first stable portable release. The `1.0.1-rc.*` development series became stable `1.1.0` because it adds substantial transfer and settings features. Keep `Directory.Build.props`, the Git tag, release title, and release notes aligned so About, diagnostics, Explorer metadata, and GitHub all identify the same build.
 
 Temporary workflow copies of the portable EXE use a one-day retention period. They exist only to carry a tested binary into the release job and support immediate diagnosis; GitHub Release assets are the durable distribution channel.
 
@@ -190,3 +197,25 @@ Keep intentional product changes separate from extraction plumbing when practica
 4. packaging/UI polish.
 
 This makes upstream merges and regressions much easier to reason about.
+
+## RC6 transfer extension
+
+See [RC6_TRANSFERS.md](RC6_TRANSFERS.md) for the current fork protocol, bounded folder traversal and UI, directory identity checks, cancellation ownership, recovery/receipt retirement, and manual-update behavior. `TransferFolders.cs`, `DurableTransfers.Folders.cs`, `TransferCenter.cs`, and `ManualUpdates.cs` contain these additions. Retain negative tests for destination replacement, traversal/case collisions, cancellation cleanup, and replay after receipt expiration. The old queued-transfer implementations remain only for prior regression coverage/legacy paths; current drag/drop requires protocol 2.
+
+## RC8 transfer preferences
+
+`DefaultReceivingFolder` defaults to an empty string (resolve Desktop/MouseWithoutBorders on this PC at drop time). `AutoCloseTransferWindow` defaults to true. Both live in the existing preferences document and survive self-install. These are local preferences, not peer-synchronized transfer commands. Choosing a folder validates a local absolute path, directory identities, and write access using a temporary probe that deletes on close. A custom folder that disappears fails clearly; never silently redirect or recreate it. Existing transfers retain their recorded destination. Explorer targets take precedence. The new folder preference applies to durable drag/drop, not legacy clipboard file copying.
+
+Automatic closing is checked live by TransferCenter after the existing completion/cleanup predicate. Turning it off keeps finished rows visible; an explicit close still confirms cancellation and waits for cleanup. Errors remain visible in either mode.
+
+## RC12 transfer startup and timeout handling
+
+See [RC12_TRANSFERS.md](RC12_TRANSFERS.md) for acknowledged startup, bounded preparation, timeout classification, aggregate progress, evidence limits and two-PC tests. Existing protocol-2 job data is retained, but RC12 new drops require the StartOffer capability on the other PC.
+
+## RC13 transfer window and queue
+
+See [RC13_TRANSFERS.md](RC13_TRANSFERS.md) for sender-controlled queue ordering, full-width rows, cached icons, title-bar progress, failure behavior and two-PC acceptance checks. RC11 settings and RC12 startup/retry fixes are retained.
+
+## RC14 drag previews and cancellation
+
+See [RC14_DRAG_PREVIEW.md](RC14_DRAG_PREVIEW.md) for sharper Windows file-type artwork, transparent edges, three-type selection previews and right-click cancellation. The RC13 transfer window, queue controls and recovery behavior are retained.

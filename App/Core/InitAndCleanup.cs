@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Linq;
 using System.Globalization;
 using System.Net.NetworkInformation;
 using System.Security.Cryptography;
@@ -148,6 +149,12 @@ internal static class InitAndCleanup
         if (e.Mode is PowerModes.Resume or PowerModes.Suspend)
         {
             Logger.TelemetryLogTrace($"{nameof(SystemEvents_PowerModeChanged)}: {e.Mode}", SeverityLevel.Information);
+            try
+            {
+                if (e.Mode == PowerModes.Suspend) DurableTransfers.Stop();
+                else { DurableTransfers.ResumeService(); if (DurableTransfers.Jobs.Any(j => !j.Terminal)) TransferCenter.ShowCenter(); }
+            }
+            catch (Exception error) { Logger.Log("Transfers: sleep recovery: " + error.Message); }
             LastResumeSuspendTime = DateTime.UtcNow;
             MachineStuff.SwitchToMultipleMode(false, true);
         }
@@ -173,15 +180,18 @@ internal static class InitAndCleanup
         Helper.signalWatchDogToExit = true;
         _ = Common.EvSwitch.Set();
 
-        int c = 0;
-        if (Common.helper != null && c < waitTime)
+        var deadline = System.Diagnostics.Stopwatch.StartNew();
+        if (Common.helper != null)
         {
-            while (Helper.signalHelperToExit)
+            while (System.Threading.Volatile.Read(ref Helper.signalHelperToExit) && deadline.ElapsedMilliseconds < waitTime)
             {
                 Thread.Sleep(1);
             }
 
-            Common.helper = null;
+            if (!System.Threading.Volatile.Read(ref Helper.signalHelperToExit))
+                Common.helper = null;
+            else
+                Logger.Log("Helper shutdown timed out; continuing application exit.");
         }
     }
 

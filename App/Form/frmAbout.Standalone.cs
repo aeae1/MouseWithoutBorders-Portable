@@ -4,7 +4,12 @@
 
 #if PORTABLE_SINGLE_FILE
 
+using System;
 using System.Drawing;
+using System.Diagnostics;
+using System.Threading;
+using System.Windows.Forms;
+using MouseWithoutBorders.Core;
 
 namespace MouseWithoutBorders;
 
@@ -21,6 +26,30 @@ internal partial class FrmAbout
         StandaloneBranding.Apply(this);
         logoPictureBox.Image = StandaloneBranding.CreateProductIconBitmap(new Size(128, 128));
         logoPictureBox.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
+
+        var check = new Button { Text = "Check for updates", Location = new Point(9, 532), Size = new Size(140, 27), Anchor = AnchorStyles.Bottom | AnchorStyles.Left };
+        var result = new LinkLabel { Location = new Point(155, 537), Size = new Size(242, 24), Anchor = AnchorStyles.Bottom | AnchorStyles.Left, AutoEllipsis = true };
+        // No network activity until the button is clicked.
+        string releaseUrl = ManualUpdates.Releases;
+        var cancelCheck = new CancellationTokenSource();
+        FormClosed += (_, _) => { cancelCheck.Cancel(); cancelCheck.Dispose(); };
+        result.LinkClicked += (_, _) => Process.Start(new ProcessStartInfo(releaseUrl) { UseShellExecute = true });
+        check.Click += async (_, _) =>
+        {
+            check.Enabled = false; result.Text = "Checking GitHub…"; result.Links.Clear();
+            try
+            {
+                string tag = await ManualUpdates.Check(Application.ProductVersion, cancelCheck.Token);
+                if (IsDisposed) return;
+                result.Text = tag == null ? "You're up to date" : tag.Replace("mwb-v", "") + " available — GitHub";
+                releaseUrl = tag == null ? ManualUpdates.Releases : ManualUpdates.Releases + "/tag/" + Uri.EscapeDataString(tag);
+                if (tag != null) result.Links.Add(0, result.Text.Length);
+            }
+            catch (OperationCanceledException) { if (!IsDisposed) { result.Text = "Check timed out — open GitHub"; result.Links.Add(0, result.Text.Length); } }
+            catch (Exception error) { Logger.Log("Update check: " + error.Message); if (!IsDisposed) { result.Text = "Couldn't check — open GitHub"; result.Links.Add(0, result.Text.Length); } }
+            finally { if (!IsDisposed) check.Enabled = true; }
+        };
+        Controls.Add(check); Controls.Add(result);
 
         var originalCredits = textBoxContributors.Text.TrimStart();
         textBoxContributors.Text =

@@ -58,3 +58,7 @@ Do not overwrite these choices during a future sync:
 5. Add or retain upstream tests and add fork-specific tests where packaging or behavior differs.
 6. Build and test from the cleaned MWB-only repository, then publish and inspect the single-EXE artifact.
 7. For input, networking, clipboard, or file-transfer changes, complete physical two-computer tests before calling the sync fully validated.
+
+## Intentional 1.1.0 transfer divergence (introduced in RC6)
+
+Version 1.1.0 retains the versioned drag/drop protocol developed through RC14 for resumable per-file/folder jobs, bounded tree manifests, safe destination reservation, and cancellation cleanup. It preserves the underlying MWB input packets, clipboard text/image behavior, encryption, and separate legacy clipboard file-copy path. See the [current transfer guide](FILE_TRANSFERS.md), [RC6 protocol notes](RC6_TRANSFERS.md), [RC13 queue notes](RC13_TRANSFERS.md), and [RC14 drag cancellation notes](RC14_DRAG_PREVIEW.md). The latter adds a marked cancellation form of the existing drag-end packet. Do not replace these semantics with upstream's single-file transfer behavior during a later sync. No new upstream audit is claimed by this feature work.

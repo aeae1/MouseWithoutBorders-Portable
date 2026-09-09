@@ -2,7 +2,11 @@
 
 The `main` branch contains a portable Windows build of Mouse Without Borders derived from the actively maintained PowerToys-era source. The `STANDALONE` build symbol remains an internal compatibility identifier; the user-facing product name is **Mouse Without Borders — Portable**.
 
-## Current status
+## Current stable release — 1.1.0
+
+Version 1.1.0 promotes RC14's application code, transfer system, compact settings and installation fixes into `main`. See [release and upgrade notes](RELEASE_1.1.0.md), the [current file-transfer guide](FILE_TRANSFERS.md), and [DEVELOPMENT.md](DEVELOPMENT.md) for implementation rules. The entries below record the original extraction and subsequent RC history; current controls and behavior are described in those guides.
+
+## Extraction milestones — historical
 
 - Direct `PowerToys.Interop` dependency: **removed**.
 - Native C++/WinRT `PowerToys.GPOWrapper` project dependency: **removed**; MWB has a small local managed compatibility implementation instead.
@@ -145,3 +149,41 @@ AI-assisted commits use:
 Unless intentionally changed, protocol constants, named IPC objects, settings migration behavior, and network/file-transfer semantics should remain aligned with the modern PowerToys MWB implementation.
 
 Do **not** assume compatibility with the old Garage standalone `2.2.1.0327`; Microsoft has changed the MWB implementation/protocol since that generation. During testing, use the same fork/current-generation build on all connected machines unless mixed-version compatibility has been explicitly verified.
+
+## RC6 transfer candidate
+
+The RC6 transfer candidate introduced safe folder copying, cancellation cleanup when closing the transfer window, disk-space checks, clearer progress and estimates, compact log events, and a manual GitHub update check in About. For current usage, see [FILE_TRANSFERS.md](FILE_TRANSFERS.md).
+
+See [RC6 behavior, limitations, and acceptance checks](RC6_TRANSFERS.md). Source files and existing destination contents are preserved; cancelled partial data is cleaned up, while interruptions remain recoverable until you Resume or Cancel. The earlier RC4 design document is historical.
+
+## RC7 follow-up
+
+RC7 fixes installation over a running copy and automatic relaunch, keeps the tray icon plain, and adds compact DPI-aware transfer rows, immediate preparation feedback, cancellation-state protection, and automatic closing of cancelled lists after cleanup. See [RC7 changes and tests](RC7_FIXES.md).
+
+## RC8 settings cleanup
+
+[RC8_SETTINGS.md](RC8_SETTINGS.md) records the RC8 settings layout and its then-visible inline defaults, receiving-folder selection, automatic transfer-window closing, installation controls, and real-PC checks. RC6/RC7 guides describe their historical transfer and installer baselines.
+
+## RC9 compact settings
+
+[RC9_SETTINGS.md](RC9_SETTINGS.md) documents the compact layout and hover help that replace RC8's inline default/description rows. Transfer preferences and installation controls remain as described in RC8.
+
+## RC10 settings polish
+
+[RC10_SETTINGS.md](RC10_SETTINGS.md) records the restored shortcut divider, multiline mapping editor, clearer connection help, and focused validation. RC9’s compact layout and RC8’s saved preferences remain intact.
+
+## RC11 divider and scroll range
+
+[RC11_SETTINGS.md](RC11_SETTINGS.md) documents the visible separator, row-measurement fix, real-form rendering checks, and manual validation.
+
+## RC12 transfer startup and timeout handling
+
+See [RC12_TRANSFERS.md](RC12_TRANSFERS.md) for acknowledged startup, bounded preparation, timeout classification, aggregate progress, evidence limits and two-PC tests. Existing protocol-2 job data is retained, but RC12 new drops require the StartOffer capability on the other PC.
+
+## RC13 transfer window and queue
+
+See [RC13_TRANSFERS.md](RC13_TRANSFERS.md) for sender-controlled queue ordering, full-width rows, cached icons, title-bar progress, failure behavior and two-PC acceptance checks. RC11 settings and RC12 startup/retry fixes are retained.
+
+## RC14 drag previews and cancellation
+
+See [RC14_DRAG_PREVIEW.md](RC14_DRAG_PREVIEW.md) for sharper Windows file-type artwork, transparent edges, three-type selection previews and right-click cancellation. The RC13 transfer window, queue controls and recovery behavior are retained.

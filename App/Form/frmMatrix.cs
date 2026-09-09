@@ -547,13 +547,19 @@ namespace MouseWithoutBorders
 
             if (!newKey.Equals(Encryption.MyKey, StringComparison.Ordinal))
             {
-                Setting.Values.MyKey = Encryption.MyKey = newKey;
+                try
+                {
+                    Setting.Values.SaveKeySynchronously(newKey);
+                }
+                catch (Exception ex) when (ex is System.IO.IOException or System.IO.InvalidDataException or UnauthorizedAccessException)
+                {
+                    _ = MessageBox.Show(this,
+                        "The new key could not be saved. The previous key remains active.\r\n\r\n" + ex.Message,
+                        "Preferences could not be saved", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return false;
+                }
+                Encryption.MyKey = newKey;
                 Encryption.GeneratedKey = false;
-
-                // Applying a key is a deliberate, security-sensitive action. Persist it
-                // before reopening the sockets so an immediate exit/restart cannot restore
-                // the previous key from the adjacent preferences file.
-                Setting.Values.SaveSettingsSynchronously();
             }
 
             Encryption.MagicNumber = Encryption.Get24BitHash(Encryption.MyKey);
@@ -810,7 +816,12 @@ namespace MouseWithoutBorders
         {
             Setting.Values.ShareClipboard = checkBoxShareClipboard.Checked;
 
+#if PORTABLE_SINGLE_FILE
+            if (!formShown) return;
+            checkBoxTransferFile.Enabled = Setting.Values.ShareClipboard && !Setting.Values.TransferFileIsGpoConfigured;
+#else
             checkBoxTransferFile.Enabled = checkBoxTransferFile.Checked = Setting.Values.ShareClipboard;
+#endif
 
             ShowUpdateMessage();
         }
@@ -851,6 +862,10 @@ namespace MouseWithoutBorders
 
             checkBoxShareClipboard.Checked = Setting.Values.ShareClipboard;
 
+#if PORTABLE_SINGLE_FILE
+            checkBoxTransferFile.Checked = Setting.Values.TransferFile;
+            checkBoxTransferFile.Enabled = Setting.Values.ShareClipboard && !Setting.Values.TransferFileIsGpoConfigured;
+#else
             if (!Setting.Values.ShareClipboard)
             {
                 checkBoxTransferFile.Enabled = checkBoxTransferFile.Checked = false;
@@ -859,6 +874,7 @@ namespace MouseWithoutBorders
             {
                 checkBoxTransferFile.Checked = Setting.Values.TransferFile;
             }
+#endif
 
             checkBoxDisableCAD.Checked = Setting.Values.DisableCAD;
             checkBoxHideLogo.Checked = Setting.Values.HideLogonLogo;
@@ -1009,6 +1025,12 @@ namespace MouseWithoutBorders
                 return;
             }
 
+            Setting.Values.SaveSettings();
+#if PORTABLE_SINGLE_FILE
+            // Saving is asynchronous. Do not flash/disable the whole page or pump nested input.
+            UpdatePortableShortcutControlState();
+            return;
+#else
             foreach (Control c in tabPageOther.Controls)
             {
                 if (c != groupBoxShortcuts)
@@ -1047,8 +1069,6 @@ namespace MouseWithoutBorders
                 }
             }
 
-#if PORTABLE_SINGLE_FILE
-            UpdatePortableShortcutControlState();
 #endif
         }
 
@@ -1153,7 +1173,7 @@ namespace MouseWithoutBorders
 
             if (MessageBox.Show(message, Application.ProductName, MessageBoxButtons.YesNo, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button2) == DialogResult.Yes)
             {
-                Setting.Values.MyKey = Encryption.MyKey = Encryption.CreateRandomKey();
+                if (!UpdateKey(Encryption.CreateRandomKey())) return;
                 textBoxEnc.Text = Encryption.MyKey;
                 checkBoxShowKey.Checked = true;
                 Encryption.GeneratedKey = true;
@@ -1182,8 +1202,10 @@ namespace MouseWithoutBorders
                 checkBoxTwoRow.Top = groupBoxMachineMatrix.Height - (int)(checkBoxTwoRow.Height * 1.4);
                 buttonOK.Top = groupBoxMachineMatrix.Bottom + (int)(buttonOK.Height * 0.3);
                 buttonCancel.Top = groupBoxMachineMatrix.Bottom + (int)(buttonCancel.Height * 0.3);
+#if !PORTABLE_SINGLE_FILE
                 groupBoxShortcuts.Height = ClientSize.Height - groupBoxOtherOptions.Bottom - 40;
                 groupBoxDNS.Height = ClientSize.Height - pictureBoxMouseWithoutBorders.Height - textBoxDNS.Height - 70;
+#endif
             }
         }
 
@@ -1202,7 +1224,11 @@ namespace MouseWithoutBorders
 
         private void LinkLabelMiniLog_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
+#if PORTABLE_SINGLE_FILE
+            string miniLog = DiagnosticLog.Create(PortableDiagnosticControls());
+#else
             string miniLog = DiagnosticLog.Create(new[] { groupBoxOtherOptions.Controls, groupBoxShortcuts.Controls });
+#endif
             MiniLogForm.ShowOrActivate(this, miniLog);
         }
 

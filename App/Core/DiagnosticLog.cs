@@ -49,6 +49,8 @@ internal static class DiagnosticLog
         report.AppendLine(new string('-', 64));
         report.AppendLine(Helper.GetMiniLog(optionControls));
         report.AppendLine();
+        report.AppendLine(DurableTransfers.DiagnosticSummary());
+        report.AppendLine();
         report.AppendLine("RECENT PROGRAM EVENTS");
         report.AppendLine(new string('-', 64));
         report.AppendLine(ReadRecentProgramEvents());

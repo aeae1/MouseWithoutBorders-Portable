@@ -50,7 +50,7 @@ namespace MouseWithoutBorders.Core;
  * 1.6.5
  * */
 
-internal static class DragDrop
+internal static partial class DragDrop
 {
     private static bool isDragging;
 
@@ -80,11 +80,6 @@ internal static class DragDrop
             Logger.LogDebug("DragDropStep01: MouseUp");
         }
 
-        if (wParam == WM.WM_RBUTTONUP && IsDropping)
-        {
-            IsDropping = false;
-            Clipboard.LastIDWithClipboardData = ID.NONE;
-        }
     }
 
     internal static void DragDropStep02()
@@ -133,7 +128,7 @@ internal static class DragDrop
         if (!IsDropping)
         {
             IntPtr h = (IntPtr)NativeMethods.FindWindow(null, Helper.HELPER_FORM_TEXT);
-            if (h.ToInt32() > 0)
+            if (h != IntPtr.Zero)
             {
                 _ = Interlocked.Exchange(ref dragDropStep05ExCalledByIpc, 0);
 
@@ -176,8 +171,39 @@ internal static class DragDrop
         Logger.LogDebug("DragDropStep04: Got WM_CHECK_EXPLORER_DRAG_DROP, done with processing jump to DragDropStep05...");
     }
 
+    private static int offeredFiles;
+    private static int incomingFiles;
+    private static ID incomingFileSource;
+    internal static bool IsIncomingOffer(int id) => IsDropping && incomingFiles == id;
+
+    internal static void OfferAccepted(int id)
+    {
+        if (offeredFiles == id) IsDragging = false;
+    }
+
+    internal static void DragDropFiles(string[] paths)
+    {
+        try
+        {
+            if (dragCancelledUntilPress) return;
+            int offer = QueuedFileTransfer.Offer(paths);
+            lock (cancelSync)
+            {
+                if (dragCancelledUntilPress) { QueuedFileTransfer.RevokeOffer(offer); return; }
+                offeredFiles = offer;
+            }
+            DragDropStep05Ex(paths[0]);
+        }
+        catch (Exception error)
+        {
+            Logger.Log(error);
+            Common.ShowToolTip(error.Message, 5000, ToolTipIcon.Warning);
+        }
+    }
+
     internal static void DragDropStep05Ex(string dragFileName)
     {
+        if (dragCancelledUntilPress) return;
         Logger.LogDebug("DragDropStep05 called.");
 
         _ = Interlocked.Exchange(ref dragDropStep05ExCalledByIpc, 1);
@@ -228,7 +254,11 @@ internal static class DragDrop
 
     private static void DragDropStep06()
     {
-        IsDragging = true;
+        lock (cancelSync)
+        {
+            if (dragCancelledUntilPress) return;
+            IsDragging = true;
+        }
         Logger.LogDebug("DragDropStep06: SendClipboardBeatDragDrop");
         SendClipboardBeatDragDrop();
         SendDropBegin();
@@ -244,7 +274,21 @@ internal static class DragDrop
     {
         if (package.Des == Common.MachineID && !Common.RunOnLogonDesktop && !Common.RunOnScrSaverDesktop)
         {
-            IsDropping = true;
+            lock (cancelSync)
+            {
+                int nextOffer = package.Machine3 == (ID)QueuedFileTransfer.Marker ? (int)package.Machine2 : 0;
+                if (WasDragCancelled(package.Src, nextOffer)) return;
+                dragCancelledUntilPress = false;
+                incomingFiles = nextOffer;
+                incomingFileSource = package.Src;
+                IsDropping = true;
+            }
+            var source = MachineStuff.MachinePool.TryFindMachineByID(incomingFileSource);
+            if (incomingFiles != 0 && source.Count > 0) DurableTransfers.Preview(source[0].Name.Trim(), incomingFiles);
+            Common.DoSomethingInUIThread(() =>
+            {
+                if (IsDropping) _ = NativeMethods.PostMessage(Common.MainForm.Handle, NativeMethods.WM_SHOW_DRAG_DROP, IntPtr.Zero, IntPtr.Zero);
+            });
             MachineStuff.dropMachineID = Common.MachineID;
             Logger.LogDebug("DragDropStep08_2: ClipboardDragDropOperation Received. IsDropping set");
         }
@@ -288,7 +332,36 @@ internal static class DragDrop
         });
 
         PowerToysTelemetry.Log.WriteEvent(new MouseWithoutBorders.Telemetry.MouseWithoutBordersDragAndDropEvent());
-        Clipboard.GetRemoteClipboard("desktop");
+        if (incomingFiles != 0)
+        {
+            int offer = incomingFiles;
+            ID sourceId = incomingFileSource;
+            incomingFiles = 0;
+            Common.DoSomethingInUIThread(() =>
+            {
+                try
+                {
+                    var sources = MachineStuff.MachinePool.TryFindMachineByID(sourceId);
+                    if (sources.Count == 0) throw new IOException("The sending PC disconnected.");
+                    string peer = sources[0].Name.Trim();
+                    var preparation = DurableTransfers.BeginPreparation(offer, peer, false);
+                    string folder;
+                    try { folder = TransferDropDestination.ResolveAndOpen(); }
+                    catch (Exception error) { preparation.Fail(error); throw; }
+                    _ = System.Threading.Tasks.Task.Run(() =>
+                    {
+                        try
+                        {
+                            preparation.Token.ThrowIfCancellationRequested();
+                            DurableTransfers.RequestPreparedOffer(preparation, folder);
+                        }
+                        catch (Exception error) { preparation.Fail(error); Logger.Log("Transfer unavailable: " + error.Message); Common.ShowToolTip(error.Message, 5000, ToolTipIcon.Error); }
+                    });
+                }
+                catch (Exception error) { Logger.Log(error); Common.ShowToolTip(error.Message, 5000, ToolTipIcon.Error); }
+            });
+        }
+        else Clipboard.GetRemoteClipboard("desktop");
     }
 
     internal static void DragDropStep11()
@@ -374,7 +447,19 @@ internal static class DragDrop
     private static void SendDropBegin()
     {
         Logger.LogDebug("SendDropBegin...");
-        Common.SendPackage(MachineStuff.dropMachineID, PackageType.ClipboardDragDropOperation);
+        DATA packet;
+        lock (cancelSync)
+        {
+            if (dragCancelledUntilPress) return;
+            // Keep the offer identity if cancellation races the actual send.
+            // The receiver can then reject a late begin for that cancelled offer.
+            packet = new DATA { Type = PackageType.ClipboardDragDropOperation,
+                Des = MachineStuff.dropMachineID, Src = IsDragging ? Common.MachineID : incomingFileSource,
+                MachineName = Common.MachineName,
+                Machine2 = (ID)(IsDragging ? offeredFiles : incomingFiles),
+                Machine3 = (ID)QueuedFileTransfer.Marker };
+        }
+        Common.SkSend(packet, null, false);
     }
 
     private static void SendClipboardBeatDragDropEnd()

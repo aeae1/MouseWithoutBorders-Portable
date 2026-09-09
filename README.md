@@ -17,7 +17,7 @@
 
 ## A much better file-transfer experience
 
-The new system goes well beyond the original file-copy feature. **[Try RC14](https://github.com/aeae1/MouseWithoutBorders-Portable/releases/tag/mwb-v1.0.1-rc.14)** on both PCs while we finish real-world testing.
+**[Version 1.1.0 is now stable](https://github.com/aeae1/MouseWithoutBorders-Portable/releases/tag/mwb-v1.1.0).** The new drag-and-drop system goes well beyond the original file-copy feature.
 
 - **Drag files and whole folders between PCs**, with clear file-type previews, directly into an open Explorer folder or your chosen receiving folder.
 - **See what's happening:** one transfer window with individual progress bars, overall speed and estimated time remaining.
@@ -25,24 +25,17 @@ The new system goes well beyond the original file-copy feature. **[Try RC14](htt
 - **Recover interrupted transfers** using checked, saved progress.
 - **Keep existing files safe:** matching names get separate copies instead of overwriting your originals.
 
-[Transfer details and testing guide](https://github.com/aeae1/MouseWithoutBorders-Portable/blob/mwb-v1.0.1-rc.14/docs/RC13_TRANSFERS.md)
-
-> [!IMPORTANT]
-> This is an unofficial fork, not a Microsoft release. Version 1.0.0 is the first stable portable release after the Test and Release Candidate series. It packages the maintained MWB engine as one standalone EXE and includes the completed portable setup, settings, diagnostics, shortcuts, branding, and responsive machine-matrix work.
-
-RC11 makes the keyboard-shortcut divider visible and corrects stale row heights that can create empty scrolling space. It retains RC10’s large multiline **IP Mappings** box and clearer connection help. It keeps RC9’s compact **Other Options**, with descriptions and defaults in tooltips and less repeated layout work when opening the page. **Two rows**, **Start with Windows**, and machine-to-IP mappings have no default labels. Mapping instructions remain visible. RC8’s transfer preferences and **Installation** controls are retained; existing supported preferences are preserved.
+[File-transfer guide](docs/FILE_TRANSFERS.md) · [What's new in 1.1.0](docs/RELEASE_1.1.0.md)
 
 ## What this project is
 
-This fork keeps the maintained PowerToys-era Mouse Without Borders engine while turning it into a focused portable application. It is intended for people who want MWB without installing or running the rest of PowerToys.
+Share one mouse and keyboard across up to four Windows PCs, without installing or running PowerToys. This unofficial fork keeps the maintained PowerToys-era Mouse Without Borders engine and packages it as a focused portable application.
 
-The finished product is deliberately small from a user's perspective:
-
-- one self-contained `MouseWithoutBorders.exe`;
-- adjacent `MouseWithoutBorders.prefs.json` settings, plus a small transfer-recovery journal in the RC builds;
-- no installer package and no required PowerToys installation;
-- optional per-user self-install, Start with Windows, Start Menu, and desktop-shortcut support;
-- the classic MWB identity recolored green so this fork is easy to recognize.
+- One self-contained `MouseWithoutBorders.exe`.
+- Preferences in `MouseWithoutBorders.prefs.json` beside the EXE, with separate recovery metadata for unfinished transfers.
+- Run from your chosen folder or use the optional per-user installation.
+- No Windows service, required PowerToys installation, or telemetry.
+- Recognizable green branding, compact settings, and a simple tray menu.
 
 ## Screenshots
 
@@ -58,100 +51,65 @@ The finished product is deliberately small from a user's perspective:
   <sub><strong>Optional portable installation.</strong> Move the current security key, computer layout, and preferences into a per-user installation—without installing a Windows service.</sub>
 </p>
 
-## Fork-specific changes
+## Everyday controls
 
-- Runs independently of the PowerToys runner and Settings application.
-- Keeps normal-desktop mouse, keyboard, clipboard, file-transfer, drag/drop, machine-layout, reconnect, and encryption behavior.
-- Includes Microsoft's September 2, 2026 incoming-file safety improvements.
-- Folds the clipboard helper into a hidden second mode of the same EXE.
-- Stores preferences beside the EXE for genuinely portable operation.
-- Offers **Install for me** or **Run portable here** when no preferences file exists.
-- Uses a per-user install folder by default, so installation does not require administrator access.
-- Allows custom security keys of four or more characters and generates easy-to-type random twelve-character keys.
-- Removes PowerToys telemetry from the portable build.
-- Uses one green icon source for the EXE, title bars, tray, and repository artwork.
-- Builds and tests directly from a cleaned MWB-only repository in GitHub Actions.
-- Lets an already-configured portable copy install itself later from the **Portable** settings tab without losing its key, layout, or options.
-- Does not expire security keys or periodically demand that a manually chosen key be regenerated.
-- Keeps only the current and previous 5 MB local diagnostic logs instead of allowing one log to grow indefinitely.
-- Reduces the tray menu to the everyday controls: Settings, About, and Exit, plus Start with Windows and Uninstall for installed copies.
-- Makes the About window fully opaque instead of retaining the original 90% transparency.
-- Makes an applied security-key edit persist immediately before reconnecting, and treats letter case as significant.
-- Opens Mini Log as a resizable, modeless Diagnostic Log instead of disabling Settings or overwriting the clipboard automatically.
-- Defaults **Wrap mouse** to off for newly created preferences while preserving existing users' saved choice.
-- Keeps the modal install-from-Settings window centered above the always-on-top Settings window so its controls remain reachable.
-- Manages supported keyboard shortcuts directly in the portable Settings window, stores them in the adjacent preferences file, and defaults all shortcuts to disabled for newly created preferences while preserving existing saved choices.
-- Hides obsolete Show Settings, Exit, and screen-capture shortcut rows whose backing commands are not part of the current portable engine.
-- Keeps the four supported shortcut rows centered, evenly spaced, and aligned as the Settings window or Windows display scaling changes.
-- Keeps only the two newest `1.0.0-rc.*` download pages after publishing a release candidate, while retaining older source tags and commit history.
-- Hides the deprecated, disconnected **Use Key Mappings** checkbox and gives disabled sign-in/clipboard-dependent options self-explanatory labels.
-- Presents mouse-edge switching as an ordinary Other Options checkbox with Always, Hold Ctrl, and Hold Shift activation choices instead of mixing that behavior into the shortcut panel.
-- Provides one **Enable keyboard shortcuts** master switch, defaulting off, that suppresses every configured hotkey while preserving its individual assignment.
-- Replaces the original stretched 43×27 computer-tile bitmaps with crisp transparent artwork: a colorful configured state and a matching grayscale empty state, rendered without distortion in responsive one-row and two-row layouts and without changing the classic green app/tray icon.
+- **Machine Setup:** arrange your PCs and choose one or two rows to match your desk.
+- **Other Options:** mouse switching, clipboard sharing, file transfers, receiving-folder choice, automatic transfer-window closing, and optional keyboard shortcuts. Hover over an option for its explanation and initial value.
+- **IP Mappings:** a large multiline editor with visible connection-help instructions for PCs that need a manually specified address.
+- **Installation:** install a portable copy, manage Start with Windows, open the app folder, or uninstall an installed copy.
+- **Mini Log:** a reusable diagnostic window with an explicit Copy all button and a bounded recent-event history.
+- **About:** manually check for updates and open GitHub to download them. Updates are never installed automatically.
+
+The tray contains Settings, File transfers, About, and Exit. Service-only settings and optional clipboard/network status popups are removed. The tray icon stays plain.
 
 ## Download and run
 
-1. Open [Releases](https://github.com/aeae1/MouseWithoutBorders-Portable/releases).
-2. Download `MouseWithoutBorders.exe` from the newest release's **Assets** section.
-3. Put it in a folder where you want to keep it, then run it.
-4. Choose **Run portable here**, or choose **Install for me** and select an install folder. Installation can create a desktop shortcut (on by default) and optionally enable Start with Windows.
+1. [Download the latest stable EXE](https://github.com/aeae1/MouseWithoutBorders-Portable/releases/latest/download/MouseWithoutBorders.exe).
+2. Put it in a folder where you want to keep it, then run it.
+3. Choose **Run portable here**, or **Install for me** and select an install folder. Installation offers a desktop shortcut and optional Start with Windows.
+4. Use the same release on every connected PC and configure the same shared key.
+
+Already using this fork? Finish or cancel active transfers, exit MWB, and replace the existing EXE while keeping the adjacent preferences and recovery files. For an installed copy, the new EXE's **Install for me** flow can update the same installation and relaunch it. A portable copy can also install later through Settings → **Installation**. See the [1.1.0 upgrade notes](docs/RELEASE_1.1.0.md#upgrading).
 
 > [!NOTE]
-> **Why is the EXE roughly 88 MB (about 84 MiB)?** This is a self-contained .NET 10 Windows build. The single EXE bundles the .NET runtime, Windows Forms desktop assemblies, and required native runtime components so the destination computer does not need a separate .NET installation. Most of that file size is the bundled platform, not the Mouse Without Borders application code itself.
+> **Why is the EXE roughly 88 MB (about 84 MiB)?** It is a self-contained .NET 10 Windows build. The EXE bundles the .NET runtime, Windows Forms desktop assemblies, and required native runtime components, so the destination PC does not need a separate .NET installation. Most of the download size is this bundled platform.
 
-If you start portably and decide to install later, open Settings and select the **Portable** tab. MWB moves the existing prefs after the running copy closes, then restarts from the installed folder with the same key, layout, and options.
+## Compatibility and limitations
 
-Use the same release on every connected computer.
+- The published download is for Windows x64. Use the same fork release on all connected PCs for the complete file-transfer feature set.
+- This edition supports normal interactive desktops. It does not install a service or control protected UAC prompts and the Windows sign-in screen.
+- Clipboard file copy/paste retains its separate transport; the transfer window and recovery controls described above apply to drag-and-drop.
+- Busy Wi-Fi can still affect mouse responsiveness during full-speed copying.
+- Builds are unsigned and may trigger Windows SmartScreen. The release workflow publishes the EXE only after its source builds, tests, and package checks pass.
 
-## Intentional limitations
+The fork accepts user-chosen shared keys of at least four characters and generates twelve-character random keys. Short keys are easier to guess; keys do not expire or trigger periodic regeneration prompts. Microsoft's upstream work and encryption implementation remain credited in the source.
 
-This portable edition does not install a Windows service. It therefore does not control protected UAC prompts, the Windows sign-in screen, or other secure desktops. Those features conflict with the project's one-EXE, no-admin, portable design.
+## Release status
 
-Current builds are unsigned and may trigger Windows SmartScreen. The automated release workflow only attaches an EXE after the exact tagged source builds and tests successfully.
+**1.1.0** promotes the tested RC14 application code, with version and documentation updates. It brings the new transfer system, revised settings, and installer fixes into the stable release and `main` branch. The owner tested the RC series on real PCs and reported no major bugs in recent use; that does not mean every hardware or network edge case has been exercised.
 
-## Current status
-
-The project is now at **1.0.0 stable**. The intended portable 1.0 scope is complete and the automated Windows build, unit-test, packaging, and release pipeline validates every downloadable EXE.
-
-Completed:
-
-- portable compilation and PowerToys dependency removal;
-- single-EXE packaging;
-- portable preferences and optional self-install/startup controls;
-- green multi-resolution branding;
-- release automation;
-- upstream audit and September 2026 transfer-safety sync;
-- Windows builds, unit tests, and a cleaned MWB-only source repository;
-- removal of the legacy PowerToys solution, unrelated modules, native module interface, service project, comparison projects, packaging machinery, and thousands of unrelated assets.
-
-Ongoing real-hardware regression coverage:
-
-- clean first launch, portable mode, self-install, startup, and self-uninstall;
-- Windows firewall prompting;
-- broader mouse/keyboard, clipboard, file transfer, reconnect, and sleep/wake regression testing between real computers;
-- cautious follow-up pruning of dormant code inside MWB itself, only when builds and real-PC tests can prove it is safe.
-
-## Clean repository layout
-
-The default `main` branch contains only this product: `App`, unit tests, focused build/release automation, documentation, and required legal notices. The portable application project is simply `App/MouseWithoutBorders.csproj`; the old parallel `.Standalone.csproj`, helper/service comparison projects, native PowerToys module interface, and surrounding PowerToys source tree are gone.
-
-The stable `mwb-v1.0.0` tag and earlier Test/Release Candidate tags preserve recovery points. Future Microsoft MWB updates should be reviewed directly from `microsoft/PowerToys` and ported deliberately rather than merging the full PowerToys tree back into this product repository.
+GitHub Actions builds Windows Release x64, runs the unit suite, checks the EXE version and single-file package, and publishes an accompanying SHA-256 checksum. Version 1.0.0 and the RC source tags remain available as earlier recovery points.
 
 ## Documentation
 
+- [What's new in 1.1.0 and upgrading](docs/RELEASE_1.1.0.md)
+- [File transfers, queue controls, and recovery](docs/FILE_TRANSFERS.md)
 - [Detailed extraction and product status](docs/README.md)
 - [Development and compatibility guide](docs/DEVELOPMENT.md)
 - [Upstream synchronization record](docs/UPSTREAM_SYNC.md)
 - [AI-assistance disclosure](docs/AI_ASSISTANCE.md)
-- [Contributing](CONTRIBUTING.md)
-- [Security policy](SECURITY.md)
-- [Code of Conduct](CODE_OF_CONDUCT.md)
+- [Contributing](CONTRIBUTING.md) · [Security policy](SECURITY.md) · [Code of Conduct](CODE_OF_CONDUCT.md)
 
 ## License and attribution
 
-This project is derived from Microsoft PowerToys Mouse Without Borders and remains under the [MIT License](LICENSE). Microsoft and the original Mouse Without Borders/PowerToys contributors retain attribution for their upstream work. The upstream [third-party notices](NOTICE.md) are intentionally retained as a conservative attribution record even though this branch now contains only MWB.
+Derived from Microsoft PowerToys Mouse Without Borders and distributed under the [MIT License](LICENSE). Microsoft and the original Mouse Without Borders/PowerToys contributors retain attribution for their upstream work. The upstream [third-party notices](NOTICE.md) are retained.
 
-The portable extraction and fork-specific changes are developed for repository owner `aeae1` through ChatGPT coding sessions. This repository is not affiliated with or endorsed by Microsoft.
+The portable extraction and fork-specific changes are developed for repository owner `aeae1` through ChatGPT coding sessions. This project is not affiliated with or endorsed by Microsoft.
+
+<details>
+<summary>Technical extraction history — the original 1.0 release</summary>
+
+This historical record describes the initial portable extraction. Later settings and transfer changes are covered by the current guides above.
 
 ## Technical extraction history
 
@@ -180,3 +138,5 @@ This section records how the PowerToys module became this portable product. It i
 21. **Separated mouse-edge behavior from optional hotkeys.** RC6 moves Easy Mouse into Other Options as a plain screen-edge-switching checkbox while retaining Always, Hold Ctrl, and Hold Shift activation. Keyboard Shortcuts gains a persisted master switch that defaults off, gates both local and remotely processed assigned hotkeys, and preserves individual choices while inactive. The ambiguous per-row Disable wording becomes None, and the responsive panel is reorganized as a master row plus three assignment rows.
 22. **Rebuilt the machine-tile artwork for modern displays.** RC7 replaces the 43×27 enabled/disabled monitor bitmaps that WinForms had to enlarge with 424×216 PNGs designed for the tile's native aspect ratio. The configured state combines a graphite-and-silver monitor with a restrained emerald, blue, cyan, and violet screen; the matching inactive state is grayscale. Machine naming, layout dragging, checkboxes, and status reporting are unchanged, and the accepted classic green EXE/tray icon remains untouched.
 23. **Corrected machine-tile transparency and responsive layout.** RC8 replaces RC7's accidentally flattened white image backgrounds with true-alpha 360×288 PNGs, changes the image control from distortion-prone stretching to aspect-preserving zoom, and sizes each tile from the matrix's actual scaled bounds. One-row mode uses the otherwise available height, while two-row mode calculates both row heights and spacing so the lower monitors remain fully visible. The portable tile condenses its two rare split status phrases onto one line to leave more room for the art; machine order, state reporting, naming, connection behavior, and the classic green product icon are otherwise unchanged.
+
+</details>

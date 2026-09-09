@@ -72,6 +72,8 @@ namespace MouseWithoutBorders.Class
             _ = Application.SetHighDpiMode(HighDpiMode.PerMonitorV2);
             Application.SetCompatibleTextRenderingDefault(false);
 
+            if (PortableInstallLifecycle.RunLaunchHelper(startupArgs)) return;
+
             if (!PortableApplication.PrepareFirstLaunch())
             {
                 return;
@@ -205,7 +207,7 @@ namespace MouseWithoutBorders.Class
                 try
                 {
                     Common.CurrentProcess = Process.GetCurrentProcess();
-                    Common.CurrentProcess.PriorityClass = ProcessPriorityClass.RealTime;
+                    Common.CurrentProcess.PriorityClass = ProcessPriorityClass.Normal;
                 }
                 catch (Exception e)
                 {
@@ -330,37 +332,53 @@ namespace MouseWithoutBorders.Class
 
             public void ConnectToMachine(string pcName, string securityKey)
             {
+                if (string.IsNullOrWhiteSpace(pcName)) throw new ArgumentException("A computer name is required.", nameof(pcName));
+                if (!Encryption.IsKeyValid(securityKey, out string error)) throw new ArgumentException(error, nameof(securityKey));
+                Setting.Values.SaveKeySynchronously(securityKey);
+                bool wasPaused = Setting.Values.PauseInstantSaving;
                 Setting.Values.PauseInstantSaving = true;
+                try
+                {
+                    MachineStuff.ClearComputerMatrix();
+                    Setting.Values.MyKey = securityKey;
+                    Encryption.MyKey = securityKey;
+                    Encryption.MagicNumber = Encryption.Get24BitHash(Encryption.MyKey);
+                    MachineStuff.MachineMatrix = new string[MachineStuff.MAX_MACHINE] { pcName.Trim().ToUpper(CultureInfo.CurrentCulture), Common.MachineName.Trim(), string.Empty, string.Empty };
 
-                MachineStuff.ClearComputerMatrix();
-                Setting.Values.MyKey = securityKey;
-                Encryption.MyKey = securityKey;
-                Encryption.MagicNumber = Encryption.Get24BitHash(Encryption.MyKey);
-                MachineStuff.MachineMatrix = new string[MachineStuff.MAX_MACHINE] { pcName.Trim().ToUpper(CultureInfo.CurrentCulture), Common.MachineName.Trim(), string.Empty, string.Empty };
+                    string[] machines = MachineStuff.MachineMatrix;
+                    MachineStuff.MachinePool.Initialize(machines);
+                    MachineStuff.UpdateMachinePoolStringSetting();
 
-                string[] machines = MachineStuff.MachineMatrix;
-                MachineStuff.MachinePool.Initialize(machines);
-                MachineStuff.UpdateMachinePoolStringSetting();
-
-                SocketStuff.InvalidKeyFound = false;
-                InitAndCleanup.ReopenSocketDueToReadError = true;
-                Common.ReopenSockets(true);
-                MachineStuff.SendMachineMatrix();
-
-                Setting.Values.PauseInstantSaving = false;
+                    SocketStuff.InvalidKeyFound = false;
+                    InitAndCleanup.ReopenSocketDueToReadError = true;
+                    Common.ReopenSockets(true);
+                    MachineStuff.SendMachineMatrix();
+                }
+                finally
+                {
+                    Setting.Values.PauseInstantSaving = wasPaused;
+                }
                 Setting.Values.SaveSettings();
             }
 
             public void GenerateNewKey()
             {
+                string newKey = Encryption.CreateRandomKey();
+                Setting.Values.SaveKeySynchronously(newKey);
+                bool wasPaused = Setting.Values.PauseInstantSaving;
                 Setting.Values.PauseInstantSaving = true;
-
-                Setting.Values.EasyMouse = (int)EasyMouseOption.Enable;
-                MachineStuff.ClearComputerMatrix();
-                Setting.Values.MyKey = Encryption.MyKey = Encryption.CreateRandomKey();
-                Encryption.GeneratedKey = true;
-
-                Setting.Values.PauseInstantSaving = false;
+                try
+                {
+                    Setting.Values.EasyMouse = (int)EasyMouseOption.Enable;
+                    MachineStuff.ClearComputerMatrix();
+                    Encryption.MyKey = newKey;
+                    Encryption.MagicNumber = Encryption.Get24BitHash(newKey);
+                    Encryption.GeneratedKey = true;
+                }
+                finally
+                {
+                    Setting.Values.PauseInstantSaving = wasPaused;
+                }
                 Setting.Values.SaveSettings();
 
                 Reconnect();
@@ -388,19 +406,7 @@ namespace MouseWithoutBorders.Class
 
             public void Shutdown()
             {
-                string processName = Path.GetFileNameWithoutExtension(Application.ExecutablePath);
-                Process[] ps = Process.GetProcessesByName(processName);
-                Process me = Process.GetCurrentProcess();
-
-                foreach (Process p in ps)
-                {
-                    if (p.Id != me.Id)
-                    {
-                        p.Kill();
-                    }
-                }
-
-                Common.MainForm.Quit(true, false);
+                Common.DoSomethingInUIThread(() => Common.MainForm?.Quit(true, false));
             }
         }
 

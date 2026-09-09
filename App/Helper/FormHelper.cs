@@ -136,7 +136,7 @@ namespace MouseWithoutBorders
 
                     try
                     {
-                        remoteClipboardHelper.SendDragFile(fileName);
+                        remoteClipboardHelper.SendDragFiles((string[])o);
                     }
                     catch (Exception ex)
                     {
