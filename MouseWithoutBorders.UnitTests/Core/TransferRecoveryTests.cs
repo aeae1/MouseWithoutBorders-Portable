@@ -3,6 +3,7 @@ using System.Net.Sockets;
 using System.Security.Cryptography;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using MouseWithoutBorders.Core;
+using MouseWithoutBorders.Class;
 
 namespace MouseWithoutBorders.UnitTests.Core;
 
@@ -38,6 +39,30 @@ public sealed class TransferRecoveryTests
         var recovered = TransferJournal.Load(path).Jobs.Single();
         Assert.AreEqual("Cancelled", recovered.State); Assert.AreEqual("cancel", recovered.PendingAction);
     }
+    [TestMethod]
+    public void FailedFirstCheckpointCanInitializeAfterStorageRecovers()
+    {
+        var path = Path.Combine(folder, "journal.json");
+        typeof(DurableTransfers).GetField("journal", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic)!.SetValue(null, null);
+        using (var blocked = new FileStream(path + ".tmp", FileMode.Create, FileAccess.ReadWrite, FileShare.None))
+            Assert.ThrowsException<IOException>(() => DurableTransfers.Initialize());
+        Assert.IsFalse(File.Exists(path));
+        DurableTransfers.Initialize();
+        Assert.IsTrue(File.Exists(path));
+    }
+    [TestMethod]
+    public void RestoringCorruptPrimaryDoesNotReplaceValidBackupWithCorruption()
+    {
+        var path = Path.Combine(folder, "restore.json");
+        var journal = new TransferJournal(); journal.Save(path); journal.Save(path);
+        byte[] backup = File.ReadAllBytes(path + ".bak");
+        File.WriteAllText(path, "{broken");
+        TransferJournal.Load(path).Save(path);
+        CollectionAssert.AreEqual(backup, File.ReadAllBytes(path + ".bak"));
+        Assert.AreEqual("{broken", File.ReadAllText(path + ".corrupt"));
+        Assert.AreEqual(0, TransferJournal.Load(path).Jobs.Count);
+    }
+
     [TestMethod]
     public void FailedRecoveryWritePausesAndExistingResumeRecovers()
     {
@@ -165,7 +190,7 @@ public sealed class TransferRecoveryTests
         await Exchange((s, r) => { Begin(s); Assert.AreEqual(30000L, DurableTransfers.ReadReply(r).Offset);
             Chunk(s, bytes[30000..], 30000); _ = DurableTransfers.ReadReply(r);
             TransferWire.Write(s, new TransferMessage { Op = "Finish", Id = job.Id });
-            Assert.AreEqual("Completed", DurableTransfers.ReadReply(r).State); return Task.CompletedTask; });
+            Assert.IsTrue(SpinWait.SpinUntil(() => job.State == "Completed", TimeSpan.FromSeconds(5))); return Task.CompletedTask; });
         // Sender never persisted the receipt: replay Begin after receiver compaction and restart.
         job.Hidden = true; DurableTransfers.RunMaintenanceForTests(); DurableTransfers.ReloadJournalForTests();
         await Exchange((s, r) => { Begin(s); Assert.AreEqual("Completed", DurableTransfers.ReadReply(r).State); return Task.CompletedTask; });

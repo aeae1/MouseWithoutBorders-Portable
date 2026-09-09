@@ -2,6 +2,10 @@
 
 This file is the working map for modification of the `main` product branch. A few imported source filenames and the `STANDALONE` build symbol remain internal compatibility identifiers; public documentation and release titles call the product **Portable**.
 
+## Current candidate
+
+[1.1.1 RC1](RC_1.1.1.md) adds recovery/storage failure handling, compact completion receipts, safe regular-file rescanning, loose destination identity checks, active-work space admission and matrix drag painting. Performance changes retain encryption and final durable checkpoints.
+
 ## Current stable baseline
 
 Version **1.1.0** promotes `mwb-v1.0.1-rc.14` without application-code or dependency changes. Preferences and recovery-journal formats are retained. See [RELEASE_1.1.0.md](RELEASE_1.1.0.md) for upgrade/validation scope and [FILE_TRANSFERS.md](FILE_TRANSFERS.md) for current user-facing transfer behavior. RC-numbered documents remain historical implementation records.

@@ -14,7 +14,7 @@ internal static partial class DurableTransfers
     private static DateTime lastMaintenance, lastProgressSave;
     private static TransferJob WireJob(TransferJob j) => new() { Id = j.Id, Name = j.Name, Length = j.Length,
         GroupId = j.GroupId, RelativePath = j.RelativePath, IsDirectory = j.IsDirectory, Skipped = j.Skipped,
-        Order = j.Order, RootOrder = j.RootOrder, NeedsSourceScan = j.NeedsSourceScan, Error = j.Skipped || j.NeedsSourceScan ? j.Error : "", ModifiedUtc = j.ModifiedUtc, Protocol = 2 };
+        Order = j.Order, RootOrder = j.RootOrder, NeedsSourceScan = j.NeedsSourceScan, Error = j.Skipped || j.NeedsSourceScan ? j.Error ?? "" : "", ModifiedUtc = j.ModifiedUtc, Protocol = 2 };
 
     internal static void CheckPeer(string peer, bool requireStartOffer = false, CancellationToken token = default)
     {
@@ -61,7 +61,7 @@ internal static partial class DurableTransfers
             {
                 if (f == null || !TransferJournal.ValidId(f.Id) || !ids.Add(f.Id) || !TransferJournal.ValidName(f.Name) || f.Length < 0
                     || f.Order < 0 || f.RootOrder < 0 || f.Order > DateTime.MaxValue.Ticks || f.RootOrder > DateTime.MaxValue.Ticks
-                    || (f.IsDirectory && f.Length != 0) || (f.GroupId == null && (f.RelativePath != null || f.IsDirectory))
+                    || (f.NeedsSourceScan && (f.IsDirectory || f.Skipped)) || (f.IsDirectory && f.Length != 0) || (f.GroupId == null && (f.RelativePath != null || f.IsDirectory))
                     || (f.GroupId != null && (!TransferJournal.ValidId(f.GroupId) || !TransferFolders.ValidRelative(f.RelativePath))))
                     throw new InvalidDataException("Invalid transfer entry.");
                 var receipt = journal.Receipts.FirstOrDefault(r => r.Id == f.Id);
