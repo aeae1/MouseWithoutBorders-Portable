@@ -227,7 +227,6 @@ public sealed class Rc8SettingsTests
                     tile.Location = new Point(originalLocation.X + i * 3, originalLocation.Y + i % 6);
                     move.Invoke(form, null); Application.DoEvents();
                 }
-                tile.Location = originalLocation; form.EndMatrixDragPreview(); Application.DoEvents();
                 using var before = new Bitmap(matrix.Width, matrix.Height);
                 using (var g = Graphics.FromImage(before)) g.CopyFromScreen(matrix.PointToScreen(Point.Empty), Point.Empty, before.Size);
                 matrix.Invalidate(true); matrix.Update(); Application.DoEvents();
@@ -236,7 +235,8 @@ public sealed class Rc8SettingsTests
                 int changed = 0;
                 for (int y = 0; y < before.Height; y++) for (int x = 0; x < before.Width; x++)
                     if (before.GetPixel(x, y) != after.GetPixel(x, y)) changed++;
-                Assert.IsTrue(changed < 100, $"{changed} stale pixels remained after dragging");
+                Assert.IsTrue(changed < 100, $"{changed} stale pixels remained during dragging");
+                tile.Location = originalLocation; form.EndMatrixDragPreview(); Application.DoEvents();
                 Assert.IsTrue(tile.Visible);
             }
             finally { Common.MachineName = name; Setting.Values = original; }

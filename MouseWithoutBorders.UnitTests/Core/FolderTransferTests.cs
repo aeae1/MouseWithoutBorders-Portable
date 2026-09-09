@@ -66,6 +66,11 @@ public sealed class FolderTransferTests
         foreach (var job in DurableTransfers.Jobs) { Receive(job, Array.Empty<byte>()); job.Hidden = true; job.Updated = DateTime.UtcNow.AddMinutes(-11); }
         DurableTransfers.RunMaintenanceForTests();
         Assert.AreEqual(0, DurableTransfers.Jobs.Length);
+        Assert.IsFalse(DurableTransfers.AcceptManifest("PEER", message), "Compact receipts still acknowledge the original declaration.");
+        string journalPath = Path.Combine(root, "journal.json");
+        var saved = TransferJournal.Load(journalPath);
+        foreach (var receipt in saved.Receipts) receipt.Updated = DateTime.UtcNow.AddDays(-2);
+        saved.Save(journalPath); DurableTransfers.ReloadJournalForTests(); DurableTransfers.RunMaintenanceForTests();
         Assert.ThrowsException<InvalidDataException>(() => DurableTransfers.AcceptManifest("PEER", message));
         Assert.AreEqual(1, Directory.GetDirectories(destination).Length);
     }

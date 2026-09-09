@@ -2,7 +2,7 @@
 
 This candidate builds on 1.1.0. Install the same candidate on both PCs.
 
-- Recovery write failures pause transfers visibly. Resume/Retry rechecks storage; cancellation remains available. Initialization is published only after the first checkpoint succeeds.
+- Recovery write failures pause transfers visibly. Resume/Retry rechecks storage; cancellation remains available, and the window waits until cancellation is durably recorded. Storage checkpoints retry automatically without restarting file payloads. Initialization is published only after the first checkpoint succeeds.
 - A missing main journal can recover its backup. Recovery from a corrupt primary preserves the valid backup.
 - New loose-file jobs remember their destination directory identity, like folder transfers. Older records acquire an identity when first used; their historical identity cannot be reconstructed.
 - Temporarily unreadable regular files remain retryable. A metadata-only rescan is acknowledged before sending bytes. Unsupported links and unreadable directory trees remain skipped and require a fresh drag.

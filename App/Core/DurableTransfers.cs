@@ -250,7 +250,7 @@ internal static partial class DurableTransfers
                     var result = results[item.Id];
                     if (result.Code != null && !(result.Code == "Unknown" && command == "cancel"))
                     { item.Detail = "Waiting for the other PC: " + result.Error; continue; }
-                    if (result.State == "Completed") { item.State = "Completed"; item.Bytes = item.Length; item.Error = ""; }
+                    if (result.State == "Completed") { MarkCompleted(item); }
                     else if (result.State == "Cancelled" && !item.Terminal) { ApplyAction(item, "cancel"); MarkGroupCleanup(item); }
                     if (item.PendingAction == command) item.PendingAction = null;
                     item.Detail = "";
@@ -407,9 +407,15 @@ internal static partial class DurableTransfers
         if (!HandleState(job, reply)) { RequireOk(reply); throw new IOException("The receiver did not confirm completion."); }
     }
 
+    // Called under Sync only after a successful commit or a peer's completion receipt.
+    private static void MarkCompleted(TransferJob job)
+    {
+        job.State = "Completed"; job.Bytes = job.Length; job.Error = ""; job.Updated = DateTime.UtcNow;
+    }
+
     internal static bool HandleState(TransferJob job, TransferMessage reply)
     {
-        if (reply.State == "Completed") { lock (Sync) { job.State = "Completed"; job.Bytes = job.Length; job.Error = ""; job.Updated = DateTime.UtcNow; Save(); TransferEvent(job, "completed and receiver-confirmed"); } return true; }
+        if (reply.State == "Completed") { lock (Sync) { MarkCompleted(job); Save(); TransferEvent(job, "completed and receiver-confirmed"); } return true; }
         if (reply.State is "Paused" or "Cancelled" or "Skipped" or "Error")
         {
             lock (Sync)
@@ -590,7 +596,7 @@ internal static partial class DurableTransfers
             using var destinationLease = PrepareDestination(job);
             if (job.IsDirectory)
             {
-                lock (Sync) { token.ThrowIfCancellationRequested(); job.State = "Completed"; job.Updated = DateTime.UtcNow; Save(); }
+                lock (Sync) { token.ThrowIfCancellationRequested(); MarkCompleted(job); Save(); }
                 TransferWire.Write(output, Status(job)); return;
             }
             CheckSpace(job);
@@ -599,7 +605,7 @@ internal static partial class DurableTransfers
             if (job.Destination != null && !File.Exists(job.Partial) && File.Exists(job.Destination))
             {
                 bool saved = Work(output, () => HashFile(job.Destination, token) == hash, token, job.Attempt);
-                if (saved) { lock (Sync) { job.State = "Completed"; job.Bytes = job.Length; Save(); } TransferWire.Write(output, Status(job)); return; }
+                if (saved) { lock (Sync) { MarkCompleted(job); Save(); } TransferWire.Write(output, Status(job)); return; }
             }
             if (job.Hash != hash) { DeletePartial(job); job.Bytes = 0; job.Hash = hash; }
             using var file = SafeTransferFile.OpenPartial(job.Partial);
@@ -673,7 +679,7 @@ internal static partial class DurableTransfers
             lock (Sync) { job.Destination = candidate; Save(); }
             try { File.Move(job.Partial, candidate, overwrite: false); }
             catch (IOException) when (File.Exists(job.Partial) && (File.Exists(candidate) || Directory.Exists(candidate))) { continue; }
-            lock (Sync) { job.State = "Completed"; job.Bytes = job.Length; job.Updated = DateTime.UtcNow; Save(); }
+            lock (Sync) { MarkCompleted(job); Save(); }
             return;
         }
         throw new IOException("Too many duplicate filenames.");

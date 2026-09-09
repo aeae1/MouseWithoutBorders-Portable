@@ -168,7 +168,7 @@ internal static partial class DurableTransfers
         CancelPreparations();
         ChangeMany(Jobs.Where(j => !j.Hidden), "cancel");
     }
-    internal static bool LocalCleanupFinished => PreparationCleanupFinished && Jobs.Where(j => !j.Hidden).All(j => !j.Declaring && !j.Running && !j.CleanupPending) && !Groups.Any(g => g.CleanupPending);
+    internal static bool LocalCleanupFinished => RecoveryError.Length == 0 && PreparationCleanupFinished && Jobs.Where(j => !j.Hidden).All(j => !j.Declaring && !j.Running && !j.CleanupPending) && !Groups.Any(g => g.CleanupPending);
     internal static bool CanAutoClose
     {
         get
@@ -230,6 +230,7 @@ internal static partial class DurableTransfers
             changed |= journal.Groups.RemoveAll(g => !g.CleanupPending && !journal.Jobs.Any(j => j.GroupId == g.Id)) > 0;
             changed |= journal.Drops.RemoveAll(d => DateTime.UtcNow - d.Created > TimeSpan.FromDays(1)) > 0;
             if (changed) Save();
+            else if (recoveryError.Length != 0) RecoverStorage(); // Retry metadata only; payloads remain paused.
         }
     }
     private static void SaveProgress() { if (DateTime.UtcNow - lastProgressSave > TimeSpan.FromSeconds(1)) { Save(); lastProgressSave = DateTime.UtcNow; } }

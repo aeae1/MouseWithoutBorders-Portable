@@ -79,6 +79,22 @@ public sealed class TransferRecoveryTests
         Assert.AreEqual("resume", job.PendingAction);
     }
     [TestMethod]
+    public void FailedCancellationCheckpointCannotCloseUntilItIsSaved()
+    {
+        var job = new TransferJob { Name = "x", Peer = "PEER", Sending = true, Protocol = 2, Declared = true };
+        var path = Path.Combine(folder, "journal.json"); DurableTransfers.ConfigureForTests(path, job);
+        using (var blocked = new FileStream(path + ".tmp", FileMode.Create, FileAccess.ReadWrite, FileShare.None))
+        {
+            Assert.ThrowsException<IOException>(() => DurableTransfers.Change(job, "cancel"));
+            Assert.IsFalse(DurableTransfers.CanAutoClose);
+        }
+        DurableTransfers.RunMaintenanceForTests();
+        Assert.IsTrue(DurableTransfers.CanAutoClose);
+        var recovered = TransferJournal.Load(path).Jobs.Single();
+        Assert.AreEqual("Cancelled", recovered.State); Assert.AreEqual("cancel", recovered.PendingAction);
+    }
+
+    [TestMethod]
     public void LockedScannedFileCanBeRescannedWithoutChangingItsDestination()
     {
         var source = Path.Combine(folder, "locked.txt"); File.WriteAllText(source, "available later");
