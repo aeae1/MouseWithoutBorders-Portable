@@ -73,7 +73,11 @@ internal partial class FrmMatrix
             AccessibleName = "Computer layout";
             AccessibleDescription = "Drag monitors to arrange computers. Use arrow keys to select a monitor and Control plus arrow keys to move it. Escape cancels a drag.";
             TabStop = true;
-            BackColor = owner.groupBoxMachineMatrix.BackColor;
+            // The legacy GroupBox is transparent. Resolve the actual background
+            // instead of making the buffered surface repaint its ancestors.
+            Control background = owner.groupBoxMachineMatrix;
+            while (background.BackColor.A != 255 && background.Parent != null) background = background.Parent;
+            BackColor = background.BackColor.A == 255 ? background.BackColor : SystemColors.Control;
             Font = owner.groupBoxMachineMatrix.Font;
             SetStyle(ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint |
                 ControlStyles.OptimizedDoubleBuffer | ControlStyles.ResizeRedraw | ControlStyles.Selectable, true);

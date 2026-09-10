@@ -52,6 +52,7 @@ internal partial class FrmMatrix
         }
 
         portableMachineTilesConfigured = true;
+        AllowDrop = false; // Tile movement is local pointer capture, not an OLE drop target.
         matrixSurface = new MatrixSurface(this);
         groupBoxMachineMatrix.Controls.Add(matrixSurface);
         DoubleBuffered = true;
