@@ -116,6 +116,7 @@ public sealed class Rc8SettingsTests
                 Common.MachineName = "LOCAL-PC";
                 var document = new MouseWithoutBordersSettings(); document.Properties.TransferFile = false;
                 Setting.Values = Settings(document);
+                Setting.Values.Username = "settings-test";
                 using var settings = new MouseWithoutBorders.FrmMatrix();
                 // Run the actual settings Load path without starting the input/network timer in Shown.
                 typeof(MouseWithoutBorders.FrmMatrix).GetMethod("OnLoad", BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(settings, new object[] { EventArgs.Empty });
@@ -214,6 +215,7 @@ public sealed class Rc8SettingsTests
             try
             {
                 Setting.Values = Settings(); Common.MachineName = "LOCAL-PC";
+                Setting.Values.Username = "matrix-test";
                 using var form = new SettingsWindowWithoutNetworkTimer();
                 if (scale != 100) form.Font = new Font(form.Font.FontFamily, form.Font.Size * scale / 100f);
                 form.Show(); Application.DoEvents();
