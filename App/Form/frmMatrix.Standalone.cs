@@ -39,8 +39,6 @@ internal partial class FrmMatrix
         ConfigurePortableMachineTiles();
     }
 
-    private void FrmMatrixPortable_Shown(object sender, EventArgs e) => ConfigurePortableMachineTiles();
-
     private void ConfigurePortableMachineTiles()
     {
         if (portableMachineTilesConfigured)
@@ -62,6 +60,7 @@ internal partial class FrmMatrix
         checkBoxTwoRow.CheckedChanged += CheckBoxTwoRow_PortableCheckedChanged;
         checkBoxTwoRow.LocationChanged += PortableMachineMatrix_SizeChanged;
         LayoutPortableMachineTiles();
+        RefreshMatrixConnections();
     }
 
     private void CheckBoxTwoRow_PortableCheckedChanged(object sender, EventArgs e)

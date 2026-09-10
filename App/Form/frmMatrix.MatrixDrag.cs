@@ -274,9 +274,18 @@ internal partial class FrmMatrix
             }
             finally { finishing = false; }
         }
+        protected override void OnVisibleChanged(EventArgs e)
+        {
+            base.OnVisibleChanged(e);
+            if (!Visible) FinishDrag(false);
+        }
         protected override void Dispose(bool disposing)
         {
-            if (disposing) owner.Deactivate -= OwnerDeactivate;
+            if (disposing)
+            {
+                FinishDrag(false);
+                owner.Deactivate -= OwnerDeactivate;
+            }
             base.Dispose(disposing);
         }
     }

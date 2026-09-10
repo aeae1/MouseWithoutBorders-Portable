@@ -786,6 +786,9 @@ namespace MouseWithoutBorders
 
         private void LoadSettingsToUI()
         {
+#if PORTABLE_SINGLE_FILE
+            matrixSurface?.FinishDrag(false);
+#endif
             checkBoxCircle.Checked = Setting.Values.MatrixCircle;
             checkBoxTwoRow.Checked = !matrixOneRow;
             checkBoxBlockMouseAtCorners.Checked = Setting.Values.BlockMouseAtCorners;

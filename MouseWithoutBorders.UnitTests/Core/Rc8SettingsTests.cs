@@ -110,8 +110,10 @@ public sealed class Rc8SettingsTests
         await OnSta(() =>
         {
             var original = Setting.Values;
+            string originalName = Common.MachineName;
             try
             {
+                Common.MachineName = "LOCAL-PC";
                 var document = new MouseWithoutBordersSettings(); document.Properties.TransferFile = false;
                 Setting.Values = Settings(document);
                 using var settings = new MouseWithoutBorders.FrmMatrix();
@@ -194,7 +196,7 @@ public sealed class Rc8SettingsTests
                 }
                 Setting.Values.SaveSettingsSynchronously(); host.Close();
             }
-            finally { Setting.Values = original; }
+            finally { Setting.Values = original; Common.MachineName = originalName; }
         });
     }
 
@@ -253,6 +255,16 @@ public sealed class Rc8SettingsTests
                 var committed = surface.Order;
                 Mouse("OnMouseDown", MouseButtons.Left, Center(slots[3]));
                 Mouse("OnMouseMove", MouseButtons.Left, Center(slots[0]));
+                var escape = new object[] { Message.Create(surface.Handle, 0x100, (IntPtr)Keys.Escape, IntPtr.Zero), Keys.Escape };
+                typeof(MouseWithoutBorders.FrmMatrix.MatrixSurface).GetMethod("ProcessCmdKey", BindingFlags.Instance | BindingFlags.NonPublic)!.Invoke(surface, escape);
+                CollectionAssert.AreEqual(committed, surface.Order);
+                Assert.IsFalse(surface.IsDragging);
+                Mouse("OnMouseDown", MouseButtons.Left, Center(slots[3]));
+                Mouse("OnMouseMove", MouseButtons.Left, Center(slots[0]));
+                Mouse("OnMouseDown", MouseButtons.Right, Center(slots[0]));
+                CollectionAssert.AreEqual(committed, surface.Order);
+                Mouse("OnMouseDown", MouseButtons.Left, Center(slots[3]));
+                Mouse("OnMouseMove", MouseButtons.Left, Center(slots[0]));
                 surface.Capture = false; // Alt-tab/capture loss must restore the committed order.
                 CollectionAssert.AreEqual(committed, surface.Order);
                 Mouse("OnMouseDown", MouseButtons.Left, Center(slots[3]));
@@ -264,6 +276,11 @@ public sealed class Rc8SettingsTests
                 Mouse("OnMouseDown", MouseButtons.Left, Center(slots[1]));
                 Mouse("OnMouseUp", MouseButtons.Left, Center(slots[1]));
                 CollectionAssert.AreEqual(committed, surface.Order);
+                Mouse("OnMouseDown", MouseButtons.Left, Center(slots[0]));
+                Mouse("OnMouseUp", MouseButtons.Left, Center(slots[0]));
+                typeof(MouseWithoutBorders.FrmMatrix.MatrixSurface).GetMethod("OnKeyDown", BindingFlags.Instance | BindingFlags.NonPublic)!
+                    .Invoke(surface, new object[] { new KeyEventArgs(Keys.Control | Keys.Right) });
+                Assert.AreSame(committed[0], surface.Order[1], "Keyboard reordering must follow the visible slots");
                 // Native controls retain their original model bindings.
                 var remote = initial.First(m => !m.LocalHost);
                 remote.EnabledBox.Checked = true; remote.NameEditor.Text = "EDITED-PC";
