@@ -222,7 +222,7 @@ public sealed class Rc8SettingsTests
                 ((CheckBox)Descendants(form).Single(c => c.Name == "checkBoxTwoRow")).Checked = twoRows;
                 Application.DoEvents();
                 var surface = Descendants(form).OfType<MouseWithoutBorders.FrmMatrix.MatrixSurface>().Single();
-                var previewDir = Path.Combine(Path.GetTempPath(), "mwb-ui-previews");
+                var previewDir = Path.Combine(Environment.GetEnvironmentVariable("RUNNER_TEMP") ?? Path.GetTempPath(), "mwb-ui-previews");
                 Directory.CreateDirectory(previewDir);
                 using (var preview = new Bitmap(form.Width, form.Height))
                 {
@@ -238,7 +238,7 @@ public sealed class Rc8SettingsTests
                 Mouse("OnMouseDown", MouseButtons.Left, Center(slots[0]));
                 Mouse("OnMouseMove", MouseButtons.Left, Center(slots[3]));
                 Application.DoEvents();
-                Assert.IsTrue(surface.IsDragging);
+                Assert.IsTrue(surface.IsDragging, $"Drag did not start: surface {surface.Bounds}, slots {string.Join("; ", slots)}, names {string.Join("; ", initial.Select(m => m.NameEditor.Bounds))}");
                 Assert.AreSame(initial[0], surface.Order[3], "Two-row swaps must not require a timed wait");
                 Assert.IsTrue(initial.All(m => !m.NameEditor.Visible && !m.EnabledBox.Visible));
                 using var before = new Bitmap(surface.Width, surface.Height);

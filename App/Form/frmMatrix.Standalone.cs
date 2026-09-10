@@ -22,6 +22,7 @@ internal partial class FrmMatrix
     private CheckBox checkBoxEnableKeyboardShortcuts;
     private CheckBox checkBoxMouseEdgeSwitching;
     private bool portableMachineTilesConfigured;
+    private bool layingOutMatrix;
 
     protected override void OnLoad(EventArgs e)
     {
@@ -100,11 +101,14 @@ internal partial class FrmMatrix
 
     private void LayoutPortableMachineTiles()
     {
-        if (!portableMachineTilesConfigured || machines[0] == null)
+        if (!portableMachineTilesConfigured || machines[0] == null || layingOutMatrix)
         {
             return;
         }
 
+        layingOutMatrix = true;
+        try
+        {
         matrixSurface?.FinishDrag(false);
         int rows = matrixOneRow ? 1 : 2;
         int columns = matrixOneRow ? 4 : 2;
@@ -119,6 +123,16 @@ internal partial class FrmMatrix
         int contentTop = titleHeight + rowGap;
         int contentBottom = checkBoxTwoRow.Top - rowGap;
         int availableHeight = Math.Max(1, contentBottom - contentTop);
+        // Keep room for both native editing controls and usable monitor artwork
+        // when text is larger without enlarging ordinary one-row windows.
+        int minimumTileHeight = machines[0].NameEditor.PreferredHeight + (groupBoxMachineMatrix.Font.Height * 4) + 4;
+        int requiredHeight = minimumTileHeight * rows + rowGap * (rows - 1);
+        if (availableHeight < requiredHeight)
+        {
+            Height += requiredHeight - availableHeight;
+            contentBottom = checkBoxTwoRow.Top - rowGap;
+            availableHeight = Math.Max(1, contentBottom - contentTop);
+        }
         int maximumTileHeight = rows == 1
             ? availableHeight
             : Math.Max(1, (availableHeight - rowGap) / 2);
@@ -141,6 +155,8 @@ internal partial class FrmMatrix
             machines[i].Visible = matrixSurface == null;
         }
         matrixSurface?.Arrange(new Rectangle(0, contentTop, groupBoxMachineMatrix.ClientSize.Width, availableHeight));
+        }
+        finally { layingOutMatrix = false; }
     }
 
     private void ConfigurePortableOtherOptions()
