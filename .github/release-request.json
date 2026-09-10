@@ -1,9 +1,10 @@
 {
-  "tag": "mwb-v1.1.1-rc.2",
-  "title": "Mouse Without Borders Portable 1.1.1 RC2",
+  "tag": "mwb-v1.1.1-rc.3",
+  "title": "Mouse Without Borders Portable 1.1.1 RC3",
   "prerelease": true,
   "summary": "Smoother computer matrix rendering and immediate dragging, retaining RC1 transfer recovery fixes.",
   "changes": [
+    "Size monitor tiles from the scaled matrix width so ordinary status labels remain readable on enlarged displays.",
     "Render monitor artwork and status together on one double-buffered matrix surface.",
     "Keep native editable computer names and checkboxes with their existing behavior.",
     "Arrange the matrix before the first visible frame and update connection status atomically.",

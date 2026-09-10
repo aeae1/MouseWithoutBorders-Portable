@@ -123,6 +123,13 @@ internal partial class FrmMatrix
             int contentTop = titleHeight + rowGap;
             int contentBottom = checkBoxTwoRow.Top - rowGap;
             int availableHeight = Math.Max(1, contentBottom - contentTop);
+            int availableWidth = Math.Max(1, groupBoxMachineMatrix.ClientSize.Width - (sidePadding * 2));
+            int slotWidth = availableWidth / columns;
+            // New controls are created after the form has scaled. Derive tile
+            // width from the scaled matrix instead of their design-time width.
+            int tileWidth = Math.Max(1, availableWidth / 4 - rowGap);
+            foreach (var machine in machines) machine.Width = tileWidth;
+
             // Keep room for both native editing controls and usable monitor artwork
             // when text is larger without enlarging ordinary one-row windows.
             int minimumTileHeight = machines[0].NameEditor.PreferredHeight + (groupBoxMachineMatrix.Font.Height * 4) + 4;
@@ -140,9 +147,6 @@ internal partial class FrmMatrix
             int usedHeight = (tileHeight * rows) + (rowGap * (rows - 1));
             int startTop = contentTop + Math.Max(0, (availableHeight - usedHeight) / 2);
 
-            int tileWidth = machines[0].Width;
-            int availableWidth = Math.Max(1, groupBoxMachineMatrix.ClientSize.Width - (sidePadding * 2));
-            int slotWidth = availableWidth / columns;
 
             for (int i = 0; i < machines.Length; i++)
             {

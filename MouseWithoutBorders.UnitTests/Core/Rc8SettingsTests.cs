@@ -237,6 +237,13 @@ public sealed class Rc8SettingsTests
                 }
                 var initial = surface.Order;
                 var slots = surface.Slots;
+                if (scale == 100 || scaleGeometry)
+                {
+                    foreach (var machine in initial)
+                        Assert.IsTrue(TextRenderer.MeasureText(machine.DisplayStatus, surface.Font).Width <= slots[0].Width,
+                            $"Standard status must fit without truncation: {machine.DisplayStatus}; tile {slots[0].Width}");
+                }
+
                 Point Center(Rectangle r) => new(r.Left + r.Width / 2, r.Top + r.Height / 3);
                 void Mouse(string method, MouseButtons button, Point point) =>
                     typeof(MouseWithoutBorders.FrmMatrix.MatrixSurface).GetMethod(method, BindingFlags.Instance | BindingFlags.NonPublic)!

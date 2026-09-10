@@ -1,6 +1,6 @@
-# 1.1.1 RC2 — smoother computer matrix
+# 1.1.1 RC3 — smoother computer matrix
 
-Builds on RC1, retaining its transfer recovery fixes. Mouse sharing, networking and file-transfer code are unchanged from RC1.
+RC3 supersedes RC2 and retains RC1 transfer recovery fixes. RC2 visual inspection identified undersized tiles at enlarged geometry/text; RC3 derives tile width from the scaled matrix and checks that standard status labels fit. Mouse sharing, networking and file-transfer code are unchanged from RC1.
 
 The Computer Matrix uses one double-buffered drawing surface for monitor artwork, status and drag previews. Computer names and checkboxes remain native Windows controls, retaining editing, validation and keyboard focus. Layout finishes before the first displayed frame. Larger text gets sufficient matrix height for usable monitor artwork. Connection statuses are computed before updating their presentation, avoiding repeated clear/reapply cycles.
 
@@ -18,4 +18,4 @@ Windows CI tests normal and enlarged geometry/text, one/two-row swaps without a 
 4. Edit an empty computer slot, toggle its checkbox, then rearrange, Apply and reopen. Check names remain attached to the right monitors and order persists.
 5. Try your usual display scaling and both row modes. Names, checkboxes and statuses should fit.
 
-Install RC2 on both PCs for a consistent test baseline. Preserve preferences and recovery files and finish/cancel unfinished work before updating.
+Install RC3 on both PCs for a consistent test baseline. Preserve preferences and recovery files and finish/cancel unfinished work before updating.
