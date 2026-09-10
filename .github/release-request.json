@@ -1,20 +1,19 @@
 {
-  "tag": "mwb-v1.1.1-rc.1",
-  "title": "Mouse Without Borders Portable 1.1.1 RC1",
+  "tag": "mwb-v1.1.1-rc.2",
+  "title": "Mouse Without Borders Portable 1.1.1 RC2",
   "prerelease": true,
-  "summary": "Transfer recovery and folder edge-case fixes, plus a clean bitmap preview when rearranging computer tiles.",
+  "summary": "Smoother computer matrix rendering and immediate dragging, retaining RC1 transfer recovery fixes.",
   "changes": [
-    "Recover paused transfers after recovery-file write failures, and recover a missing journal from its backup.",
-    "Verify loose-file destination identities before resuming or cleaning up.",
-    "Retry temporarily unreadable scanned files using safely refreshed metadata.",
-    "Compact finished rows into bounded completion receipts and budget space for admitted transfers.",
-    "Reuse receiving buffers and avoid redundant completion checkpoints.",
-    "Replace live computer-tile dragging with a painted preview to prevent trails and clipped child controls."
+    "Render monitor artwork and status together on one double-buffered matrix surface.",
+    "Keep native editable computer names and checkboxes with their existing behavior.",
+    "Arrange the matrix before the first visible frame and update connection status atomically.",
+    "Use pointer capture with immediate target swaps in one/two rows; cancel on Escape, right click, lost capture or release outside the matrix.",
+    "Retain RC1 transfer recovery fixes; mouse sharing and network transport are unchanged."
   ],
   "testing": [
     "Windows Release x64 build and automated regression suite must pass before publication.",
-    "Use this candidate on both PCs. Test paused/resumed folder copies, cancellation, a locked source file, and rearranging the matrix in one and two rows.",
-    "Hardware sleep/wake, network interruption and real Explorer interaction still require owner validation."
+    "Test opening Machine Setup, fast dragging, one/two rows, cancellation, name editing and Apply/reopen.",
+    "Real-PC rendering at your display scale still needs owner testing."
   ],
   "known_limitations": [
     "One self-contained, unsigned Windows x64 EXE; no Windows service or protected-desktop support.",

@@ -223,3 +223,7 @@ See [RC13_TRANSFERS.md](RC13_TRANSFERS.md) for sender-controlled queue ordering,
 ## RC14 drag previews and cancellation
 
 See [RC14_DRAG_PREVIEW.md](RC14_DRAG_PREVIEW.md) for sharper Windows file-type artwork, transparent edges, three-type selection previews and right-click cancellation. The RC13 transfer window, queue controls and recovery behavior are retained.
+
+## 1.1.1 RC2 matrix surface
+
+See [RC_1.1.1_RC2.md](RC_1.1.1_RC2.md). The portable matrix initializes during Load. `MatrixSurface` paints monitor artwork and status together while retaining native name editors and checkboxes. Pointer capture handles drag previews; only successful inside releases commit the local order, and Apply retains existing persistence. Connection status is aggregated before touching controls. Do not reintroduce OLE drag/drop, timer-based swap delays or forced synchronous paints per mouse movement. No input transport changes.

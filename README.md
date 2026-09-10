@@ -141,4 +141,4 @@ This section records how the PowerToys module became this portable product. It i
 
 </details>
 
-Current candidate: [1.1.1 RC1 recovery and matrix-drag fixes](docs/RC_1.1.1.md).
+Current candidate: [1.1.1 RC2 smoother computer matrix](docs/RC_1.1.1_RC2.md).

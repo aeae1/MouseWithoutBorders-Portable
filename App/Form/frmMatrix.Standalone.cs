@@ -35,7 +35,8 @@ internal partial class FrmMatrix
         ConfigurePortableShortcutControls();
         LayoutPortableSettingsPages();
         AddPortableSettingsTab();
-        Shown += FrmMatrixPortable_Shown;
+        InitAll();
+        ConfigurePortableMachineTiles();
     }
 
     private void FrmMatrixPortable_Shown(object sender, EventArgs e) => ConfigurePortableMachineTiles();
@@ -53,6 +54,8 @@ internal partial class FrmMatrix
         }
 
         portableMachineTilesConfigured = true;
+        matrixSurface = new MatrixSurface(this);
+        groupBoxMachineMatrix.Controls.Add(matrixSurface);
         DoubleBuffered = true;
         groupBoxMachineMatrix.SizeChanged += PortableMachineMatrix_SizeChanged;
         checkBoxTwoRow.CheckedChanged -= CheckBoxTwoRow_CheckedChanged;
@@ -63,6 +66,7 @@ internal partial class FrmMatrix
 
     private void CheckBoxTwoRow_PortableCheckedChanged(object sender, EventArgs e)
     {
+        matrixSurface?.FinishDrag(false);
         // Changing row modes resizes the form and every machine tile. Prevent
         // WinForms from painting those intermediate bounds one control at a time.
         _ = NativeMethods.SendMessage(Handle, WmSetRedraw, IntPtr.Zero, IntPtr.Zero);
@@ -101,6 +105,7 @@ internal partial class FrmMatrix
             return;
         }
 
+        matrixSurface?.FinishDrag(false);
         int rows = matrixOneRow ? 1 : 2;
         int columns = matrixOneRow ? 4 : 2;
         int sidePadding = Math.Max(12, groupBoxMachineMatrix.Font.Height);
@@ -133,8 +138,9 @@ internal partial class FrmMatrix
             machines[i].Height = tileHeight;
             machines[i].Left = sidePadding + (column * slotWidth) + Math.Max(0, (slotWidth - tileWidth) / 2);
             machines[i].Top = startTop + (row * (tileHeight + rowGap));
-            machines[i].Visible = true;
+            machines[i].Visible = matrixSurface == null;
         }
+        matrixSurface?.Arrange(new Rectangle(0, contentTop, groupBoxMachineMatrix.ClientSize.Width, availableHeight));
     }
 
     private void ConfigurePortableOtherOptions()

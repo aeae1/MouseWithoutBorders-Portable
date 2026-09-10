@@ -169,6 +169,9 @@ namespace MouseWithoutBorders
 
         private void InitAll()
         {
+#if PORTABLE_SINGLE_FILE
+            if (machines[0] != null) return;
+#endif
             formOrgHeight = Height;
             matrixOneRow = Setting.Values.MatrixOneRow;
             CreateMachines();
@@ -450,6 +453,9 @@ namespace MouseWithoutBorders
                 AddNewMachine();
             }
 
+#if PORTABLE_SINGLE_FILE
+            keyNotMatchedMachines = RefreshMatrixConnections();
+#else
             // NOTE(@yuyoyuppe): this option is deprecated
             // checkBoxVKMap.Checked = Setting.Values.UseVKMap;
             foreach (Machine m in machines)
@@ -507,6 +513,8 @@ namespace MouseWithoutBorders
                     }
                 }
             }
+
+#endif
 
             if (SocketStuff.InvalidKeyFound)
             {
@@ -641,9 +649,7 @@ namespace MouseWithoutBorders
             dragDropMachineOrgY = dragDropMachine.Top;
             dragDropMachine.BringToFront();
             #if PORTABLE_SINGLE_FILE
-            BeginMatrixDragPreview();
-            try { _ = DoDragDrop(dragDropMachine, DragDropEffects.Move); }
-            finally { Form_DragDrop(this, null); EndMatrixDragPreview(); }
+            return; // Portable matrix uses its own captured drawing surface.
 #else
             _ = DoDragDrop(dragDropMachine, DragDropEffects.Move);
 #endif
@@ -684,9 +690,7 @@ namespace MouseWithoutBorders
 
             dragDropMachine.Left = dragDropMachineOrgX + (e.X - startX);
             dragDropMachine.Top = dragDropMachineOrgY + (e.Y - startY);
-#if PORTABLE_SINGLE_FILE
-            MoveMatrixDragPreview();
-#endif
+
 
             /*
             dragDropMachine.Left = e.X - dragDropMachine.MouseDownPos.X - Left - 3

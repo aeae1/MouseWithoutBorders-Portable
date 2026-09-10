@@ -12,6 +12,21 @@ namespace MouseWithoutBorders;
 
 internal partial class Machine
 {
+    internal TextBox NameEditor => textBoxName;
+    internal CheckBox EnabledBox => checkBoxEnabled;
+    internal string DisplayStatus => labelStatusClient.Text;
+    internal Color DisplayStatusColor => labelStatusClient.ForeColor;
+    internal Image Artwork => pictureBoxLogo.Image;
+
+    internal void SetConnectionStatus(Class.SocketStatus client, Class.SocketStatus server)
+    {
+        if (statusClient == client && statusServer == server) return;
+        statusClient = client; statusServer = server;
+        if (client is Class.SocketStatus.Connected or Class.SocketStatus.Handshaking ||
+            server is Class.SocketStatus.Connected or Class.SocketStatus.Handshaking) Editable = false;
+        UpdateStatusPresentation();
+    }
+
     private bool combiningPortableStatus;
     private int portableFooterHeight;
 
@@ -59,6 +74,7 @@ internal partial class Machine
 
     private void LayoutPortableEnabledCheckBox()
     {
+        if (checkBoxEnabled.Parent != this) return;
         checkBoxEnabled.Left = Math.Max(0, ClientSize.Width - checkBoxEnabled.Width);
         checkBoxEnabled.Top = Math.Max(0, pictureBoxLogo.Bottom - checkBoxEnabled.Height);
         checkBoxEnabled.BringToFront();

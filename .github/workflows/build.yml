@@ -48,7 +48,7 @@ jobs:
         if: always()
         shell: pwsh
         run: |
-          foreach ($name in @('settings-150.png', 'transfers-9.png', 'transfers-14.png', 'drag-alpha.png')) {
+          foreach ($name in @('settings-150.png', 'transfers-9.png', 'transfers-14.png', 'drag-alpha.png', 'matrix-1-100.png', 'matrix-2-100.png', 'matrix-1-150.png', 'matrix-2-150.png')) {
             $preview = Join-Path $env:RUNNER_TEMP ('mwb-ui-previews/' + $name)
             if (Test-Path $preview) {
               Write-Output ('MWB_UI_PREVIEW ' + $name + ' ' + [Convert]::ToBase64String([IO.File]::ReadAllBytes($preview)))

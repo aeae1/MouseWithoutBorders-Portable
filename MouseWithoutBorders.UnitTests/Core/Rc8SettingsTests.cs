@@ -199,9 +199,11 @@ public sealed class Rc8SettingsTests
     }
 
     [DataTestMethod]
-    [DataRow(false)]
-    [DataRow(true)]
-    public async Task MatrixDragPreviewDoesNotLeaveStaleScreenPixels(bool twoRows)
+    [DataRow(false, 100)]
+    [DataRow(true, 100)]
+    [DataRow(false, 150)]
+    [DataRow(true, 150)]
+    public async Task MatrixSurfaceDragCommitsCancelsAndRepaintsCleanly(bool twoRows, int scale)
     {
         await OnSta(() =>
         {
@@ -210,34 +212,65 @@ public sealed class Rc8SettingsTests
             try
             {
                 Setting.Values = Settings(); Common.MachineName = "LOCAL-PC";
-                Setting.Values.Username = "matrix-drag-test";
                 using var form = new SettingsWindowWithoutNetworkTimer();
+                if (scale != 100) form.Font = new Font(form.Font.FontFamily, form.Font.Size * scale / 100f);
                 form.Show(); Application.DoEvents();
-                var controls = Descendants(form).ToArray();
-                ((CheckBox)controls.Single(c => c.Name == "checkBoxTwoRow")).Checked = twoRows;
+                ((CheckBox)Descendants(form).Single(c => c.Name == "checkBoxTwoRow")).Checked = twoRows;
                 Application.DoEvents();
-                var tile = controls.OfType<MouseWithoutBorders.Machine>().First();
-                var matrix = tile.Parent!;
-                var originalLocation = tile.Location;
-                typeof(MouseWithoutBorders.FrmMatrix).GetField("dragDropMachine", BindingFlags.Instance | BindingFlags.NonPublic)!.SetValue(form, tile);
-                form.BeginMatrixDragPreview();
-                var move = typeof(MouseWithoutBorders.FrmMatrix).GetMethod("MoveMatrixDragPreview", BindingFlags.Instance | BindingFlags.NonPublic)!;
-                for (int i = 0; i < 30; i++)
+                var surface = Descendants(form).OfType<MouseWithoutBorders.FrmMatrix.MatrixSurface>().Single();
+                var previewDir = Path.Combine(Path.GetTempPath(), "mwb-ui-previews");
+                Directory.CreateDirectory(previewDir);
+                using (var preview = new Bitmap(form.Width, form.Height))
                 {
-                    tile.Location = new Point(originalLocation.X + i * 3, originalLocation.Y + i % 6);
-                    move.Invoke(form, null); Application.DoEvents();
+                    form.DrawToBitmap(preview, new Rectangle(Point.Empty, preview.Size));
+                    preview.Save(Path.Combine(previewDir, $"matrix-{(twoRows ? 2 : 1)}-{scale}.png"));
                 }
-                using var before = new Bitmap(matrix.Width, matrix.Height);
-                using (var g = Graphics.FromImage(before)) g.CopyFromScreen(matrix.PointToScreen(Point.Empty), Point.Empty, before.Size);
-                matrix.Invalidate(true); matrix.Update(); Application.DoEvents();
-                using var after = new Bitmap(matrix.Width, matrix.Height);
-                using (var g = Graphics.FromImage(after)) g.CopyFromScreen(matrix.PointToScreen(Point.Empty), Point.Empty, after.Size);
+                var initial = surface.Order;
+                var slots = surface.Slots;
+                Point Center(Rectangle r) => new(r.Left + r.Width / 2, r.Top + r.Height / 3);
+                void Mouse(string method, MouseButtons button, Point point) =>
+                    typeof(MouseWithoutBorders.FrmMatrix.MatrixSurface).GetMethod(method, BindingFlags.Instance | BindingFlags.NonPublic)!
+                        .Invoke(surface, new object[] { new MouseEventArgs(button, 1, point.X, point.Y, 0) });
+                Mouse("OnMouseDown", MouseButtons.Left, Center(slots[0]));
+                Mouse("OnMouseMove", MouseButtons.Left, Center(slots[3]));
+                Application.DoEvents();
+                Assert.IsTrue(surface.IsDragging);
+                Assert.AreSame(initial[0], surface.Order[3], "Two-row swaps must not require a timed wait");
+                Assert.IsTrue(initial.All(m => !m.NameEditor.Visible && !m.EnabledBox.Visible));
+                using var before = new Bitmap(surface.Width, surface.Height);
+                using (var g = Graphics.FromImage(before)) g.CopyFromScreen(surface.PointToScreen(Point.Empty), Point.Empty, before.Size);
+                surface.Invalidate(true); surface.Update(); Application.DoEvents();
+                using var after = new Bitmap(surface.Width, surface.Height);
+                using (var g = Graphics.FromImage(after)) g.CopyFromScreen(surface.PointToScreen(Point.Empty), Point.Empty, after.Size);
                 int changed = 0;
                 for (int y = 0; y < before.Height; y++) for (int x = 0; x < before.Width; x++)
                     if (before.GetPixel(x, y) != after.GetPixel(x, y)) changed++;
                 Assert.IsTrue(changed < 100, $"{changed} stale pixels remained during dragging");
-                tile.Location = originalLocation; form.EndMatrixDragPreview(); Application.DoEvents();
-                Assert.IsTrue(tile.Visible);
+                Mouse("OnMouseUp", MouseButtons.Left, Center(slots[3]));
+                Assert.IsFalse(surface.IsDragging);
+                Assert.AreSame(initial[0], surface.Order[3]);
+                Assert.IsTrue(initial.All(m => m.NameEditor.Visible && m.EnabledBox.Visible));
+                var committed = surface.Order;
+                Mouse("OnMouseDown", MouseButtons.Left, Center(slots[3]));
+                Mouse("OnMouseMove", MouseButtons.Left, Center(slots[0]));
+                surface.Capture = false; // Alt-tab/capture loss must restore the committed order.
+                CollectionAssert.AreEqual(committed, surface.Order);
+                Mouse("OnMouseDown", MouseButtons.Left, Center(slots[3]));
+                Mouse("OnMouseMove", MouseButtons.Left, Center(slots[0]));
+                Mouse("OnMouseUp", MouseButtons.Left, new Point(-20, -20));
+                CollectionAssert.AreEqual(committed, surface.Order);
+                Assert.IsTrue(initial.All(m => m.NameEditor.Visible && m.EnabledBox.Visible));
+                // A plain click does not start a drag or change ordering.
+                Mouse("OnMouseDown", MouseButtons.Left, Center(slots[1]));
+                Mouse("OnMouseUp", MouseButtons.Left, Center(slots[1]));
+                CollectionAssert.AreEqual(committed, surface.Order);
+                // Native controls retain their original model bindings.
+                var remote = initial.First(m => !m.LocalHost);
+                remote.EnabledBox.Checked = true; remote.NameEditor.Text = "EDITED-PC";
+                Assert.IsTrue(remote.MachineEnabled); Assert.AreEqual("EDITED-PC", remote.MachineName);
+                Assert.IsTrue(remote.NameEditor.Enabled);
+                foreach (var control in surface.Controls.Cast<Control>())
+                    Assert.IsTrue(surface.ClientRectangle.Contains(control.Bounds), $"Clipped {control.Name}: {control.Bounds}");
             }
             finally { Common.MachineName = name; Setting.Values = original; }
         });
