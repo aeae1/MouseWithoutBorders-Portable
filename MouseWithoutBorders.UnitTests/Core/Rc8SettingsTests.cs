@@ -202,11 +202,13 @@ public sealed class Rc8SettingsTests
     }
 
     [DataTestMethod]
-    [DataRow(false, 100)]
-    [DataRow(true, 100)]
-    [DataRow(false, 150)]
-    [DataRow(true, 150)]
-    public async Task MatrixSurfaceDragCommitsCancelsAndRepaintsCleanly(bool twoRows, int scale)
+    [DataRow(false, 100, false)]
+    [DataRow(true, 100, false)]
+    [DataRow(false, 150, false)]
+    [DataRow(true, 150, false)]
+    [DataRow(false, 150, true)]
+    [DataRow(true, 150, true)]
+    public async Task MatrixSurfaceDragCommitsCancelsAndRepaintsCleanly(bool twoRows, int scale, bool scaleGeometry)
     {
         await OnSta(() =>
         {
@@ -217,7 +219,11 @@ public sealed class Rc8SettingsTests
                 Setting.Values = Settings(); Common.MachineName = "LOCAL-PC";
                 Setting.Values.Username = "matrix-test";
                 using var form = new SettingsWindowWithoutNetworkTimer();
-                if (scale != 100) form.Font = new Font(form.Font.FontFamily, form.Font.Size * scale / 100f);
+                if (scale != 100)
+                {
+                    if (scaleGeometry) form.Scale(new SizeF(scale / 100f, scale / 100f));
+                    form.Font = new Font(form.Font.FontFamily, form.Font.Size * scale / 100f);
+                }
                 form.Show(); Application.DoEvents();
                 ((CheckBox)Descendants(form).Single(c => c.Name == "checkBoxTwoRow")).Checked = twoRows;
                 Application.DoEvents();
@@ -227,7 +233,7 @@ public sealed class Rc8SettingsTests
                 using (var preview = new Bitmap(form.Width, form.Height))
                 {
                     form.DrawToBitmap(preview, new Rectangle(Point.Empty, preview.Size));
-                    preview.Save(Path.Combine(previewDir, $"matrix-{(twoRows ? 2 : 1)}-{scale}.png"));
+                    if (scale == 100 || scaleGeometry) preview.Save(Path.Combine(previewDir, $"matrix-{(twoRows ? 2 : 1)}-{scale}.png"));
                 }
                 var initial = surface.Order;
                 var slots = surface.Slots;

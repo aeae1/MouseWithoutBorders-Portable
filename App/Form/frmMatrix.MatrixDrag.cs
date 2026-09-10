@@ -272,7 +272,11 @@ internal partial class FrmMatrix
             try
             {
                 if (commit && dragging) CommitOrder();
-                else order = (Machine[])owner.machines.Clone();
+                else
+                {
+                    order = (Machine[])owner.machines.Clone();
+                    focusedSlot = Array.IndexOf(order, held);
+                }
                 held = null; dragging = false; Capture = false;
                 PlaceEditors(); Invalidate();
             }
